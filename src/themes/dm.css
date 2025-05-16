@@ -1,0 +1,74 @@
+.btn-primary {
+  --color-btn: oklch(38.3% 0.2 285);
+  --color-btn-dark: oklch(0.41 0.2187 283.88);
+  --color-btn-hover: oklch(41.4% 0.21 285);
+  --color-btn-active: oklch(41.4% 0.21 285);
+  --color-btn-disabled: oklch(92.8% 0.006 264.531);
+
+  --color-btn-ring: oklch(38.3% 0.2 285);
+
+  --color-btn-text: oklch(100% 0 0);
+  --color-btn-text-disabled: oklch(70.7% 0.022 261.325);
+
+  --color-btn-spinner: oklch(100% 0 0);
+}
+
+.btn-secondary {
+  --color-btn: oklch(92.8% 0.01 265);
+  --color-btn-dark: oklch(92.8% 0.01 265);
+  --color-btn-hover: oklch(87.2% 0.01 258);
+  --color-btn-active: oklch(87.2% 0.01 258);
+  --color-btn-disabled: oklch(83.6% 0 0);
+
+  --color-btn-ring: oklch(92.8% 0.01 265);
+
+  --color-btn-text: oklch(27.8% 0.03 257);
+  --color-btn-text-disabled: oklch(100% 0 0);
+
+  --color-btn-spinner: oklch(27.8% 0.03 257);
+}
+
+.btn-ghost {
+  --color-btn: transparent;
+  --color-btn-dark: transparent;
+  --color-btn-hover: transparent;
+  --color-btn-active: transparent;
+  --color-btn-disabled: oklch(96.7% 0.003 264.542);
+
+  --color-btn-ring: oklch(87.2% 0.01 258);
+
+  --color-btn-text: oklch(27.8% 0.03 257);
+  --color-btn-text-disabled: oklch(70.7% 0.022 261.325);
+
+  --color-btn-spinner: oklch(27.8% 0.03 257);
+}
+
+.btn-danger {
+  --color-btn: oklch(63.7% 0.21 25.3);
+  --color-btn-dark: oklch(63.7% 0.21 25.3);
+  --color-btn-hover: oklch(57.7% 0.22 27.3);
+  --color-btn-active: oklch(57.7% 0.22 27.3);
+  --color-btn-disabled: oklch(80.8% 0.1 19.6);
+
+  --color-btn-ring: oklch(63.7% 0.21 25.3);
+
+  --color-btn-text: oklch(100% 0 0);
+  --color-btn-text-disabled: oklch(100% 0 0);
+
+  --color-btn-spinner: oklch(100% 0 0);
+}
+
+.btn-unstyled {
+  --color-btn: transparent;
+  --color-btn-dark: transparent;
+  --color-btn-hover: transparent;
+  --color-btn-active: transparent;
+  --color-btn-disabled: transparent;
+
+  --color-btn-ring: transparent;
+
+  --color-btn-text: oklch(0% 0 0);
+  --color-btn-text-disabled: oklch(17.3% 0 0);
+
+  --color-btn-spinner: oklch(0% 0 0);
+}
