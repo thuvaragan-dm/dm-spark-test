@@ -4,7 +4,7 @@ import { ipcRenderer, contextBridge, IpcRendererEvent } from "electron";
 contextBridge.exposeInMainWorld("ipcRenderer", {
   on(
     channel: string,
-    listener: (event: IpcRendererEvent, ...args: unknown[]) => void
+    listener: (event: IpcRendererEvent, ...args: unknown[]) => void,
   ) {
     ipcRenderer.on(channel, listener);
     return () => {
@@ -60,7 +60,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    */
   deleteToken: (): void => {
     console.log(
-      "Preload: deleteToken() called. Requesting main process to delete token."
+      "Preload: deleteToken() called. Requesting main process to delete token.",
     );
     // Ask the main process to delete the token from file and its memory
     ipcRenderer.send("delete-auth-token");
@@ -95,5 +95,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
 });
 
 console.log(
-  "Preload script loaded. ipcRenderer and electronAPI exposed with updated token logic."
+  "Preload script loaded. ipcRenderer and electronAPI exposed with updated token logic.",
 );

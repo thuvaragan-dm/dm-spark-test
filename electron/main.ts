@@ -1,8 +1,7 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron"; // Added dialog, ipcMain
-import { fileURLToPath } from "node:url";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
+import fs from "node:fs/promises";
 import path from "node:path";
-import { URL } from "node:url"; // Import URL for parsing
-import fs from "node:fs/promises"; // Added fs.promises for async file operations
+import { fileURLToPath, URL } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -103,13 +102,13 @@ async function handleUrlAndExtractToken(url: string) {
           extractedToken = url.substring(prefix.length);
           console.log(
             "Auth token extracted via custom prefix 'dm://authtoken=':",
-            extractedToken
+            extractedToken,
           );
         } else if (url.startsWith(prefixGenericPath)) {
           extractedToken = url.substring(prefixGenericPath.length);
           console.log(
             "Auth token extracted via custom prefix 'dm:/authtoken=':",
-            extractedToken
+            extractedToken,
           );
         }
       }
@@ -128,7 +127,7 @@ async function handleUrlAndExtractToken(url: string) {
         }
       } else {
         console.warn(
-          "Deep link URL did not contain an 'authtoken' query parameter or match known custom formats."
+          "Deep link URL did not contain an 'authtoken' query parameter or match known custom formats.",
         );
       }
     }
@@ -137,7 +136,7 @@ async function handleUrlAndExtractToken(url: string) {
       "Failed to parse deep link URL or extract token:",
       e,
       "URL was:",
-      url
+      url,
     );
     // Attempt direct string manipulation as a last resort if URL parsing failed entirely for "dm://authtoken=TOKEN"
     const prefix = "dm://authtoken=";
@@ -145,7 +144,7 @@ async function handleUrlAndExtractToken(url: string) {
       extractedToken = url.substring(prefix.length);
       console.log(
         "Auth token extracted via fallback custom prefix 'dm://authtoken=':",
-        extractedToken
+        extractedToken,
       );
       currentAuthToken = extractedToken;
       await saveTokenToFile(currentAuthToken);
@@ -160,7 +159,7 @@ async function handleUrlAndExtractToken(url: string) {
     } else {
       console.warn(
         "URL parsing failed and no token found with fallback prefix for:",
-        url
+        url,
       );
     }
   }
@@ -169,8 +168,6 @@ async function handleUrlAndExtractToken(url: string) {
     if (!win || win.isDestroyed()) {
       // Window not ready, URL is stored in deeplinkUrlToProcess
       // Dialog will be shown when window loads.
-    } else {
-      processDeepLinkDialog(url); // Show dialog for the full URL
     }
   }
 }
@@ -191,24 +188,6 @@ async function onDeepLinkReceived(url: string) {
   } else {
     if (win.isMinimized()) win.restore();
     win.focus();
-  }
-}
-
-function processDeepLinkDialog(url: string) {
-  if (win && !win.isDestroyed()) {
-    dialog
-      .showMessageBox(win, {
-        type: "info",
-        title: "Deep Link Opened",
-        message: "Application opened with URL:",
-        detail: url,
-      })
-      .catch((err) => console.error("Failed to show dialog:", err));
-  } else {
-    console.warn(
-      "processDeepLinkDialog called but no window available. URL:",
-      url
-    );
   }
 }
 
@@ -242,7 +221,7 @@ if (!gotTheLock) {
     currentAuthToken = await loadTokenFromFile(); // Load token at startup
 
     const initialUrlFromArgs = process.argv.find((arg) =>
-      arg.startsWith("dm:")
+      arg.startsWith("dm:"),
     ); // More generic dm: prefix
     if (initialUrlFromArgs) {
       deeplinkUrlToProcess = initialUrlFromArgs; // Store for processing after window loads
@@ -258,6 +237,30 @@ app.on("open-url", async (event, url) => {
   // Made async
   event.preventDefault();
   await onDeepLinkReceived(url); // Await if onDeepLinkReceived is async
+});
+
+// Listen for the 'open-external-url' message from the renderer process
+ipcMain.on("open-external-url", (_event, url) => {
+  console.log('Main Process: Received "open-external-url" with URL:', url);
+  // Validate the URL if necessary (e.g., check if it's an https URL)
+  if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+    shell
+      .openExternal(url)
+      .then(() => {
+        console.log(
+          "Main Process: Successfully opened URL in external browser.",
+        );
+      })
+      .catch((err) => {
+        console.error("Main Process: Failed to open URL:", err);
+        // Optionally, send an error message back to the renderer process
+        // event.sender.send('open-external-url-error', err.message);
+      });
+  } else {
+    console.warn("Main Process: Invalid or missing URL received:", url);
+    // Optionally, send an error message back to the renderer process
+    // event.sender.send('open-external-url-error', 'Invalid URL provided.');
+  }
 });
 
 // --- IPC Listener for Token Deletion ---
@@ -277,12 +280,19 @@ ipcMain.on("delete-auth-token", async () => {
 async function createWindow() {
   // Changed to async as it now contains async operations in did-finish-load indirectly
   win = new BrowserWindow({
+    width: 950,
+    height: 650,
+    minWidth: 950,
+    minHeight: 650,
     icon: path.join(process.env.VITE_PUBLIC!, "electron-vite.svg"),
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },
+    titleBarStyle: "hidden",
+    // expose window controls in Windows/Linux
+    ...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}),
   });
 
   win.webContents.on("did-finish-load", async () => {
@@ -293,7 +303,6 @@ async function createWindow() {
       const urlToProcess = deeplinkUrlToProcess; // process one url at a time
       deeplinkUrlToProcess = null; // Clear before async operation
       await handleUrlAndExtractToken(urlToProcess); // Extracts, saves token, updates currentAuthToken
-      processDeepLinkDialog(urlToProcess); // Show dialog for the full URL
     }
 
     // Send current token (either loaded from file, or from a just-processed deeplink)

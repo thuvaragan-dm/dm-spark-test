@@ -1,14 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap");
 @import "tailwindcss";
 @import "./themes/dm.css" layer(utilities);
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@font-face {
+  font-family: "Gilroy"; /* This name will be used in the Tailwind @theme configuration */
+  src: url("./assets/GilroyMedium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   /* https://coolors.co/421ca4-e7e2f9-0f0616-160d1e */
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-gilroy: var(--font-gilroy-medium);
+  --font-sans: "Geist", sans-serif;
+  --font-mono: "Geist Mono", monospace;
+  --font-gilroy: "Gilroy", sans-serif;
 
   --color-primary-50: oklch(0.97 0.016 289.93);
   --color-primary-100: oklch(0.94 0.0309 289.79);
@@ -53,4 +63,8 @@
   --color-btn-text-disabled: oklch(100% 0 0);
   --color-btn-spinner: oklch(100% 0 0);
   /* End of Styles for button */
+}
+
+.app-region-drag {
+  app-region: drag;
 }

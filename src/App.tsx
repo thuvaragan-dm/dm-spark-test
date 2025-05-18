@@ -1,21 +1,21 @@
-import { Button } from "./components/Button";
+import Login from "./screens/Login";
 
 function App() {
-  const handleGetToken = () => {
-    const token = window.electronAPI.getToken();
-    console.log({ token });
-  };
-
-  const handleDeleteToken = () => {
-    window.electronAPI.deleteToken();
-  };
+  // useEffect(() => {
+  //   window.electronAPI.onTokenReceived((token) => {
+  //     setAccessToken(token);
+  //     refetchUser();
+  //   });
+  // }, [setAccessToken, refetchUser]);
 
   return (
-    <section>
-      <h1 className="text-4xl text-primary">Hello</h1>
-      <Button onClick={handleGetToken}>click to get token</Button>
-      <Button onClick={handleDeleteToken}>delete token</Button>
-    </section>
+    <main className="@container flex h-dvh w-full flex-col font-sans">
+      <nav className="app-region-drag dark:bg-primary-dark-foreground w-full bg-gray-100 py-3.5"></nav>
+
+      <section className="dark:from-primary-dark-foreground dark:to-primary-dark flex w-full flex-1 flex-col overflow-hidden bg-gradient-to-b from-gray-100 to-gray-200">
+        <Login />
+      </section>
+    </main>
   );
 }
 
