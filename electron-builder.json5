@@ -1,43 +1,41 @@
-// @see - https://www.electron.build/configuration/configuration
 {
-  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
-  "asar": true,
-  "productName": "YourAppName",
-  "directories": {
-    "output": "release/${version}"
+  $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  appId: "com.deepmodel.app", // Changed: Use a unique App ID, reverse domain notation is common
+  productName: "DeepModel", // Changed: Your application's name
+  asar: true,
+  directories: {
+    output: "release/${version}",
+    buildResources: "build", // Added: Specifies where to look for build resources like icons
   },
-  "files": [
-    "dist",
-    "dist-electron"
-  ],
-  "mac": {
-    "target": [
-      "dmg"
-    ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+  files: ["dist", "dist-electron"],
+  mac: {
+    icon: "build/icon.png", // Added: Path to your macOS icon file
+    target: ["dmg"],
+    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
   },
-  "win": {
-    "target": [
+  win: {
+    icon: "build/icon.ico", // Added: Path to your Windows icon file
+    target: [
       {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      }
+        target: "nsis",
+        arch: ["x64"],
+      },
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
   },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+    deleteAppDataOnUninstall: false,
+    installerIcon: "build/icon.ico", // Added: Icon for the installer
+    uninstallerIcon: "build/icon.ico", // Added: Icon for the uninstaller
   },
-  "linux": {
-    "target": [
-      "AppImage"
-    ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
-  }
+  linux: {
+    icon: "build/icons", // Added: Path to a directory containing PNG icons (e.g., 64x64.png, 128x128.png, 256x256.png, 512x512.png)
+    // Electron Builder will pick the best ones. Or specify a single high-res PNG.
+    target: ["AppImage"],
+    category: "Utility", // Optional: Specify an application category for Linux
+    artifactName: "${productName}-Linux-${version}.${ext}",
+  },
 }

@@ -21,7 +21,7 @@ let deeplinkUrlToProcess: string | null = null;
 let currentAuthToken: string | null = null;
 
 const TOKEN_FILE_NAME = "authToken.txt";
-const RECENTLY_SELECTED_AGENTS_FILE_NAME = "recentlySelectedAgents.json"; // New file name
+const RECENTLY_SELECTED_AGENTS_FILE_NAME = "recentlySelectedAgents.json";
 
 // --- Path Helper Functions ---
 function getTokenFilePath(): string {
@@ -104,7 +104,7 @@ async function saveRecentlySelectedAgentsToFile(
 ): Promise<void> {
   try {
     const filePath = getRecentlySelectedAgentsFilePath();
-    await fs.writeFile(filePath, JSON.stringify(agents, null, 2), "utf8"); // Pretty print
+    await fs.writeFile(filePath, JSON.stringify(agents, null, 2), "utf8");
     console.log("Recently selected agents saved to file:", filePath);
   } catch (error) {
     console.error("Failed to save recently selected agents to file:", error);
@@ -312,7 +312,7 @@ ipcMain.handle(AGENT_CHANNELS.GET_AGENTS, async () => {
 
 ipcMain.handle(
   AGENT_CHANNELS.ADD_AGENT,
-  async (_event, agentToAdd: StoredAgent, maxItems: number = 5) => {
+  async (_event, agentToAdd: StoredAgent, maxItems: number = 4) => {
     console.log(
       `IPC Main: Handling ${AGENT_CHANNELS.ADD_AGENT}`,
       agentToAdd,

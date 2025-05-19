@@ -1,6 +1,15 @@
-import { cn } from "../../../utilities/cn";
 import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { IoCreateOutline, IoGrid } from "react-icons/io5";
+import { Link, useLocation, useParams } from "react-router-dom";
+import Avatar from "../../../components/Avatar";
+import { Button } from "../../../components/Button";
+import { useBreakpoint } from "../../../hooks/useBreakpoint";
+import { useAgent, useAgentActions } from "../../../store/agentStore";
+import { useChatInputActions } from "../../../store/chatInputStore";
+import { useSidebar, useSidebarActions } from "../../../store/sidebarStore";
+import capitalizeFirstLetter from "../../../utilities/capitalizeFirstLetter";
+import { cn } from "../../../utilities/cn";
 import {
   addAgentToRecentlySelected,
   getRecentlySelectedAgents,
@@ -8,16 +17,6 @@ import {
 } from "./manageRecentlySelectedAgents";
 import { SidebarWrapper } from "./sidebarWrapper";
 import AllThreads from "./threads/AllThreads";
-import { useLocation, useParams } from "react-router-dom";
-import { useAgent, useAgentActions } from "../../../store/agentStore";
-import { useChatInputActions } from "../../../store/chatInputStore";
-import { useSidebar, useSidebarActions } from "../../../store/sidebarStore";
-import { useBreakpoint } from "../../../hooks/useBreakpoint";
-import { Button } from "../../../components/Button";
-import { Link } from "react-router-dom";
-import Avatar from "../../../components/Avatar";
-import capitalizeFirstLetter from "../../../utilities/capitalizeFirstLetter";
-import { useEffect, useState } from "react";
 
 const Sidebar = () => {
   const { pathname: path } = useLocation();
@@ -47,24 +46,13 @@ const Sidebar = () => {
     handleGetRecentlySelectedAgents();
   }, [param, agents]);
 
-  useEffect(() => {
-    const selectedAgent = agents.find(
-      (agent) => agent.path === param.agentPath,
-    );
-
-    if (selectedAgent) {
-      setSelectedAgent(selectedAgent);
-      addAgentToRecentlySelected(selectedAgent);
-    }
-  }, [param, agents, setSelectedAgent]);
-
   return (
     <>
       <SidebarWrapper>
         <div className="dark:bg-primary-dark relative flex h-full flex-1 flex-col overflow-visible border-r border-gray-300 bg-white dark:border-white/10">
           <header
             className={cn(
-              "sticky top-0 z-[999] flex items-center justify-between overflow-x-hidden px-3 pt-3 pb-0",
+              "sticky top-5 z-[999] flex items-center justify-between overflow-x-hidden px-3 pt-3 pb-0",
             )}
           >
             {/* sidebar toggle button */}
@@ -114,7 +102,7 @@ const Sidebar = () => {
             </div>
           </header>
 
-          <div className="mt-3 max-h-72 w-full overflow-y-auto px-3">
+          <div className="mt-8 max-h-72 w-full overflow-y-auto px-3">
             {/* Selected agent always shown on top */}
             {recentlySelectedAgents
               .filter((agent) => agent.path === param.agentPath)
@@ -123,9 +111,13 @@ const Sidebar = () => {
                   to={`/chat/${agent.path}`}
                   onClick={() => {
                     reset();
-                    setSelectedAgent(
-                      agents.find((ag) => ag.path === agent.path) || null,
+                    const selectedAgent = agents.find(
+                      (ag) => ag.path === agent.path,
                     );
+                    if (selectedAgent) {
+                      setSelectedAgent(selectedAgent);
+                      addAgentToRecentlySelected(selectedAgent);
+                    }
                   }}
                   key={agent.id}
                   className={cn(
@@ -166,9 +158,13 @@ const Sidebar = () => {
                   to={`/chat/${agent.path}`}
                   onClick={() => {
                     reset();
-                    setSelectedAgent(
-                      agents.find((ag) => ag.path === agent.path) || null,
+                    const selectedAgent = agents.find(
+                      (ag) => ag.path === agent.path,
                     );
+                    if (selectedAgent) {
+                      setSelectedAgent(selectedAgent);
+                      addAgentToRecentlySelected(selectedAgent);
+                    }
                   }}
                   key={agent.id}
                   className={cn(
@@ -250,7 +246,7 @@ const Sidebar = () => {
                 opacity: 0,
               },
             }}
-            className="absolute top-0 left-0 z-[9999999] mt-10 ml-3 hidden items-start justify-start gap-2 md:flex"
+            className="absolute top-0 left-0 z-[9999999] mt-8 ml-3 hidden items-start justify-start gap-2 md:flex"
           >
             {/* sidebar toggle button */}
             <Button

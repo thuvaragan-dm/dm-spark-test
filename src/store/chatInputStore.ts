@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { create } from "zustand";
 import { Suggestion, Video } from "../api/messages/types";
+import { Document } from "../api/document/types";
 
 interface ChatInputState {
   states: {

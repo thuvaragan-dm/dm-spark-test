@@ -1,21 +1,9 @@
-import { useLocation, useParams } from "react-router-dom";
-import { Button } from "../../components/Button";
-import { useAuthActions } from "../../store/authStore";
+import ChatArea from "./chatarea/ChatArea";
 
 const ChatPage = () => {
-  const { logout } = useAuthActions();
-  const location = useLocation();
-  const path = useParams<{ agentPath: string }>();
-
   return (
-    <section className="flex w-full flex-1 flex-col overflow-y-auto">
-      <p className="text-gray-800 dark:text-white">{path.agentPath}</p>
-      <pre className="text-gray-800 dark:text-white">
-        {JSON.stringify(location, null, 2)}
-      </pre>
-      <Button className={"mt-5"} onClick={logout}>
-        Logout
-      </Button>
+    <section className="flex h-dvh w-full overflow-hidden">
+      <ChatArea />
     </section>
   );
 };
