@@ -1,7 +1,40 @@
+// electron/preload.ts
 import { ipcRenderer, contextBridge, IpcRendererEvent } from "electron";
 
-// --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld("ipcRenderer", {
+// --- Define IPC Channel Constants (must match main.ts and renderer store) ---
+const AGENT_IPC_CHANNELS = {
+  GET_AGENTS: "fs-agents:get",
+  ADD_AGENT: "fs-agents:add",
+  CLEAR_AGENTS: "fs-agents:clear",
+  REMOVE_AGENT: "fs-agents:remove",
+  INITIALIZE_AGENTS: "fs-agents:initialize",
+};
+
+// --- Allowed Channels for Generic Invoke ---
+// It's good practice to list all channels that electronAPI.invoke can use.
+const ALLOWED_INVOKE_CHANNELS = [
+  ...Object.values(AGENT_IPC_CHANNELS),
+  // Add other channel names here if your app uses electronAPI.invoke for other features
+];
+
+// --- Token Handling Logic (from your existing preload script) ---
+let currentToken: string | null = null;
+
+ipcRenderer.on("deep-link-token", (_event: IpcRendererEvent, token: string) => {
+  console.log("Preload: Received 'deep-link-token' from main process:", token);
+  currentToken = token;
+  // Notify renderer, e.g., window.dispatchEvent(new CustomEvent('token-updated', { detail: token }));
+});
+
+ipcRenderer.on("auth-token-deleted", () => {
+  console.log("Preload: Received 'auth-token-deleted' from main process.");
+  currentToken = null;
+  // Notify renderer, e.g., window.dispatchEvent(new CustomEvent('token-was-deleted'));
+});
+
+// --- Expose APIs to Renderer ---
+contextBridge.exposeInMainWorld("electronAPI", {
+  // Generic IPC methods (from your existing preload, slightly adapted for safety)
   on(
     channel: string,
     listener: (event: IpcRendererEvent, ...args: unknown[]) => void,
@@ -17,77 +50,39 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   send(channel: string, ...args: unknown[]) {
     ipcRenderer.send(channel, ...args);
   },
-  invoke(channel: string, ...args: unknown[]) {
-    return ipcRenderer.invoke(channel, ...args);
+  invoke(channel: string, ...args: unknown[]): Promise<any> {
+    if (ALLOWED_INVOKE_CHANNELS.includes(channel)) {
+      return ipcRenderer.invoke(channel, ...args);
+    }
+    console.error(
+      `Preload: IPC channel '${channel}' is not allowed for invoke.`,
+    );
+    return Promise.reject(
+      new Error(`IPC channel '${channel}' is not allowed for invoke.`),
+    );
   },
-});
 
-// --- Token Handling Logic ---
-
-let currentToken: string | null = null;
-
-// Listen for the token sent from the main process
-ipcRenderer.on("deep-link-token", (_event: IpcRendererEvent, token: string) => {
-  console.log("Preload: Received 'deep-link-token' from main process:", token);
-  currentToken = token;
-  // Renderer can use electronAPI.onTokenReceived or window.dispatchEvent
-  // For example: window.dispatchEvent(new CustomEvent('token-updated', { detail: token }));
-});
-
-// Listen for the token deletion confirmation from the main process
-ipcRenderer.on("auth-token-deleted", () => {
-  console.log("Preload: Received 'auth-token-deleted' from main process.");
-  currentToken = null;
-  // Renderer can use electronAPI.onTokenDeleted or window.dispatchEvent
-  // For example: window.dispatchEvent(new CustomEvent('token-was-deleted'));
-});
-
-contextBridge.exposeInMainWorld("electronAPI", {
-  /**
-   * Retrieves the authentication token currently cached in preload.
-   * This token is updated by events from the main process.
-   * @returns {string | null} The token, or null if not set or deleted.
-   */
+  // Token specific methods (from your existing preload)
   getToken: (): string | null => {
-    // console.log("Preload: getToken() called. Returning:", currentToken); // Keep for debugging if needed
     return currentToken;
   },
-
-  /**
-   * Sends a request to the main process to delete the stored authentication token.
-   * The local `currentToken` in preload will be cleared when the main process
-   * sends back an 'auth-token-deleted' event.
-   */
   deleteToken: (): void => {
     console.log(
       "Preload: deleteToken() called. Requesting main process to delete token.",
     );
-    // Ask the main process to delete the token from file and its memory
-    ipcRenderer.send("delete-auth-token");
+    ipcRenderer.send("delete-auth-token"); // This 'send' should be fine.
   },
-
-  /**
-   * Registers a callback to be invoked when a new token is received from the main process.
-   * @param {(token: string) => void} callback - The function to call when a token is received.
-   * @returns {() => void} A function to remove the listener.
-   */
   onTokenReceived: (callback: (token: string) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, token: string) =>
       callback(token);
-    ipcRenderer.on("deep-link-token", listener);
+    ipcRenderer.on("deep-link-token", listener); // This 'on' is specific and fine.
     return () => {
       ipcRenderer.removeListener("deep-link-token", listener);
     };
   },
-
-  /**
-   * Registers a callback to be invoked when the main process confirms token deletion.
-   * @param {() => void} callback - The function to call when the token has been deleted.
-   * @returns {() => void} A function to remove the listener.
-   */
   onTokenDeleted: (callback: () => void): (() => void) => {
     const listener = () => callback();
-    ipcRenderer.on("auth-token-deleted", listener);
+    ipcRenderer.on("auth-token-deleted", listener); // This 'on' is specific and fine.
     return () => {
       ipcRenderer.removeListener("auth-token-deleted", listener);
     };
@@ -95,5 +90,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
 });
 
 console.log(
-  "Preload script loaded. ipcRenderer and electronAPI exposed with updated token logic.",
+  "Preload script loaded. electronAPI exposed with file system agent storage and token logic.",
 );

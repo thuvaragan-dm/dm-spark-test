@@ -1,3 +1,4 @@
+// electron/main.ts
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -16,15 +17,20 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   : RENDERER_DIST;
 
 let win: BrowserWindow | null = null;
-let deeplinkUrlToProcess: string | null = null; // Stores URL if received before app/window is ready
-let currentAuthToken: string | null = null; // Holds the currently active auth token
+let deeplinkUrlToProcess: string | null = null;
+let currentAuthToken: string | null = null;
 
 const TOKEN_FILE_NAME = "authToken.txt";
+const RECENTLY_SELECTED_AGENTS_FILE_NAME = "recentlySelectedAgents.json"; // New file name
+
+// --- Path Helper Functions ---
 function getTokenFilePath(): string {
   return path.join(app.getPath("userData"), TOKEN_FILE_NAME);
 }
 
-// --- Token File Operations ---
+function getRecentlySelectedAgentsFilePath(): string {
+  return path.join(app.getPath("userData"), RECENTLY_SELECTED_AGENTS_FILE_NAME);
+}
 
 async function saveTokenToFile(token: string): Promise<void> {
   try {
@@ -43,7 +49,6 @@ async function loadTokenFromFile(): Promise<string | null> {
     console.log("Auth token loaded from file.");
     return token;
   } catch (error) {
-    // If file doesn't exist or other read error, assume no token
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       console.log("Auth token file not found. No token loaded.");
     } else {
@@ -67,8 +72,46 @@ async function deleteTokenFromFile(): Promise<void> {
   }
 }
 
-// --- Deep Linking Setup ---
+// --- Recently Selected Agents File Operations (NEW) ---
+interface StoredAgent {
+  // Must match the interface in renderer/store
+  id: string;
+  path: string;
+  name: string;
+  avatar: string;
+  description: string;
+}
 
+async function loadRecentlySelectedAgentsFromFile(): Promise<StoredAgent[]> {
+  try {
+    const filePath = getRecentlySelectedAgentsFilePath();
+    const data = await fs.readFile(filePath, "utf8");
+    return JSON.parse(data) as StoredAgent[];
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      console.log(
+        "Recently selected agents file not found. Returning empty list.",
+      );
+      return [];
+    }
+    console.error("Failed to load recently selected agents from file:", error);
+    return [];
+  }
+}
+
+async function saveRecentlySelectedAgentsToFile(
+  agents: StoredAgent[],
+): Promise<void> {
+  try {
+    const filePath = getRecentlySelectedAgentsFilePath();
+    await fs.writeFile(filePath, JSON.stringify(agents, null, 2), "utf8"); // Pretty print
+    console.log("Recently selected agents saved to file:", filePath);
+  } catch (error) {
+    console.error("Failed to save recently selected agents to file:", error);
+  }
+}
+
+// --- Deep Linking Setup (existing) ---
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient("dm", process.execPath, [
@@ -79,25 +122,20 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient("dm");
 }
 
-// Function to parse URL, extract token, save it, and send to renderer
 async function handleUrlAndExtractToken(url: string) {
+  // (existing function)
   console.log("Handling URL:", url);
   let extractedToken: string | null = null;
   try {
-    // It's recommended to structure your deep link like: dm://callback?authtoken=YOUR_TOKEN
     const parsedUrl = new URL(url);
     if (parsedUrl.protocol === "dm:") {
-      extractedToken = parsedUrl.searchParams.get("authtoken"); // Expect 'authtoken' query param
+      extractedToken = parsedUrl.searchParams.get("authtoken");
 
       if (extractedToken) {
         console.log("Auth token extracted via query param:", extractedToken);
       } else {
-        // Fallback: if your URL is exactly "dm://authtoken=ACTUAL_TOKEN"
-        // This format is non-standard and new URL() might not parse it as expected.
-        // A more direct string manipulation might be needed if this is a strict requirement
-        // and the above fails. For example:
-        const prefix = "dm://authtoken="; // For "dm://authtoken=TOKEN"
-        const prefixGenericPath = "dm:/authtoken="; // For "dm:/authtoken=TOKEN" (pathname)
+        const prefix = "dm://authtoken=";
+        const prefixGenericPath = "dm:/authtoken=";
         if (url.startsWith(prefix)) {
           extractedToken = url.substring(prefix.length);
           console.log(
@@ -114,9 +152,8 @@ async function handleUrlAndExtractToken(url: string) {
       }
 
       if (extractedToken) {
-        currentAuthToken = extractedToken; // Update in-memory token
-        await saveTokenToFile(currentAuthToken); // Save to file (overwrites)
-
+        currentAuthToken = extractedToken;
+        await saveTokenToFile(currentAuthToken);
         if (
           win &&
           win.webContents &&
@@ -138,7 +175,6 @@ async function handleUrlAndExtractToken(url: string) {
       "URL was:",
       url,
     );
-    // Attempt direct string manipulation as a last resort if URL parsing failed entirely for "dm://authtoken=TOKEN"
     const prefix = "dm://authtoken=";
     if (url.startsWith(prefix)) {
       extractedToken = url.substring(prefix.length);
@@ -166,24 +202,22 @@ async function handleUrlAndExtractToken(url: string) {
 
   if (app.isReady()) {
     if (!win || win.isDestroyed()) {
-      // Window not ready, URL is stored in deeplinkUrlToProcess
-      // Dialog will be shown when window loads.
+      // Window not ready
     }
   }
 }
 
 async function onDeepLinkReceived(url: string) {
+  // (existing function)
   if (!app.isReady()) {
     deeplinkUrlToProcess = url;
     return;
   }
-
   await handleUrlAndExtractToken(url);
-
   if (!win || win.isDestroyed()) {
-    deeplinkUrlToProcess = url; // Keep storing for dialog if window not ready
+    deeplinkUrlToProcess = url;
     if (BrowserWindow.getAllWindows().length === 0) {
-      await createWindow(); // Ensure window creation is awaited if it's async due to token loading
+      await createWindow();
     }
   } else {
     if (win.isMinimized()) win.restore();
@@ -192,93 +226,149 @@ async function onDeepLinkReceived(url: string) {
 }
 
 function sendTokenToRenderer(token: string | null) {
+  // (existing function)
   if (win && win.webContents && !win.webContents.isDestroyed() && token) {
     console.log("Sending token to renderer:", token);
-    win.webContents.send("deep-link-token", token); // Renderer should listen for 'deep-link-token'
+    win.webContents.send("deep-link-token", token);
   }
 }
 
-// --- Single Instance Lock ---
+// --- Single Instance Lock (existing) ---
 const gotTheLock = app.requestSingleInstanceLock();
-
 if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", async (_event, commandLine) => {
-    // Made async
-    const url = commandLine.find((arg) => arg.startsWith("dm:")); // More generic dm: prefix
+    const url = commandLine.find((arg) => arg.startsWith("dm:"));
     if (url) {
-      await onDeepLinkReceived(url); // Await if onDeepLinkReceived is async
+      await onDeepLinkReceived(url);
     } else if (win) {
       if (win.isMinimized()) win.restore();
       win.focus();
     }
   });
 
-  // --- App Ready ---
   app.whenReady().then(async () => {
-    // Made async
-    currentAuthToken = await loadTokenFromFile(); // Load token at startup
-
+    // (existing)
+    currentAuthToken = await loadTokenFromFile();
     const initialUrlFromArgs = process.argv.find((arg) =>
       arg.startsWith("dm:"),
-    ); // More generic dm: prefix
+    );
     if (initialUrlFromArgs) {
-      deeplinkUrlToProcess = initialUrlFromArgs; // Store for processing after window loads
-      // No need to call onDeepLinkReceived here if createWindow and did-finish-load handle it
+      deeplinkUrlToProcess = initialUrlFromArgs;
     }
-    await createWindow(); // createWindow might become async if it directly awaits anything
-    // For now, its internal 'did-finish-load' handles async token operations
+    await createWindow();
   });
 }
 
-// --- open-url event for macOS ---
 app.on("open-url", async (event, url) => {
-  // Made async
+  // (existing)
   event.preventDefault();
-  await onDeepLinkReceived(url); // Await if onDeepLinkReceived is async
+  await onDeepLinkReceived(url);
 });
 
-// Listen for the 'open-external-url' message from the renderer process
+// --- IPC Listeners (existing and new) ---
 ipcMain.on("open-external-url", (_event, url) => {
   console.log('Main Process: Received "open-external-url" with URL:', url);
-  // Validate the URL if necessary (e.g., check if it's an https URL)
   if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
     shell
       .openExternal(url)
-      .then(() => {
+      .then(() =>
         console.log(
           "Main Process: Successfully opened URL in external browser.",
-        );
-      })
-      .catch((err) => {
-        console.error("Main Process: Failed to open URL:", err);
-        // Optionally, send an error message back to the renderer process
-        // event.sender.send('open-external-url-error', err.message);
-      });
+        ),
+      )
+      .catch((err) => console.error("Main Process: Failed to open URL:", err));
   } else {
     console.warn("Main Process: Invalid or missing URL received:", url);
-    // Optionally, send an error message back to the renderer process
-    // event.sender.send('open-external-url-error', 'Invalid URL provided.');
   }
 });
 
-// --- IPC Listener for Token Deletion ---
 ipcMain.on("delete-auth-token", async () => {
+  // (existing)
   console.log("Received request to delete auth token.");
   await deleteTokenFromFile();
   currentAuthToken = null;
-  // Optionally, notify the renderer that the token has been deleted
   if (win && win.webContents && !win.webContents.isDestroyed()) {
-    win.webContents.send("auth-token-deleted"); // Renderer should listen for 'auth-token-deleted'
+    win.webContents.send("auth-token-deleted");
     console.log("Notified renderer of token deletion.");
   }
 });
 
-// --- End of Deep Linking & Token Management ---
+// --- IPC Handlers for Recently Selected Agents (NEW) ---
+const AGENT_CHANNELS = {
+  // Must match renderer store and preload
+  GET_AGENTS: "fs-agents:get",
+  ADD_AGENT: "fs-agents:add",
+  CLEAR_AGENTS: "fs-agents:clear",
+  REMOVE_AGENT: "fs-agents:remove",
+  INITIALIZE_AGENTS: "fs-agents:initialize",
+};
+
+ipcMain.handle(AGENT_CHANNELS.GET_AGENTS, async () => {
+  console.log(`IPC Main: Handling ${AGENT_CHANNELS.GET_AGENTS}`);
+  return await loadRecentlySelectedAgentsFromFile();
+});
+
+ipcMain.handle(
+  AGENT_CHANNELS.ADD_AGENT,
+  async (_event, agentToAdd: StoredAgent, maxItems: number = 5) => {
+    console.log(
+      `IPC Main: Handling ${AGENT_CHANNELS.ADD_AGENT}`,
+      agentToAdd,
+      maxItems,
+    );
+    const currentList = await loadRecentlySelectedAgentsFromFile();
+    const filteredList = currentList.filter((a) => a.id !== agentToAdd.id);
+    const updatedList = [agentToAdd, ...filteredList];
+    const trimmedList = updatedList.slice(0, maxItems);
+    await saveRecentlySelectedAgentsToFile(trimmedList);
+    return trimmedList;
+  },
+);
+
+ipcMain.handle(AGENT_CHANNELS.CLEAR_AGENTS, async () => {
+  console.log(`IPC Main: Handling ${AGENT_CHANNELS.CLEAR_AGENTS}`);
+  await saveRecentlySelectedAgentsToFile([]);
+  return true; // Indicate success
+});
+
+ipcMain.handle(
+  AGENT_CHANNELS.REMOVE_AGENT,
+  async (_event, agentIdToRemove: string) => {
+    console.log(
+      `IPC Main: Handling ${AGENT_CHANNELS.REMOVE_AGENT}`,
+      agentIdToRemove,
+    );
+    const currentList = await loadRecentlySelectedAgentsFromFile();
+    const updatedList = currentList.filter(
+      (agent) => agent.id !== agentIdToRemove,
+    );
+    await saveRecentlySelectedAgentsToFile(updatedList);
+    return updatedList;
+  },
+);
+
+ipcMain.handle(
+  AGENT_CHANNELS.INITIALIZE_AGENTS,
+  async (_event, initialAgentsToStore: StoredAgent[]) => {
+    console.log(
+      `IPC Main: Handling ${AGENT_CHANNELS.INITIALIZE_AGENTS}`,
+      initialAgentsToStore,
+    );
+    const currentList = await loadRecentlySelectedAgentsFromFile();
+    if (currentList.length === 0 && initialAgentsToStore.length > 0) {
+      await saveRecentlySelectedAgentsToFile(initialAgentsToStore);
+      return initialAgentsToStore;
+    }
+    return currentList;
+  },
+);
+
+// --- End of Deep Linking & Token Management & Agent Storage ---
 
 async function createWindow() {
-  // Changed to async as it now contains async operations in did-finish-load indirectly
+  // (existing function, minor internal async changes)
   win = new BrowserWindow({
     width: 950,
     height: 650,
@@ -291,21 +381,16 @@ async function createWindow() {
       nodeIntegration: false,
     },
     titleBarStyle: "hidden",
-    // expose window controls in Windows/Linux
     ...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}),
   });
 
   win.webContents.on("did-finish-load", async () => {
-    // Made async
     win?.webContents.send("main-process-message", new Date().toLocaleString());
-
     if (deeplinkUrlToProcess) {
-      const urlToProcess = deeplinkUrlToProcess; // process one url at a time
-      deeplinkUrlToProcess = null; // Clear before async operation
-      await handleUrlAndExtractToken(urlToProcess); // Extracts, saves token, updates currentAuthToken
+      const urlToProcess = deeplinkUrlToProcess;
+      deeplinkUrlToProcess = null;
+      await handleUrlAndExtractToken(urlToProcess);
     }
-
-    // Send current token (either loaded from file, or from a just-processed deeplink)
     if (currentAuthToken) {
       sendTokenToRenderer(currentAuthToken);
     }
@@ -323,14 +408,15 @@ async function createWindow() {
 }
 
 app.on("window-all-closed", () => {
+  // (existing)
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
 app.on("activate", async () => {
-  // Made async
+  // (existing)
   if (BrowserWindow.getAllWindows().length === 0) {
-    await createWindow(); // Await if createWindow is async
+    await createWindow();
   }
 });

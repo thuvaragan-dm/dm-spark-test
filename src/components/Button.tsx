@@ -1,5 +1,3 @@
-"use client";
-
 import { cva, VariantProps } from "class-variance-authority";
 import {
   AnimationDefinition,
@@ -23,7 +21,7 @@ const variants = {
 };
 
 const defaultStyles = cn(
-  "touch-none select-none cursor-pointer overflow-hidden disabled:cursor-not-allowed rounded-xl bg-[var(--color-btn)] dark:bg-[var(--color-btn-dark)] text-[var(--color-btn-text)] text-sm font-medium outline-none ring-[var(--color-btn-ring)] ring-offset-2 ring-offset-inherit hover:bg-[var(--color-btn-hover)] focus:outline-none disabled:text-[var(--color-btn-text-disabled)] disabled:bg-[var(--color-btn-disabled)] data-[pressed]:bg-[var(--color-btn-active)] data-[focus-visible]:ring-2 px-5 py-3"
+  "touch-none select-none cursor-pointer overflow-hidden disabled:cursor-not-allowed rounded-xl bg-[var(--color-btn)] dark:bg-[var(--color-btn-dark)] text-[var(--color-btn-text)] text-sm font-medium outline-none ring-[var(--color-btn-ring)] ring-offset-2 ring-offset-inherit hover:bg-[var(--color-btn-hover)] focus:outline-none disabled:text-[var(--color-btn-text-disabled)] disabled:bg-[var(--color-btn-disabled)] data-[pressed]:bg-[var(--color-btn-active)] data-[focus-visible]:ring-2 px-5 py-3",
 );
 
 export const ButtonVariants = cva(defaultStyles, {
@@ -94,7 +92,7 @@ const Loader = ({
             className={cn(
               "absolute h-4 w-4 text-[var(--color-btn-spinner)]",
               isDisabled && disabledClass,
-              className
+              className,
             )}
             style={{ marginLeft: "-11px" }}
           />
@@ -130,7 +128,7 @@ const ButtonWithLoader = forwardRef<HTMLButtonElement, IButton>(
       disabledLoaderClass,
       ...props
     },
-    ref
+    ref,
   ) => {
     const control = useAnimationControls();
 
@@ -184,7 +182,7 @@ const ButtonWithLoader = forwardRef<HTMLButtonElement, IButton>(
         </Btn>
       </motion.div>
     );
-  }
+  },
 );
 
 // Basic button without loader
@@ -200,7 +198,7 @@ const Button = forwardRef<HTMLButtonElement, IButton>(
       wrapperClass,
       ...props
     },
-    ref
+    ref,
   ) => {
     const control = useAnimationControls();
 
@@ -247,7 +245,7 @@ const Button = forwardRef<HTMLButtonElement, IButton>(
         </Btn>
       </motion.div>
     );
-  }
+  },
 );
 
 ButtonWithLoader.displayName = "ButtonWithLoader";

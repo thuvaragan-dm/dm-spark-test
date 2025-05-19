@@ -1,5 +1,3 @@
-"use client";
-
 import { create } from "zustand";
 import { User } from "../api/user/types";
 import { apiUrl } from "../api/variables";
@@ -14,7 +12,7 @@ interface AuthState {
     logout: () => void;
     refetchUser: () => Promise<User | null>;
     setUser: (
-      value: User | null | ((value: User | null) => User | null)
+      value: User | null | ((value: User | null) => User | null),
     ) => void;
     setAccessToken: Dispatch<SetStateAction<string | null>>;
   };

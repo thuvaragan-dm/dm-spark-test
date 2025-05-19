@@ -1,5 +1,3 @@
-"use client";
-
 import { ComponentProps, useEffect, useRef } from "react";
 import { useSetInitialTheme, useTheme } from "../store/themeStore";
 import { cn } from "../utilities/cn";
@@ -56,7 +54,7 @@ const ThemeProvider = ({ children }: IThemeProvider) => {
         // or if global application to <html> is sufficient, this could be omitted.
         // For now, retaining it for consistency with previous structure.
         theme,
-        "flex flex-1 flex-col overflow-hidden"
+        "flex flex-1 flex-col overflow-hidden",
       )}
     >
       {children}

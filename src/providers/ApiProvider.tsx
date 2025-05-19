@@ -1,5 +1,3 @@
-"use client";
-
 import React, { createContext, useCallback, useContext, useMemo } from "react";
 import { createApiClient } from "../api/baseApi";
 import { useAuth, useAuthActions } from "../store/authStore";
@@ -24,7 +22,7 @@ export const ApiProvider: React.FC<
 
   const apiClient = useMemo(
     () => createApiClient(apiUrl ?? "", getAccessToken, logout),
-    [getAccessToken, logout]
+    [getAccessToken, logout],
   );
 
   const formDataApiClient = useMemo(
@@ -35,7 +33,7 @@ export const ApiProvider: React.FC<
         },
         responseType: "json",
       }),
-    [getAccessToken, logout]
+    [getAccessToken, logout],
   );
 
   const arrayBufferApiClient = useMemo(
@@ -43,7 +41,7 @@ export const ApiProvider: React.FC<
       createApiClient(apiUrl ?? "", getAccessToken, logout, {
         responseType: "arraybuffer",
       }),
-    [getAccessToken, logout]
+    [getAccessToken, logout],
   );
 
   const blobApiClient = useMemo(
@@ -51,7 +49,7 @@ export const ApiProvider: React.FC<
       createApiClient(apiUrl ?? "", getAccessToken, logout, {
         responseType: "blob",
       }),
-    [getAccessToken, logout]
+    [getAccessToken, logout],
   );
 
   return (

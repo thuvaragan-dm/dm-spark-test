@@ -63,8 +63,19 @@
   --color-btn-text-disabled: oklch(100% 0 0);
   --color-btn-spinner: oklch(100% 0 0);
   /* End of Styles for button */
+
+  --animate-rocket: subtleRocketMovement 2s ease-in-out infinite alternate;
 }
 
 .app-region-drag {
   app-region: drag;
+}
+
+@keyframes subtleRocketMovement {
+  0% {
+    transform: translateY(0px) rotate(-2deg); /* Start position */
+  }
+  100% {
+    transform: translateY(-20px) rotate(3deg); /* End position: moves slightly up and tilts a bit */
+  }
 }
