@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 0.0.6
+
+### Patch Changes
+
+- [`524bfaf`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/524bfaf874e729ea5e680206425799472e4d5696) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - electron updated configured.
+
 ## 0.0.5
 
 ### Patch Changes
