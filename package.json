@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.0.2",
   "type": "module",
+  "description": "DeepModel Desktop Application",
+  "author": {
+    "name": "Thuvaragan",
+    "email": "thuvaragan@deepmodel.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
