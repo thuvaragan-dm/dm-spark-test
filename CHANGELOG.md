@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 0.0.4
+
+### Patch Changes
+
+- [`281b1b7`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/281b1b704e3706174903440c44f7f5c08fae0877) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added icons
+
 ## 0.0.3
 
 ### Patch Changes
