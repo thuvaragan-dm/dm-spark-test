@@ -4,7 +4,7 @@ name: Changesets Version PR
 on:
   push:
     branches:
-      - master # UPDATED: Trigger on pushes to your master branch
+      - master
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -24,15 +24,16 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install Dependencies for Electron App
+      - name: Install Dependencies
+        # Runs 'npm ci' at the root of your repository, as package.json is at the root
         run: npm ci
-        working-directory: ./electron
 
       - name: Create or Update Version PR
         id: changesets-pr
         uses: changesets/action@v1
         with:
-          version: npm run version-script --prefix electron
+          # This command runs the 'version-script' from your root package.json.
+          version: npm run version-script
           title: "chore: Upcoming Release Version Bump"
           commit: "chore: update version and changelog via Changesets"
         env:

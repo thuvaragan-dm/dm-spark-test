@@ -1,48 +1,75 @@
 {
   $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  appId: "com.deepmodel.app", // Changed: Use a unique App ID, reverse domain notation is common
-  productName: "DeepModel", // Changed: Your application's name
+  appId: "com.deepmodel.app",
+  productName: "DeepModel",
+  copyright: "Copyright © 2024 Deepmodel", // Update if necessary
   asar: true,
   directories: {
-    output: "release/${version}",
-    buildResources: "build", // Added: Specifies where to look for build resources like icons
+    output: "release/${version}", // Output builds to release/0.1.0, release/0.2.0 etc.
+    buildResources: "assets/build", // Place icons etc. in DM-ELECTRON-VITE/assets/build/
   },
-  files: ["dist", "dist-electron"],
+  files: [
+    "dist/**/*", // Vite build output for renderer
+    "dist-electron/**/*", // Compiled Electron main and preload scripts
+    "node_modules/**/*", // Include node_modules if not fully bundled by Vite/Electron for main process
+    // Or be more specific, e.g. "!node_modules/@types/**"
+    "package.json", // electron-builder needs this
+  ],
   mac: {
-    icon: "build/icon.png", // Added: Path to your macOS icon file
-    target: ["dmg"],
+    icon: "assets/build/icon.icns", // e.g., DM-ELECTRON-VITE/assets/build/icon.icns
+    target: ["dmg", "zip"], // Create both DMG and zip
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
+    category: "public.app-category.developer-tools", // Choose an appropriate category
+    darkModeSupport: true,
+    // For code signing (essential for distribution):
+    // "identity": "Developer ID Application: Your Name (YOUR_TEAM_ID)",
+    // "hardenedRuntime": true,
+    // "entitlements": "assets/build/entitlements.mac.plist",
+    // "entitlementsInherit": "assets/build/entitlements.mac.plist"
   },
   win: {
-    icon: "build/icon.ico", // Added: Path to your Windows icon file
+    icon: "assets/build/icon.ico", // e.g., DM-ELECTRON-VITE/assets/build/icon.ico
     target: [
       {
-        target: "nsis",
+        target: "nsis", // NSIS installer
+        arch: ["x64"], // Target 64-bit architecture
+      },
+      {
+        target: "zip", // Also create a portable zip for Windows
         arch: ["x64"],
       },
     ],
     artifactName: "${productName}-Windows-${version}-Setup.${ext}",
+    // For Code Signing:
+    // "certificateFile": "path/to/your/code_signing_cert.pfx",
+    // "certificatePassword": "YOUR_CERT_PASSWORD" // Use environment variable CSC_KEY_PASSWORD
+    // "verifyUpdateCodeSignature": true, // Recommended for signed updates
   },
   nsis: {
     oneClick: false,
-    perMachine: false,
+    perMachine: false, // Installs for current user. Set to true for all users (requires admin).
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false,
-    installerIcon: "build/icon.ico", // Added: Icon for the installer
-    uninstallerIcon: "build/icon.ico", // Added: Icon for the uninstaller
+    installerIcon: "assets/build/icon.ico",
+    uninstallerIcon: "assets/build/icon.ico",
+    // "license": "assets/build/LICENSE.txt"
   },
   linux: {
-    icon: "build/icons", // Added: Path to a directory containing PNG icons (e.g., 64x64.png, 128x128.png, 256x256.png, 512x512.png)
-    // Electron Builder will pick the best ones. Or specify a single high-res PNG.
-    target: ["AppImage"],
-    category: "Utility", // Optional: Specify an application category for Linux
+    // For Linux, electron-builder can create icons from a directory of PNGs
+    // or a single high-resolution PNG.
+    icon: "assets/build/icons", // Path to DM-ELECTRON-VITE/assets/build/icons/ (containing 16x16.png, 32x32.png etc.)
+    // OR "assets/build/icon.png" (a single high-res PNG like 512x512)
+    target: ["AppImage", "deb"], // Create AppImage and Debian package
+    category: "Utility",
     artifactName: "${productName}-Linux-${version}.${ext}",
+    // "maintainer": "Your Name <your.email@example.com>",
+    // "description": "Your app description for Linux packages."
   },
   publish: {
     provider: "github",
     owner: "thuvaragan-dm",
     repo: "dm-desktop-test",
-    // "private": true, // Add this if you face issues, but often not needed for same-repo actions
-    // "releaseType": "release"
+    // "private": true, // Usually not needed for same-repo actions with GITHUB_TOKEN
+    // "releaseType": "release" // 'release', 'draft', or 'prerelease'
   },
 }

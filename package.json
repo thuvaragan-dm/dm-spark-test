@@ -11,7 +11,8 @@
     "changeset:add": "changeset add",
     "changeset:version": "changeset version",
     "changeset:status": "changeset status",
-    "version-script": "changeset version && git add ."
+    "version-script": "changeset version && git add .",
+    "release": "npm run build -- --publish always"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.9",
@@ -25,7 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "electron-updater": "^6.6.2",
+    "electron-updater": "^6.1.8",
     "js-cookie": "^3.0.5",
     "motion": "^12.11.3",
     "react": "^18.2.0",
@@ -48,8 +49,8 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.29.4",
+    "@changesets/cli": "^2.27.1",
+    "@changesets/changelog-github": "^0.5.0",
     "@types/js-cookie": "^3.0.6",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",

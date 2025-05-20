@@ -1,91 +1,46 @@
+# .github/workflows/release-electron-app.yml
 name: Build and Release Electron App
 
 on:
   push:
     tags:
-      - "v*.*.*" # Trigger this workflow when a tag like v1.0.0, v0.1.2, etc., is pushed
+      - "v*.*.*"
 
 jobs:
   release:
-    # This job will run on a matrix of operating systems to build for each platform.
-    # electron-builder can often cross-compile, but using native OS runners is more reliable,
-    # especially for macOS signing and notarization.
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        # Note on macOS runners:
-        # - macos-latest is often an ARM (Apple Silicon) runner.
-        # - electron-builder can typically create a 'universal' macOS build (x64 + arm64)
-        #   on either an x64 or an arm64 runner if configured correctly.
-        # - If you need specific architectures, you might use macos-13 (ARM) or macos-12 (Intel x64).
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        # fetch-depth: 0 is not strictly necessary here unless your build process needs full git history,
-        # but it doesn't hurt.
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Use the Node.js version specified in your electron/package.json engines or your dev environment
+          node-version: "20"
 
-      - name: Install Dependencies for Electron App
-        # This assumes your Electron app's package.json and all related files
-        # are within an 'electron' subdirectory of your Git repository root.
-        # If your 'electron' folder IS the root of your Git repo, remove 'working-directory'.
-        run: npm ci # Or yarn install --frozen-lockfile / pnpm install --frozen-lockfile
-        working-directory: ./electron
+      - name: Install Dependencies
+        # Runs 'npm ci' at the root of your repository
+        run: npm ci
 
       - name: Build and Package Electron App
-        # This command runs your 'build' script (defined in electron/package.json)
+        # This command runs your 'build' script (defined in your root package.json)
         # which should execute 'tsc && vite build && electron-builder'.
         # The '--publish onTagOrCreate' flag tells electron-builder to publish a release
-        # if the current commit is tagged (which it will be for this workflow).
-        #
-        # Environment Variables for Code Signing (CRITICAL for distribution):
-        # These should be stored as encrypted secrets in your GitHub repository settings
-        # (Settings > Secrets and variables > Actions).
-        #
-        # For Windows:
-        # CSC_LINK: Path to your .pfx certificate file OR the base64 encoded content of the .pfx file.
-        # CSC_KEY_PASSWORD: Password for your .pfx certificate file.
-        #
-        # For macOS:
-        # APPLE_ID: Your Apple ID email address.
-        # APPLE_ID_PASSWORD: An app-specific password for your Apple ID (recommended).
-        # APPLE_TEAM_ID: Your Apple Developer Team ID.
-        # CSC_LINK (for macOS local signing): Base64 encoded .p12 certificate.
-        # CSC_KEY_PASSWORD (for macOS local signing): Password for the .p12 certificate.
-        #
-        # electron-builder will automatically use these environment variables if they are set.
+        # if the current commit is tagged.
         run: npm run build -- --publish onTagOrCreate
-        working-directory: ./electron # Ensure this is correct
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub Actions
-
-
-          # --- Windows Code Signing Example (uncomment and set secrets if you have a cert) ---
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # --- Windows Code Signing Example (set secrets in GitHub repo settings) ---
           # CSC_LINK: ${{ secrets.WINDOWS_PFX_BASE64 }}
           # CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
 
-          # --- macOS Code Signing & Notarization Example (uncomment and set secrets) ---
+          # --- macOS Code Signing & Notarization Example (set secrets) ---
           # APPLE_ID: ${{ secrets.APPLE_ID_EMAIL }}
           # APPLE_ID_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }} # For Notarytool JWT
-          # APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }} # For Notarytool JWT
-          # APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_P8_BASE64 }} # Base64 encoded .p8 key for Notarytool JWT
-          #
-          # Alternatively, for older certificate-based macOS signing (if not using Notarytool JWT):
-          # CSC_LINK: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }} # Base64 encoded .p12 developer ID cert
-          # CSC_KEY_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
-          # CSC_INSTALL_KEY_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }} # Sometimes needed for keychain import
-
-      # Note: electron-builder, when configured with the "github" publisher in your
-      # electron-builder.json5 (or package.json build config), will handle creating
-      # the GitHub Release and uploading the built artifacts (e.g., .dmg, .exe, .AppImage)
-      # automatically when '--publish' is used.
-      # No separate step is usually needed to create the release or upload assets.
+          # APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          # APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          # APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
