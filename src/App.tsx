@@ -4,18 +4,24 @@ import ChatPage from "./app/chat/ChatPage";
 import AgentLayout from "./app/AgentLayout";
 import MainPage from "./app/MainPage";
 import Explore from "./app/explore/Explore";
+import AppUpdater from "./components/AppUpdater";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<RootLayout />}>
-        <Route element={<AgentLayout />}>
-          <Route path="/" index element={<MainPage />} />
-          <Route path="chat/:agentPath" element={<ChatPage />} />
+    <>
+      {/* AppUpdater component to handle update logic and notifications */}
+      {/* It doesn't render any visible UI itself, but listens for events */}
+      <AppUpdater />
+      <Routes>
+        <Route path="/" element={<RootLayout />}>
+          <Route element={<AgentLayout />}>
+            <Route path="/" index element={<MainPage />} />
+            <Route path="chat/:agentPath" element={<ChatPage />} />
+          </Route>
+          <Route path="/explore" element={<Explore />} />
         </Route>
-        <Route path="/explore" element={<Explore />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   );
 }
 

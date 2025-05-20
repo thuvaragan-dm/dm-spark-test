@@ -38,4 +38,11 @@
     category: "Utility", // Optional: Specify an application category for Linux
     artifactName: "${productName}-Linux-${version}.${ext}",
   },
+  publish: {
+    provider: "github",
+    owner: "thuvaragan-dm",
+    repo: "dm-desktop-test",
+    // "private": true, // Add this if you face issues, but often not needed for same-repo actions
+    // "releaseType": "release"
+  },
 }

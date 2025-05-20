@@ -1,0 +1,45 @@
+name: Changesets Version PR
+
+on:
+  push:
+    branches:
+      - main # Or your specified baseBranch
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  version-pr:
+    # This 'if' condition ensures the action only runs in your main repository,
+    # not on forks, which is good practice.
+    if: github.repository == 'thuvaragan-dm/dm-desktop-test'
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important for Changesets to correctly determine version bumps
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # Match your project's Node.js version
+
+      - name: Install Dependencies for Electron App
+        run: npm ci # Or yarn install / pnpm install
+        working-directory: ./electron # Assumes your Electron app's package.json is in 'electron/'
+
+      - name: Create or Update Version PR
+        id: changesets-pr
+        uses: changesets/action@v1
+        with:
+          # This command runs the 'version-script' from your electron/package.json
+          # The script should execute 'changeset version' and then 'git add .'
+          # to stage package.json, CHANGELOG.md, and the .changeset folder changes.
+          version: npm run version-script --prefix electron
+          title: "chore: Upcoming Release Version Bump"
+          commit: "chore: update version and changelog via Changesets"
+          # For private repos, the default GITHUB_TOKEN provided by Actions has sufficient
+          # permissions to create PRs within the same repository.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

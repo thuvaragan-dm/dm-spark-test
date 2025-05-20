@@ -1,29 +1,59 @@
 // electron/main.ts
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, ipcMain, shell, dialog } from "electron"; // Added dialog
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, URL } from "node:url";
+import { autoUpdater, UpdateInfo } from "electron-updater"; // Import autoUpdater and UpdateInfo
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Correctly define __dirname for ESM if not already handled by your bundler/setup
+let currentDirname: string;
+try {
+  // This is the standard way in ESM modules
+  currentDirname = path.dirname(fileURLToPath(import.meta.url));
+} catch (e) {
+  // Fallback for environments where import.meta.url might not be standard or if __dirname is globally available (e.g. CJS)
+  currentDirname = __dirname;
+}
 
-process.env.APP_ROOT = path.join(__dirname, "..");
+// --- VITE Environment Variables ---
+// These are usually set by vite-plugin-electron and used to determine paths
+process.env.APP_ROOT = path.join(currentDirname, ".."); // Assuming main.ts is in dist-electron, APP_ROOT is one level up
 
 export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
+// MAIN_DIST should point to the directory where your compiled main process file (main.js) is located
+export const MAIN_DIST = currentDirname; // currentDirname should be dist-electron
+// RENDERER_DIST should point to the directory where your Vite build output (index.html, assets) is located
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, "public")
   : RENDERER_DIST;
+// --- End VITE Environment Variables ---
 
+// Reference to the main window
 let win: BrowserWindow | null = null;
+
+// Deep linking and token variables (as per your existing code)
 let deeplinkUrlToProcess: string | null = null;
 let currentAuthToken: string | null = null;
-
 const TOKEN_FILE_NAME = "authToken.txt";
 const RECENTLY_SELECTED_AGENTS_FILE_NAME = "recentlySelectedAgents.json";
 
-// --- Path Helper Functions ---
+// --- Configure electron-updater ---
+// Log updater events to the console.
+autoUpdater.logger = console; // This is fine for basic logging.
+// For file logging, you would typically integrate a library like 'electron-log'
+// and then assign it:
+// import log from 'electron-log';
+// autoUpdater.logger = log;
+// log.transports.file.level = 'info'; // Configure electron-log directly
+
+// Disable auto-download. Updates will be downloaded only when the user confirms.
+autoUpdater.autoDownload = false;
+// Install on quit if an update has been downloaded.
+autoUpdater.autoInstallOnAppQuit = true;
+
+// --- Path Helper Functions (Your existing functions) ---
 function getTokenFilePath(): string {
   return path.join(app.getPath("userData"), TOKEN_FILE_NAME);
 }
@@ -36,9 +66,9 @@ async function saveTokenToFile(token: string): Promise<void> {
   try {
     const filePath = getTokenFilePath();
     await fs.writeFile(filePath, token, "utf8");
-    console.log("Auth token saved to file:", filePath);
+    console.log("[Main] Auth token saved to file:", filePath);
   } catch (error) {
-    console.error("Failed to save token to file:", error);
+    console.error("[Main] Failed to save token to file:", error);
   }
 }
 
@@ -46,13 +76,13 @@ async function loadTokenFromFile(): Promise<string | null> {
   try {
     const filePath = getTokenFilePath();
     const token = await fs.readFile(filePath, "utf8");
-    console.log("Auth token loaded from file.");
+    console.log("[Main] Auth token loaded from file.");
     return token;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      console.log("Auth token file not found. No token loaded.");
+      console.log("[Main] Auth token file not found. No token loaded.");
     } else {
-      console.error("Failed to load token from file:", error);
+      console.error("[Main] Failed to load token from file:", error);
     }
     return null;
   }
@@ -62,19 +92,17 @@ async function deleteTokenFromFile(): Promise<void> {
   try {
     const filePath = getTokenFilePath();
     await fs.unlink(filePath);
-    console.log("Auth token file deleted.");
+    console.log("[Main] Auth token file deleted.");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      console.log("Auth token file not found, nothing to delete.");
+      console.log("[Main] Auth token file not found, nothing to delete.");
     } else {
-      console.error("Failed to delete token file:", error);
+      console.error("[Main] Failed to delete token file:", error);
     }
   }
 }
 
-// --- Recently Selected Agents File Operations (NEW) ---
 interface StoredAgent {
-  // Must match the interface in renderer/store
   id: string;
   path: string;
   name: string;
@@ -90,11 +118,14 @@ async function loadRecentlySelectedAgentsFromFile(): Promise<StoredAgent[]> {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       console.log(
-        "Recently selected agents file not found. Returning empty list.",
+        "[Main] Recently selected agents file not found. Returning empty list.",
       );
       return [];
     }
-    console.error("Failed to load recently selected agents from file:", error);
+    console.error(
+      "[Main] Failed to load recently selected agents from file:",
+      error,
+    );
     return [];
   }
 }
@@ -105,13 +136,16 @@ async function saveRecentlySelectedAgentsToFile(
   try {
     const filePath = getRecentlySelectedAgentsFilePath();
     await fs.writeFile(filePath, JSON.stringify(agents, null, 2), "utf8");
-    console.log("Recently selected agents saved to file:", filePath);
+    console.log("[Main] Recently selected agents saved to file:", filePath);
   } catch (error) {
-    console.error("Failed to save recently selected agents to file:", error);
+    console.error(
+      "[Main] Failed to save recently selected agents to file:",
+      error,
+    );
   }
 }
 
-// --- Deep Linking Setup (existing) ---
+// --- Deep Linking Setup (Your existing functions) ---
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient("dm", process.execPath, [
@@ -123,8 +157,7 @@ if (process.defaultApp) {
 }
 
 async function handleUrlAndExtractToken(url: string) {
-  // (existing function)
-  console.log("Handling URL:", url);
+  console.log("[Main] Handling URL:", url);
   let extractedToken: string | null = null;
   try {
     const parsedUrl = new URL(url);
@@ -132,20 +165,23 @@ async function handleUrlAndExtractToken(url: string) {
       extractedToken = parsedUrl.searchParams.get("authtoken");
 
       if (extractedToken) {
-        console.log("Auth token extracted via query param:", extractedToken);
+        console.log(
+          "[Main] Auth token extracted via query param:",
+          extractedToken,
+        );
       } else {
         const prefix = "dm://authtoken=";
         const prefixGenericPath = "dm:/authtoken=";
         if (url.startsWith(prefix)) {
           extractedToken = url.substring(prefix.length);
           console.log(
-            "Auth token extracted via custom prefix 'dm://authtoken=':",
+            "[Main] Auth token extracted via custom prefix 'dm://authtoken=':",
             extractedToken,
           );
         } else if (url.startsWith(prefixGenericPath)) {
           extractedToken = url.substring(prefixGenericPath.length);
           console.log(
-            "Auth token extracted via custom prefix 'dm:/authtoken=':",
+            "[Main] Auth token extracted via custom prefix 'dm:/authtoken=':",
             extractedToken,
           );
         }
@@ -161,16 +197,20 @@ async function handleUrlAndExtractToken(url: string) {
           !win.webContents.isLoading()
         ) {
           sendTokenToRenderer(currentAuthToken);
+        } else {
+          console.log(
+            "[Main] Window or webContents not ready to send token immediately after extraction.",
+          );
         }
       } else {
         console.warn(
-          "Deep link URL did not contain an 'authtoken' query parameter or match known custom formats.",
+          "[Main] Deep link URL did not contain an 'authtoken' query parameter or match known custom formats.",
         );
       }
     }
   } catch (e) {
     console.error(
-      "Failed to parse deep link URL or extract token:",
+      "[Main] Failed to parse deep link URL or extract token:",
       e,
       "URL was:",
       url,
@@ -179,7 +219,7 @@ async function handleUrlAndExtractToken(url: string) {
     if (url.startsWith(prefix)) {
       extractedToken = url.substring(prefix.length);
       console.log(
-        "Auth token extracted via fallback custom prefix 'dm://authtoken=':",
+        "[Main] Auth token extracted via fallback custom prefix 'dm://authtoken=':",
         extractedToken,
       );
       currentAuthToken = extractedToken;
@@ -194,27 +234,24 @@ async function handleUrlAndExtractToken(url: string) {
       }
     } else {
       console.warn(
-        "URL parsing failed and no token found with fallback prefix for:",
+        "[Main] URL parsing failed and no token found with fallback prefix for:",
         url,
       );
-    }
-  }
-
-  if (app.isReady()) {
-    if (!win || win.isDestroyed()) {
-      // Window not ready
     }
   }
 }
 
 async function onDeepLinkReceived(url: string) {
-  // (existing function)
   if (!app.isReady()) {
+    console.log("[Main] App not ready, queuing deep link URL:", url);
     deeplinkUrlToProcess = url;
     return;
   }
   await handleUrlAndExtractToken(url);
   if (!win || win.isDestroyed()) {
+    console.log(
+      "[Main] Window not available or destroyed after deep link. Queuing URL or creating window.",
+    );
     deeplinkUrlToProcess = url;
     if (BrowserWindow.getAllWindows().length === 0) {
       await createWindow();
@@ -226,14 +263,17 @@ async function onDeepLinkReceived(url: string) {
 }
 
 function sendTokenToRenderer(token: string | null) {
-  // (existing function)
   if (win && win.webContents && !win.webContents.isDestroyed() && token) {
-    console.log("Sending token to renderer:", token);
+    console.log("[Main] Sending token to renderer:", token);
     win.webContents.send("deep-link-token", token);
+  } else {
+    console.warn(
+      "[Main] Could not send token to renderer: window or webContents not available, or token is null.",
+    );
   }
 }
 
-// --- Single Instance Lock (existing) ---
+// --- Single Instance Lock ---
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
@@ -247,57 +287,179 @@ if (!gotTheLock) {
       win.focus();
     }
   });
+}
 
-  app.whenReady().then(async () => {
-    // (existing)
-    currentAuthToken = await loadTokenFromFile();
-    const initialUrlFromArgs = process.argv.find((arg) =>
-      arg.startsWith("dm:"),
+// --- createWindow Function ---
+async function createWindow() {
+  win = new BrowserWindow({
+    width: 950,
+    height: 650,
+    minWidth: 950,
+    minHeight: 650,
+    icon: path.join(process.env.VITE_PUBLIC!, "electron-vite.svg"),
+    webPreferences: {
+      preload: path.join(MAIN_DIST, "preload.mjs"), // Corrected path for preload
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+    titleBarStyle: "hidden",
+    ...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}),
+  });
+
+  win.webContents.on("did-finish-load", async () => {
+    win?.webContents.send(
+      "main-process-message",
+      `Main process loaded at: ${new Date().toLocaleString()}`,
     );
-    if (initialUrlFromArgs) {
-      deeplinkUrlToProcess = initialUrlFromArgs;
+    if (deeplinkUrlToProcess) {
+      const urlToProcess = deeplinkUrlToProcess;
+      deeplinkUrlToProcess = null;
+      await handleUrlAndExtractToken(urlToProcess);
     }
-    await createWindow();
+    if (currentAuthToken) {
+      sendTokenToRenderer(currentAuthToken);
+    }
+
+    // --- Auto Update Check ---
+    if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
+      console.log(
+        "[AutoUpdater] Checking for updates after window finished loading...",
+      );
+      autoUpdater.checkForUpdates().catch((err) => {
+        console.error(
+          "[AutoUpdater] Error in initial checkForUpdates:",
+          err.message || err,
+        );
+        if (win && !win.isDestroyed()) {
+          win.webContents.send(
+            "update-error",
+            "Initial update check failed: " + (err.message || err),
+          );
+        }
+      });
+    }
+  });
+
+  if (VITE_DEV_SERVER_URL) {
+    win.loadURL(VITE_DEV_SERVER_URL);
+    // win.webContents.openDevTools(); // Optional
+  } else {
+    win.loadFile(path.join(RENDERER_DIST, "index.html"));
+  }
+
+  win.on("closed", () => {
+    win = null;
   });
 }
 
+// --- App Lifecycle Events ---
+app.whenReady().then(async () => {
+  currentAuthToken = await loadTokenFromFile();
+  const initialUrlFromArgs = process.argv.find((arg) => arg.startsWith("dm:"));
+  if (initialUrlFromArgs) {
+    deeplinkUrlToProcess = initialUrlFromArgs;
+  }
+
+  await createWindow();
+
+  // Set up autoUpdater event listeners once the app is ready.
+  if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
+    autoUpdater.on("update-available", (info: UpdateInfo) => {
+      console.log("[AutoUpdater] Update available:", info);
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("update-available", info);
+      }
+    });
+
+    autoUpdater.on("update-not-available", (info: UpdateInfo) => {
+      console.log("[AutoUpdater] Update not available:", info);
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("update-not-available", info);
+      }
+    });
+
+    autoUpdater.on("error", (err) => {
+      console.error("[AutoUpdater] Error: ", err.message || err);
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(
+          "update-error",
+          "Update error: " + (err.message || err),
+        );
+      }
+    });
+
+    autoUpdater.on("download-progress", (progressObj) => {
+      const log_message = `[AutoUpdater] Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`;
+      console.log(log_message);
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("update-download-progress", progressObj);
+      }
+    });
+
+    autoUpdater.on("update-downloaded", (info: UpdateInfo) => {
+      console.log("[AutoUpdater] Update downloaded:", info);
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("update-downloaded", info);
+        dialog
+          .showMessageBox(win, {
+            type: "info",
+            title: "Update Ready to Install",
+            message: `Version ${info.version} has been downloaded. Restart the application to apply the updates?`,
+            buttons: ["Restart Now", "Later"],
+            defaultId: 0,
+            cancelId: 1,
+          })
+          .then((result) => {
+            if (result.response === 0) {
+              autoUpdater.quitAndInstall();
+            }
+          })
+          .catch((err) => {
+            console.error(
+              "[Main] Error showing update downloaded dialog:",
+              err,
+            );
+          });
+      }
+    });
+  }
+});
+
 app.on("open-url", async (event, url) => {
-  // (existing)
   event.preventDefault();
   await onDeepLinkReceived(url);
 });
 
-// --- IPC Listeners (existing and new) ---
+// --- IPC Listeners (Your existing listeners) ---
 ipcMain.on("open-external-url", (_event, url) => {
-  console.log('Main Process: Received "open-external-url" with URL:', url);
+  console.log('[Main] Received "open-external-url" with URL:', url);
   if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
     shell
       .openExternal(url)
       .then(() =>
-        console.log(
-          "Main Process: Successfully opened URL in external browser.",
-        ),
+        console.log("[Main] Successfully opened URL in external browser."),
       )
-      .catch((err) => console.error("Main Process: Failed to open URL:", err));
+      .catch((err) => console.error("[Main] Failed to open URL:", err));
   } else {
-    console.warn("Main Process: Invalid or missing URL received:", url);
+    console.warn(
+      "[Main] Invalid or missing URL received for open-external-url:",
+      url,
+    );
   }
 });
 
 ipcMain.on("delete-auth-token", async () => {
-  // (existing)
-  console.log("Received request to delete auth token.");
+  console.log("[Main] Received request to delete auth token.");
   await deleteTokenFromFile();
   currentAuthToken = null;
   if (win && win.webContents && !win.webContents.isDestroyed()) {
     win.webContents.send("auth-token-deleted");
-    console.log("Notified renderer of token deletion.");
+    console.log("[Main] Notified renderer of token deletion.");
   }
 });
 
-// --- IPC Handlers for Recently Selected Agents (NEW) ---
+// --- IPC Handlers for Recently Selected Agents (Your existing handlers) ---
 const AGENT_CHANNELS = {
-  // Must match renderer store and preload
   GET_AGENTS: "fs-agents:get",
   ADD_AGENT: "fs-agents:add",
   CLEAR_AGENTS: "fs-agents:clear",
@@ -306,7 +468,7 @@ const AGENT_CHANNELS = {
 };
 
 ipcMain.handle(AGENT_CHANNELS.GET_AGENTS, async () => {
-  console.log(`IPC Main: Handling ${AGENT_CHANNELS.GET_AGENTS}`);
+  console.log(`[Main IPC] Handling ${AGENT_CHANNELS.GET_AGENTS}`);
   return await loadRecentlySelectedAgentsFromFile();
 });
 
@@ -314,7 +476,7 @@ ipcMain.handle(
   AGENT_CHANNELS.ADD_AGENT,
   async (_event, agentToAdd: StoredAgent, maxItems: number = 4) => {
     console.log(
-      `IPC Main: Handling ${AGENT_CHANNELS.ADD_AGENT}`,
+      `[Main IPC] Handling ${AGENT_CHANNELS.ADD_AGENT}`,
       agentToAdd,
       maxItems,
     );
@@ -328,16 +490,16 @@ ipcMain.handle(
 );
 
 ipcMain.handle(AGENT_CHANNELS.CLEAR_AGENTS, async () => {
-  console.log(`IPC Main: Handling ${AGENT_CHANNELS.CLEAR_AGENTS}`);
+  console.log(`[Main IPC] Handling ${AGENT_CHANNELS.CLEAR_AGENTS}`);
   await saveRecentlySelectedAgentsToFile([]);
-  return true; // Indicate success
+  return true;
 });
 
 ipcMain.handle(
   AGENT_CHANNELS.REMOVE_AGENT,
   async (_event, agentIdToRemove: string) => {
     console.log(
-      `IPC Main: Handling ${AGENT_CHANNELS.REMOVE_AGENT}`,
+      `[Main IPC] Handling ${AGENT_CHANNELS.REMOVE_AGENT}`,
       agentIdToRemove,
     );
     const currentList = await loadRecentlySelectedAgentsFromFile();
@@ -353,7 +515,7 @@ ipcMain.handle(
   AGENT_CHANNELS.INITIALIZE_AGENTS,
   async (_event, initialAgentsToStore: StoredAgent[]) => {
     console.log(
-      `IPC Main: Handling ${AGENT_CHANNELS.INITIALIZE_AGENTS}`,
+      `[Main IPC] Handling ${AGENT_CHANNELS.INITIALIZE_AGENTS}`,
       initialAgentsToStore,
     );
     const currentList = await loadRecentlySelectedAgentsFromFile();
@@ -365,57 +527,46 @@ ipcMain.handle(
   },
 );
 
-// --- End of Deep Linking & Token Management & Agent Storage ---
-
-async function createWindow() {
-  // (existing function, minor internal async changes)
-  win = new BrowserWindow({
-    width: 950,
-    height: 650,
-    minWidth: 950,
-    minHeight: 650,
-    icon: path.join(process.env.VITE_PUBLIC!, "electron-vite.svg"),
-    webPreferences: {
-      preload: path.join(__dirname, "preload.mjs"),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-    titleBarStyle: "hidden",
-    ...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}),
-  });
-
-  win.webContents.on("did-finish-load", async () => {
-    win?.webContents.send("main-process-message", new Date().toLocaleString());
-    if (deeplinkUrlToProcess) {
-      const urlToProcess = deeplinkUrlToProcess;
-      deeplinkUrlToProcess = null;
-      await handleUrlAndExtractToken(urlToProcess);
-    }
-    if (currentAuthToken) {
-      sendTokenToRenderer(currentAuthToken);
-    }
-  });
-
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
+// --- IPC Listeners for Renderer to Control Updates ---
+ipcMain.on("download-update", () => {
+  console.log("[AutoUpdater] Renderer requested to download update.");
+  if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
+    autoUpdater.downloadUpdate().catch((err) => {
+      console.error(
+        "[AutoUpdater] Error downloading update:",
+        err.message || err,
+      );
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(
+          "update-error",
+          "Failed to download update: " + (err.message || err),
+        );
+      }
+    });
   } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
+    console.log("[AutoUpdater] Download update skipped in development mode.");
   }
+});
 
-  win.on("closed", () => {
-    win = null;
-  });
-}
+ipcMain.on("quit-and-install-update", () => {
+  console.log("[AutoUpdater] Renderer requested to quit and install update.");
+  if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
+    autoUpdater.quitAndInstall();
+  } else {
+    console.log(
+      "[AutoUpdater] Quit and install update skipped in development mode.",
+    );
+  }
+});
 
+// --- Standard App Lifecycle Handlers ---
 app.on("window-all-closed", () => {
-  // (existing)
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
 app.on("activate", async () => {
-  // (existing)
   if (BrowserWindow.getAllWindows().length === 0) {
     await createWindow();
   }
