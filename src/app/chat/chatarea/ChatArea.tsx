@@ -6,14 +6,14 @@ import { IoReader } from "react-icons/io5";
 import { useSearchParams } from "react-router-dom";
 import { documentKey, EDocument } from "../../../api/document/config";
 import { useUploadDocument } from "../../../api/document/useUploadDocument";
-import Grid from "../../../components/patterns/Grid";
+// import Grid from "../../../components/patterns/Grid";
 import useFileUpload from "../../../hooks/useFileUpload";
 import { useAgent } from "../../../store/agentStore";
 import {
   useChatInput,
   useChatInputActions,
 } from "../../../store/chatInputStore";
-import { cn } from "../../../utilities/cn";
+// import { cn } from "../../../utilities/cn";
 import { DevThemeToggler } from "../../../utilities/DevThemeToggler";
 import ChatInput from "./ChatInput";
 import ChatThreads from "./ChatThreads";
@@ -124,8 +124,10 @@ const ChatArea = () => {
 
       {/* pattern */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        <div className="from-primary/20 dark:from-primary/50 pointer-events-none size-full bg-gradient-to-b to-transparent mask-b-from-0 [mask-image:linear-gradient(45deg,transparent,white)] dark:opacity-45"></div>
-        <Grid
+        <div className="from-primary/20 dark:from-primary/50 pointer-events-none relative size-full bg-gradient-to-b to-transparent mask-b-from-0 [mask-image:linear-gradient(45deg,transparent,white)] dark:opacity-45"></div>
+        <div className="pattern absolute inset-0 mask-b-from-0.5 mask-b-to-50% opacity-50 dark:hidden"></div>
+        <div className="pattern-dark absolute inset-0 hidden mask-b-from-0.5 mask-b-to-50% opacity-30 dark:block"></div>
+        {/* <Grid
           width={50}
           height={50}
           x={-1}
@@ -144,7 +146,7 @@ const ChatArea = () => {
           className={cn(
             "inset-0 mask-r-from-0% mask-b-from-0% mask-b-to-50% mask-l-from-0% fill-gray-500 stroke-gray-500 opacity-50 dark:fill-white/30 dark:stroke-white/60",
           )}
-        />
+        /> */}
       </div>
       {/* pattern */}
 

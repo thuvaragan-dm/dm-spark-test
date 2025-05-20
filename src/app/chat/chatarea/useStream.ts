@@ -76,7 +76,7 @@ const useStream = (): StreamControl => {
       const finalAgentId = agentId || selectedAgent?.id || "";
       // Use encodeURIComponent for better handling of special characters
       const query = encodeURIComponent(message);
-      const url = `${apiUrl}/copilots/${finalAgentId}/ask?query=${query}&accessToken=${accessToken}`;
+      const url = `${apiUrl}/copilots/${finalAgentId}/ask?query=${query}&access_token=${accessToken}`;
 
       console.log("Initializing EventSource:", url);
       const es = new EventSource(url);
