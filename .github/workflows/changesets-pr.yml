@@ -1,28 +1,37 @@
 # .github/workflows/changesets-pr.yml
+# This file should be at the ROOT of your Git repository (e.g., dm-desktop-test/.github/workflows/changesets-pr.yml)
+
 name: Changesets Version PR
 
 on:
   push:
     branches:
-      - master
+      - master # Your primary branch
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   version-pr:
+    # This 'if' condition ensures the action only runs in your main repository,
+    # not on forks, which is good practice.
     if: github.repository == 'thuvaragan-dm/dm-desktop-test'
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    # Add permissions for the GITHUB_TOKEN
+    permissions:
+      contents: write # To push the new branch and commit version files
+      pull-requests: write # To create the pull request
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Important for Changesets to correctly determine version bumps
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20" # Match your project's Node.js version (from your root package.json)
 
       - name: Install Dependencies
         # Runs 'npm ci' at the root of your repository, as package.json is at the root
@@ -33,8 +42,11 @@ jobs:
         uses: changesets/action@v1
         with:
           # This command runs the 'version-script' from your root package.json.
+          # The script should execute 'changeset version' and then 'git add .'
+          # to stage package.json, CHANGELOG.md, and the .changeset folder changes.
           version: npm run version-script
           title: "chore: Upcoming Release Version Bump"
           commit: "chore: update version and changelog via Changesets"
+          # setupGitUser: true # This is true by default in changesets/action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
