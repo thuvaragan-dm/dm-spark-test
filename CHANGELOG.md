@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.1
+
+### Patch Changes
+
+- [`45e2924`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/45e2924167ac39d07cc9fd0a3c460a9599ab40c0) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added dev theme toggler
+
 ## 1.0.0
 
 ### Major Changes
