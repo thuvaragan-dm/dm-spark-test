@@ -55,14 +55,14 @@
     target: ["AppImage", "deb"],
     category: "Utility",
     artifactName: "${productName}-Linux-${version}.${ext}",
-    maintainer: "Thuvaragan <thuvaragan@deepmodel.ai>", // Replace with your actual email
+    maintainer: "Thuvaragan <thuvaragan@deepmodel.ai>",
     description: "DeepModel Desktop Application",
   },
   publish: {
     provider: "github",
-    owner: "thuvaragan-dm",
-    repo: "dm-desktop-test",
-    //private: true,
-    // "releaseType": "release"
+    owner: "thuvaragan-dm", // Owner of the RELEASE repository
+    repo: "dm-desktop-release", // Name of your PUBLIC RELEASE repository
+    // "private": false, // Not needed if the release repo is public. electron-builder defaults to public.
+    releaseType: "release",
   },
 }
