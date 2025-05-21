@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import Login from "./Login";
 import { useAuth, useAuthActions } from "../store/authStore";
+import Login from "./Login";
 
 //test for changesets.
 const RootLayout = () => {

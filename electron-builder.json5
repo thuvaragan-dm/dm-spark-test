@@ -63,6 +63,6 @@
     owner: "thuvaragan-dm", // Owner of the RELEASE repository
     repo: "dm-desktop-release", // Name of your PUBLIC RELEASE repository
     // "private": false, // Not needed if the release repo is public. electron-builder defaults to public.
-    releaseType: "release",
+    releaseType: "draft",
   },
 }
