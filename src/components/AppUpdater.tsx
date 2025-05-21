@@ -30,7 +30,7 @@ const AppUpdater: React.FC = () => {
           (t) => (
             <InfoAlert
               t={t}
-              title={`Update Available: v1.0.0`}
+              title={`Update Available: v${info.version}`}
               description="A new version is ready to download."
               Custom={() => (
                 <div className="mt-5 flex w-full items-center justify-end gap-2">
@@ -98,7 +98,7 @@ const AppUpdater: React.FC = () => {
                 <div className="mt-2 flex w-full items-center justify-between gap-2">
                   <div className="relative h-3 w-full rounded-full bg-white/10">
                     <div
-                      style={{ width: progressObj.percent }}
+                      style={{ width: `${progressObj.percent}%` }}
                       className="absolute inset-y-0 left-0 m-0.5 animate-pulse rounded-full bg-green-500"
                     ></div>
                   </div>
