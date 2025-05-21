@@ -4,6 +4,12 @@
 
 ### Patch Changes
 
+- [`cda00e6`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/cda00e657dc3376837915d0de0ccb62dc5018ddc) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - styled update toasts.
+
+## 1.0.1
+
+### Patch Changes
+
 - [`45e2924`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/45e2924167ac39d07cc9fd0a3c460a9599ab40c0) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added dev theme toggler
 
 ## 1.0.0
