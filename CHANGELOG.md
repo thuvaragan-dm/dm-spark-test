@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.0
+
+### Major Changes
+
+- [`daf1760`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/daf1760b9edc2a3242475f0d5c08bfeab92a0ec6) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - Added new logo
+
 ## 0.0.6
 
 ### Patch Changes
