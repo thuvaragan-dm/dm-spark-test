@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.3
+
+### Patch Changes
+
+- [`79cc96a`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/79cc96a8498a9fe5da2820b18c8656a095197719) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added new chat background
+
 ## 1.0.1
 
 ### Patch Changes
