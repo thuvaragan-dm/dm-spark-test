@@ -6,7 +6,7 @@ import { AlertToast } from "./types";
 import Grid from "../patterns/Grid";
 import { Button } from "../Button";
 
-const Warning = ({ t, title, description }: AlertToast) => {
+const Warning = ({ t, title, description, Custom }: AlertToast) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -37,7 +37,7 @@ const Warning = ({ t, title, description }: AlertToast) => {
           [4, 2],
         ]}
         className={cn(
-          "inset-0 [mask-image:radial-gradient(200px_circle_at_top_left,white,transparent)] opacity-60"
+          "inset-0 [mask-image:radial-gradient(200px_circle_at_top_left,white,transparent)] opacity-60",
         )}
       />
       {/* pattern */}
@@ -66,6 +66,7 @@ const Warning = ({ t, title, description }: AlertToast) => {
             <p className="mt-1 text-xs text-gray-600 dark:text-white/70">
               {description}
             </p>
+            {Custom && <Custom />}
           </div>
         </div>
         <Button

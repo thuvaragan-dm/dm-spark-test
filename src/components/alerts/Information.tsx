@@ -6,7 +6,7 @@ import { AlertToast } from "./types";
 import Grid from "../patterns/Grid";
 import { Button } from "../Button";
 
-const Information = ({ t, title, description }: AlertToast) => {
+const Information = ({ t, title, description, Custom }: AlertToast) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -37,7 +37,7 @@ const Information = ({ t, title, description }: AlertToast) => {
           [4, 2],
         ]}
         className={cn(
-          "inset-0 [mask-image:radial-gradient(200px_circle_at_top_left,white,transparent)] opacity-60"
+          "inset-0 [mask-image:radial-gradient(200px_circle_at_top_left,white,transparent)] opacity-60",
         )}
       />
       {/* pattern */}
@@ -56,16 +56,19 @@ const Information = ({ t, title, description }: AlertToast) => {
         }}
       />
       <div className="relative flex items-start justify-between overflow-hidden rounded-lg">
-        <div className="flex items-center justify-start gap-3 p-3 py-4">
+        <div className="flex items-start justify-start gap-3 p-3 py-4">
           <div className="flex h-full flex-1 items-center justify-center rounded-lg bg-blue-700 p-1 text-white">
             <IoInformationCircle className="size-8" />
           </div>
 
           <div>
-            <h3 className="text-base font-medium text-blue-700">{title}</h3>
+            <h3 className="text-base font-medium text-blue-700 dark:text-white">
+              {title}
+            </h3>
             <p className="mt-1 text-xs text-gray-600 dark:text-white/70">
               {description}
             </p>
+            {Custom && <Custom />}
           </div>
         </div>
         <Button
