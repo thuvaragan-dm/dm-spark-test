@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.4
+
+### Patch Changes
+
+- [`cda3f88`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/cda3f885c060389db887a36d0fed39ccda6cfb25) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - fixed app update loader.
+
 ## 1.0.3
 
 ### Patch Changes
