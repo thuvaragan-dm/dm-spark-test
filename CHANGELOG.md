@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 2.0.2
+
+### Patch Changes
+
+- [`846d553`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/846d553a054230436a52ebc9f6f2fb5488167bc1) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - fix windows control icon height.
+
 ## 2.0.1
 
 ### Patch Changes
