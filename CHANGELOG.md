@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 2.0.1
+
+### Patch Changes
+
+- [`df576eb`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/df576eb8e0e838ca7d21af7cea8f4066f3af87fb) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - window control icons positioned inset.
+
 ## 2.0.0
 
 ### Major Changes
