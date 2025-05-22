@@ -1,7 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap");
 @import "tailwindcss";
-@import "./themes/dm.css" layer(utilities);
+@import "./styles/themes/dm.css" layer(utilities);
+@import "./styles/custom-scrollbar.css" layer(utilities);
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -47,6 +48,7 @@
   --color-primary: oklch(0.38 0.1961 285.2);
   --color-primary-dark: oklch(0.2 0 0);
   --color-primary-dark-foreground: oklch(0.25 0 0);
+  --color-primary-darker: oklch(0.1194 0.0382 296.42);
   --color-secondary: oklch(0.9 0.0554 297.86);
   --color-accent: oklch(0.8 0.152851 67.8262);
 
@@ -69,6 +71,9 @@
 
 .app-region-drag {
   app-region: drag;
+}
+.app-region-no-drag {
+  app-region: no-drag;
 }
 
 @keyframes subtleRocketMovement {

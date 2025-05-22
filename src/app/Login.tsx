@@ -6,7 +6,7 @@ const Login = () => {
     <div className="flex w-full flex-1 flex-col overflow-hidden">
       <div className="grid w-full flex-1 grid-cols-6 overflow-hidden @6xl:grid-cols-7">
         {/* form */}
-        <div className="items-start-safe col-span-3 flex w-full flex-1 flex-col justify-center-safe overflow-y-auto pl-20">
+        <div className="items-start-safe scrollbar col-span-3 flex w-full flex-1 flex-col justify-center-safe overflow-y-auto pl-20">
           {/* logo */}
           <div className="flex w-min items-center justify-center gap-2">
             <div className="bg-primary w-min rounded-full stroke-white p-2 text-white">

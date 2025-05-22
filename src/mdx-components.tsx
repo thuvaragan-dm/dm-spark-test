@@ -84,7 +84,7 @@ export function useMDXComponents(
       />
     ),
     table: ({ node: _node, ...props }) => (
-      <div className="my-6 overflow-x-auto">
+      <div className="scrollbar my-6 overflow-x-auto">
         <table
           className="w-full border-collapse border border-gray-200 dark:border-gray-700"
           {...props}

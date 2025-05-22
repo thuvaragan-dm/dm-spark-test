@@ -69,6 +69,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       new Error(`Disallowed invoke on channel '${channel}'.`),
     );
   },
+  osPlatform: process.platform,
   getToken: (): string | null => currentToken,
   deleteToken: (): void => {
     ipcRenderer.send("delete-auth-token");

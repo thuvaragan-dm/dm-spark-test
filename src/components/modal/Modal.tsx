@@ -88,7 +88,7 @@ const Modal = ({
                 </Dialog.Header>
               )}
 
-              <div className="scrollbar flex h-full flex-1 flex-col overflow-y-auto">
+              <div className="scrollbar scrollbar flex h-full flex-1 flex-col overflow-y-auto">
                 {children}
               </div>
             </div>
@@ -132,7 +132,7 @@ const Modal = ({
                     )}
                   </Drawer.Header>
                 )}
-                <div className="scrollbar flex flex-1 flex-col overflow-y-auto">
+                <div className="scrollbar scrollbar flex flex-1 flex-col overflow-y-auto">
                   {children}
                 </div>
               </div>

@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from "react";
-import { useGetAgents } from "../api/agent/useGetAgents";
-import { useAgent, useAgentActions } from "../store/agentStore";
 import { Outlet } from "react-router-dom";
+import { useGetAgents } from "../api/agent/useGetAgents";
 import Spinner from "../components/Spinner";
+import { useAgent, useAgentActions } from "../store/agentStore";
 import {
   getRecentlySelectedAgents,
   initializeRecentlySelectedAgents,

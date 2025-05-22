@@ -52,7 +52,7 @@ const Sidebar = () => {
         <div className="dark:bg-primary-dark relative flex h-full flex-1 flex-col overflow-visible border-r border-gray-300 bg-white dark:border-white/10">
           <header
             className={cn(
-              "sticky top-5 z-[999] flex items-center justify-between overflow-x-hidden px-3 pt-3 pb-0",
+              "sticky top-0 z-[999] flex items-center justify-between overflow-x-hidden px-3 pt-3 pb-0",
             )}
           >
             {/* sidebar toggle button */}
@@ -102,7 +102,7 @@ const Sidebar = () => {
             </div>
           </header>
 
-          <div className="mt-8 max-h-72 w-full overflow-y-auto px-3">
+          <div className="scrollbar mt-8 max-h-72 w-full overflow-y-auto px-3">
             {/* Selected agent always shown on top */}
             {recentlySelectedAgents
               .filter((agent) => agent.path === param.agentPath)
@@ -223,7 +223,7 @@ const Sidebar = () => {
             </Link>
           </div>
 
-          <div className="scrollbar mt-5 w-full flex-1 overflow-x-hidden overflow-y-auto px-5 pr-3">
+          <div className="scrollbar scrollbar mt-5 w-full flex-1 overflow-x-hidden overflow-y-auto px-5 pr-3">
             <AllThreads />
           </div>
         </div>
@@ -246,7 +246,7 @@ const Sidebar = () => {
                 opacity: 0,
               },
             }}
-            className="absolute top-0 left-0 z-[9999999] mt-8 ml-3 hidden items-start justify-start gap-2 md:flex"
+            className="absolute top-0 left-0 z-[9999999] mt-[--spacing(13.2)] ml-[--spacing(21.5)] hidden items-start justify-start gap-2 md:flex"
           >
             {/* sidebar toggle button */}
             <Button

@@ -313,7 +313,7 @@ const ChatThreads = ({
           ref={chatContainerRef}
           onWheel={handleWheel}
           onScroll={handleScroll}
-          className="scrollbar relative z-30 flex w-full flex-1 flex-col overflow-y-auto"
+          className="scrollbar scrollbar relative z-30 flex w-full flex-1 flex-col overflow-y-auto"
         >
           <AnimatePresence mode="popLayout">
             {isFetchingNextPage && (

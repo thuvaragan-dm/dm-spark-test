@@ -99,7 +99,7 @@ export default function CodeBlock({ className, children }: CodeBlockProps) {
           style={coldarkDark}
           customStyle={highlighterCustomStyle}
           showLineNumbers
-          className="relative overflow-x-auto rounded-b-md p-3 font-mono text-sm"
+          className="scrollbar relative overflow-x-auto rounded-b-md p-3 font-mono text-sm"
         >
           {children.trim()}
         </SyntaxHighlighter>

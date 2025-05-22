@@ -1,8 +1,8 @@
 import { Route, Routes } from "react-router-dom";
-import RootLayout from "./app/RootLayout";
-import ChatPage from "./app/chat/ChatPage";
 import AgentLayout from "./app/AgentLayout";
 import MainPage from "./app/MainPage";
+import RootLayout from "./app/RootLayout";
+import ChatPage from "./app/chat/ChatPage";
 import Explore from "./app/explore/Explore";
 import AppUpdater from "./components/AppUpdater";
 

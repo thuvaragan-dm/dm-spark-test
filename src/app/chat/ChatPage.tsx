@@ -2,7 +2,7 @@ import ChatArea from "./chatarea/ChatArea";
 
 const ChatPage = () => {
   return (
-    <section className="flex h-dvh w-full overflow-hidden">
+    <section className="flex w-full flex-1 flex-col overflow-hidden">
       <ChatArea />
     </section>
   );

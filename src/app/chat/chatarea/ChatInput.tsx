@@ -80,7 +80,7 @@ const ChatInput = ({
             initial="close"
             animate="open"
             exit="close"
-            className="flex w-full items-start justify-start gap-5 overflow-x-auto p-2"
+            className="scrollbar flex w-full items-start justify-start gap-5 overflow-x-auto p-2"
           >
             {files.map((file) => (
               <Fragment key={file.name}>
@@ -150,7 +150,7 @@ const ChatInput = ({
 
         <textarea
           ref={textAreaRef}
-          className="h-11 max-h-[25dvh] w-full resize-none overflow-y-auto py-3 pr-2 text-sm text-gray-800 [word-wrap:break-word] focus:outline-none dark:text-white"
+          className="scrollbar h-11 max-h-[25dvh] w-full resize-none overflow-y-auto py-3 pr-2 text-sm text-gray-800 [word-wrap:break-word] focus:outline-none dark:text-white"
           placeholder={placeholder}
           rows={1}
           value={query}

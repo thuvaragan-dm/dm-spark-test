@@ -1,10 +1,17 @@
-import { useEffect } from "react";
+import { IoArrowBack, IoArrowForward, IoSearch } from "react-icons/io5";
+import { Button } from "../components/Button";
+import usePlatform from "../hooks/usePlatform";
+import { cn } from "../utilities/cn";
 import { Outlet } from "react-router-dom";
+import { useAgent } from "../store/agentStore";
+import Avatar from "../components/Avatar";
 import { useAuth, useAuthActions } from "../store/authStore";
+import { useEffect } from "react";
 import Login from "./Login";
 
-//test for changesets.
 const RootLayout = () => {
+  const platform = usePlatform();
+  const { selectedAgent } = useAgent();
   const { user, accessToken } = useAuth();
   const { setAccessToken, refetchUser } = useAuthActions();
   useEffect(() => {
@@ -15,42 +22,158 @@ const RootLayout = () => {
   }, [setAccessToken, refetchUser]);
 
   return (
-    <main className="@container relative flex h-dvh w-full flex-col font-sans">
-      <nav className="app-region-drag dark:bg-primary-dark-foreground absolute inset-x-0 top-0 w-full bg-gray-100 py-3.5"></nav>
+    <main className="from-primary-darker to-primary-dark-foreground @container relative flex h-dvh w-full flex-col bg-gradient-to-br font-sans">
+      <div className="app-region-drag pointer-events-none absolute inset-x-0 z-20 h-10"></div>
+      <nav className="absolute inset-x-0 top-0 z-10 flex h-10 flex-col items-center justify-center bg-transparent">
+        {accessToken && user && (
+          <div
+            className={cn(
+              "relative flex w-full flex-1 items-center justify-between pr-1.5",
+              {
+                "pr-32": platform !== "darwin",
+              },
+            )}
+          >
+            {/* center controls */}
+            <div className="flex h-full w-full items-center justify-center gap-3">
+              <div className="flex items-center justify-center gap-1">
+                <Button
+                  variant={"unstyled"}
+                  wrapperClass="app-region-no-drag flex items-center"
+                  className={
+                    "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10"
+                  }
+                >
+                  <IoArrowBack className="size-5" />
+                </Button>
+                <Button
+                  variant={"unstyled"}
+                  wrapperClass="app-region-no-drag flex items-center"
+                  className={
+                    "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10"
+                  }
+                >
+                  <IoArrowForward className="size-5" />
+                </Button>
+              </div>
 
-      <section className="dark:from-primary-dark-foreground dark:to-primary-dark flex w-full flex-1 flex-col overflow-hidden bg-gradient-to-b from-gray-100 to-gray-200">
-        {!accessToken && !user && <Login />}
-
-        {accessToken && !user && (
-          <div className="flex h-full w-full flex-1 flex-col items-center justify-center">
-            <div className="bg-primary relative w-min rounded-full p-2 text-white dark:bg-black/10 dark:text-white/50">
-              <div className="absolute -inset-1 animate-spin rounded-full bg-gradient-to-b from-[#EDEEF1] from-20% to-transparent dark:from-[#1C1C1C]"></div>
-              <svg
-                className="size-8"
-                fill="none"
-                viewBox="0 0 227 228"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 124.669c0 56.279 45.623 91.36 101.902 91.36 56.278 0 101.901-45.623 101.901-101.901S176.448 12.227 113.902 12.227c-43.572 0-88.001-5.742-88.001 40.532 0 46.275-4.275 75.51 54.268 24.122 63.249-55.518 109.631 37.247 73.79 73.088-35.841 35.841-78.007 0-78.007 0"
-                  stroke="currentColor"
-                  strokeWidth={22.033}
-                  strokeLinecap="round"
-                />
-              </svg>
+              <div className="w-full max-w-sm">
+                <button
+                  className={
+                    "app-region-no-drag flex w-full items-center justify-start gap-2 rounded-md bg-white/15 px-2 py-1 text-sm font-light tracking-wide text-white/50"
+                  }
+                >
+                  <IoSearch className="size-4" />
+                  <p>Search across threads</p>
+                </button>
+              </div>
             </div>
+            {/* center controls */}
 
-            <h2 className="mt-2 text-center text-base font-medium tracking-wide text-gray-800 dark:text-white">
-              Getting Your Workspace Ready
-            </h2>
-            <p className="text-center text-xs text-gray-500 dark:text-white/50">
-              We're currently loading your profile and settings.
-            </p>
+            {/* far right controls */}
+            {/* <div className=""></div> */}
+            {/* far right controls */}
           </div>
         )}
+      </nav>
 
-        {accessToken && user && <Outlet />}
-      </section>
+      {!accessToken && !user && <Login />}
+
+      {accessToken && !user && (
+        <div className="flex h-full w-full flex-1 flex-col items-center justify-center">
+          <div className="bg-primary relative w-min rounded-full p-2 text-white dark:bg-black/10 dark:text-white/50">
+            <div className="absolute -inset-1 animate-spin rounded-full bg-gradient-to-b from-[#EDEEF1] from-20% to-transparent dark:from-[#1C1C1C]"></div>
+            <svg
+              className="size-8"
+              fill="none"
+              viewBox="0 0 227 228"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 124.669c0 56.279 45.623 91.36 101.902 91.36 56.278 0 101.901-45.623 101.901-101.901S176.448 12.227 113.902 12.227c-43.572 0-88.001-5.742-88.001 40.532 0 46.275-4.275 75.51 54.268 24.122 63.249-55.518 109.631 37.247 73.79 73.088-35.841 35.841-78.007 0-78.007 0"
+                stroke="currentColor"
+                strokeWidth={22.033}
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
+
+          <h2 className="mt-2 text-center text-base font-medium tracking-wide text-gray-800 dark:text-white">
+            Getting Your Workspace Ready
+          </h2>
+          <p className="text-center text-xs text-gray-500 dark:text-white/50">
+            We're currently loading your profile and settings.
+          </p>
+        </div>
+      )}
+
+      {/* Main content */}
+      {accessToken && user && (
+        <section className="mt-10 flex w-full flex-1 flex-col overflow-hidden">
+          <div className="flex h-full w-full items-start justify-start overflow-hidden">
+            {/* side panel */}
+            <div className="scrollbar flex h-full w-20 flex-col items-center justify-between overflow-y-auto pb-4">
+              <div className="flex flex-1 flex-col items-center justify-start gap-3">
+                {/* logo */}
+                <div className="bg-primary w-min rounded-xl p-2 text-white">
+                  <svg
+                    className="size-8"
+                    fill="none"
+                    viewBox="0 0 227 228"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 124.669c0 56.279 45.623 91.36 101.902 91.36 56.278 0 101.901-45.623 101.901-101.901S176.448 12.227 113.902 12.227c-43.572 0-88.001-5.742-88.001 40.532 0 46.275-4.275 75.51 54.268 24.122 63.249-55.518 109.631 37.247 73.79 73.088-35.841 35.841-78.007 0-78.007 0"
+                      stroke="currentColor"
+                      strokeWidth={22.033}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                {/* logo */}
+
+                {selectedAgent && (
+                  <div className="aspect-square size-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/10">
+                    <Avatar
+                      Fallback={() => (
+                        <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
+                          {selectedAgent.name[0]} {selectedAgent.name[1]}
+                        </Avatar.Fallback>
+                      )}
+                      className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-11 w-full shrink-0 items-center justify-center rounded-none object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
+                      src={selectedAgent.avatar || ""}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* user details */}
+              <div className="flex flex-col items-center justify-center gap-2">
+                <div className="aspect-square size-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/10">
+                  <Avatar
+                    Fallback={() => (
+                      <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
+                        {user?.first_name[0]} {user?.last_name[0]}
+                      </Avatar.Fallback>
+                    )}
+                    className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-11 w-full shrink-0 items-center justify-center rounded-none object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
+                    src={user?.original_profile_picture_url || ""}
+                  />
+                </div>
+              </div>
+              {/* user details */}
+            </div>
+            {/* side panel */}
+
+            {/* content panel */}
+            <div className="bg-primary-dark mr-2 flex h-full w-full flex-col overflow-hidden rounded-t-2xl border border-b-0 border-white/10">
+              <Outlet />
+            </div>
+            {/* content panel */}
+          </div>
+        </section>
+      )}
+      {/* Main content */}
     </main>
   );
 };

@@ -14,7 +14,6 @@ import {
   useChatInputActions,
 } from "../../../store/chatInputStore";
 // import { cn } from "../../../utilities/cn";
-import { DevThemeToggler } from "../../../utilities/DevThemeToggler";
 import ChatInput from "./ChatInput";
 import ChatThreads from "./ChatThreads";
 import ChatZeroState from "./ChatZeroState";
@@ -91,8 +90,6 @@ const ChatArea = () => {
       {...getRootProps()}
       className="dark:bg-primary-dark-foreground relative flex w-full flex-1 flex-col items-center justify-center overflow-hidden bg-gray-100 focus:outline-0"
     >
-      <DevThemeToggler />
-
       <AnimatePresence>
         {isDragActive && (
           <motion.div className="absolute inset-0 isolate z-[999999] flex flex-col">
