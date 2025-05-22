@@ -1,4 +1,11 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  shell,
+  dialog,
+  nativeTheme,
+} from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, URL } from "node:url";
@@ -16,17 +23,10 @@ if (typeof __dirname !== "undefined") {
 }
 
 // APP_ROOT is the actual root of your packaged Electron app.
-// In development with Vite, this might be different than in production.
-// electron-vite usually sets process.env.APP_ROOT correctly.
-// If process.env.APP_ROOT is not set, this is a fallback for production.
-// In a typical electron-vite setup where package.json is at the root,
-// after build, main.js is in `dist-electron`,
-// and APP_ROOT would be the parent of `dist-electron` and `dist`.
 const APP_ROOT = process.env.APP_ROOT || path.join(currentDirname, "..");
 
 export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 // MAIN_DIST is where the compiled main process code (main.js, preload.mjs) resides.
-// This should correctly point to your 'dist-electron' folder.
 export const MAIN_DIST = path.join(APP_ROOT, "dist-electron");
 // RENDERER_DIST is where the Vite build output for the renderer (index.html, assets) resides.
 export const RENDERER_DIST = path.join(APP_ROOT, "dist");
@@ -99,7 +99,6 @@ async function deleteTokenFromFile(): Promise<void> {
 }
 
 interface StoredAgent {
-  // Ensure this matches the renderer's definition
   id: string;
   path: string;
   name: string;
@@ -123,7 +122,7 @@ async function loadRecentlySelectedAgentsFromFile(): Promise<StoredAgent[]> {
       "[Main] Failed to load recently selected agents from file:",
       error,
     );
-    return []; // Return empty array on other errors too, to prevent app crash
+    return [];
   }
 }
 
@@ -132,7 +131,7 @@ async function saveRecentlySelectedAgentsToFile(
 ): Promise<void> {
   try {
     const filePath = getRecentlySelectedAgentsFilePath();
-    await fs.writeFile(filePath, JSON.stringify(agents, null, 2), "utf8"); // Use pretty print for readability
+    await fs.writeFile(filePath, JSON.stringify(agents, null, 2), "utf8");
     console.log("[Main] Recently selected agents saved to file:", filePath);
   } catch (error) {
     console.error(
@@ -146,7 +145,7 @@ async function saveRecentlySelectedAgentsToFile(
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient("dm", process.execPath, [
-      path.resolve(process.argv[1]), // Use argv[1] for packaged apps
+      path.resolve(process.argv[1]),
     ]);
   }
 } else {
@@ -157,7 +156,7 @@ async function handleUrlAndExtractToken(urlLink: string) {
   console.log("[Main] Handling URL:", urlLink);
   let extractedToken: string | null = null;
   try {
-    const parsedUrl = new URL(urlLink); // Use URL constructor for robust parsing
+    const parsedUrl = new URL(urlLink);
     if (parsedUrl.protocol === "dm:") {
       extractedToken = parsedUrl.searchParams.get("authtoken");
 
@@ -167,11 +166,10 @@ async function handleUrlAndExtractToken(urlLink: string) {
           extractedToken,
         );
       } else {
-        // Fallback for formats like dm://authtoken=xxxx or dm:/authtoken=xxxx
         const pathPart = parsedUrl.pathname.startsWith("/")
           ? parsedUrl.pathname.substring(1)
           : parsedUrl.pathname;
-        const hostAndPath = `${parsedUrl.hostname}${pathPart}`; // Combine hostname and pathname
+        const hostAndPath = `${parsedUrl.hostname}${pathPart}`;
         const tokenPrefix = "authtoken=";
         if (hostAndPath.startsWith(tokenPrefix)) {
           extractedToken = hostAndPath.substring(tokenPrefix.length);
@@ -211,7 +209,6 @@ async function handleUrlAndExtractToken(urlLink: string) {
       "URL was:",
       urlLink,
     );
-    // Fallback for very simple dm://authtoken=value format if URL parsing fails
     const prefix = "dm://authtoken=";
     if (urlLink.startsWith(prefix)) {
       extractedToken = urlLink.substring(prefix.length);
@@ -244,13 +241,13 @@ async function onDeepLinkReceived(urlLink: string) {
     console.log(
       "[Main] Window not available after deep link. Queuing URL or creating window.",
     );
-    deeplinkUrlToProcess = urlLink; // Ensure it's set if window needs to be created
+    deeplinkUrlToProcess = urlLink;
     if (BrowserWindow.getAllWindows().length === 0) {
       await createWindow();
     }
   } else {
     if (win.isMinimized()) win.restore();
-    win.focus(); // Bring window to front
+    win.focus();
   }
 }
 
@@ -271,8 +268,6 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", async (_event, commandLine) => {
-    // Someone tried to run a second instance, we should focus our window.
-    // commandLine is an array of strings, the last one is often the deeplink URL on Windows
     const urlFromCmd = commandLine.find((arg) => arg.startsWith("dm:"));
     if (urlFromCmd) {
       await onDeepLinkReceived(urlFromCmd);
@@ -283,24 +278,61 @@ if (!gotTheLock) {
   });
 }
 
+// --- Function to Apply Theme to TitleBar Overlay ---
+function applyThemeToTitleBarOverlay() {
+  if (!win || win.isDestroyed() || process.platform === "darwin") {
+    // This function is primarily for Windows titleBarOverlay customization
+    return;
+  }
+
+  const isDarkMode = nativeTheme.shouldUseDarkColors;
+  console.log(`[Main] Applying theme to title bar. Dark mode: ${isDarkMode}`);
+
+  try {
+    win.setTitleBarOverlay({
+      color: "rgba(0, 0, 0, 0)", // Transparent background to blend with web content
+      symbolColor: isDarkMode ? "#FFFFFF" : "#000000", // White for dark, Black for light
+      // height: 30 // Optional: if you defined a height at creation, keep it consistent or set it here
+    });
+  } catch (error) {
+    console.error("[Main] Failed to set title bar overlay:", error);
+  }
+}
+
 // --- createWindow Function ---
 async function createWindow() {
+  const isInitialDarkMode = nativeTheme.shouldUseDarkColors;
+  console.log(
+    `[Main] Initial dark mode state for window creation: ${isInitialDarkMode}`,
+  );
+
   win = new BrowserWindow({
     width: 950,
     height: 650,
     minWidth: 950,
     minHeight: 650,
-    icon: path.join(process.env.VITE_PUBLIC!, "electron-vite.svg"), // Ensure this icon exists
+    icon: path.join(process.env.VITE_PUBLIC!, "electron-vite.svg"),
     webPreferences: {
-      // Preload script path is crucial. It should point to the *compiled* preload script.
-      // MAIN_DIST should be your 'dist-electron' folder.
       preload: path.join(MAIN_DIST, "preload.mjs"),
       contextIsolation: true,
-      nodeIntegration: false, // Security best practice
+      nodeIntegration: false,
     },
-    titleBarStyle: "hidden", // For custom title bar
-    ...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}), // Windows custom title bar overlay
+    titleBarStyle: "hidden",
+    ...(process.platform !== "darwin"
+      ? {
+          titleBarOverlay: {
+            color: "rgba(0, 0, 0, 0)", // Transparent background
+            symbolColor: isInitialDarkMode ? "#FFFFFF" : "#000000", // Initial symbol color
+            // height: 30 // Optional: Adjust height of the overlay bar
+          },
+        }
+      : {}),
   });
+
+  // Ensure theme is applied after window is created, especially for Windows.
+  if (process.platform !== "darwin") {
+    applyThemeToTitleBarOverlay();
+  }
 
   win.webContents.on("did-finish-load", async () => {
     win?.webContents.send(
@@ -309,19 +341,14 @@ async function createWindow() {
     );
     if (deeplinkUrlToProcess) {
       const urlToProcess = deeplinkUrlToProcess;
-      deeplinkUrlToProcess = null; // Clear it after processing
+      deeplinkUrlToProcess = null;
       await handleUrlAndExtractToken(urlToProcess);
     }
-    // Send token if it was loaded from file or set by an earlier deep link
     if (currentAuthToken) {
       sendTokenToRenderer(currentAuthToken);
     }
 
-    // --- Auto Update Check ---
-    // Check for updates only in production-like environments (not during Vite dev server)
     if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
-      // For private repositories, electron-updater needs GH_TOKEN or GITHUB_TOKEN env variable when running locally.
-      // In GitHub Actions, GITHUB_TOKEN is automatically provided.
       if (!process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
         console.warn(
           "[AutoUpdater] GH_TOKEN or GITHUB_TOKEN environment variable is not set. Update check for private repo might fail when running locally.",
@@ -347,30 +374,35 @@ async function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
-    // Optionally open dev tools in development
-    // win.webContents.openDevTools();
+    // win.webContents.openDevTools(); // Uncomment for dev tools
   } else {
-    // In production, load the index.html from the 'dist' folder
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
 
   win.on("closed", () => {
-    win = null; // Dereference the window object
+    win = null;
   });
 }
 
 // --- App Lifecycle Events ---
 app.whenReady().then(async () => {
-  currentAuthToken = await loadTokenFromFile(); // Load token early
+  currentAuthToken = await loadTokenFromFile();
   const initialUrlFromArgs = process.argv.find((arg) => arg.startsWith("dm:"));
   if (initialUrlFromArgs) {
-    // If app is opened via deep link directly before 'ready'
     deeplinkUrlToProcess = initialUrlFromArgs;
   }
 
-  await createWindow(); // Create window, which will handle deeplinkUrlToProcess if set
+  await createWindow();
 
-  // Set up autoUpdater event listeners once the app is ready.
+  // Listen for OS theme changes to update title bar symbols (Windows specific for color options)
+  if (process.platform !== "darwin") {
+    nativeTheme.on("updated", () => {
+      console.log("[Main] OS theme updated event received.");
+      applyThemeToTitleBarOverlay();
+    });
+  }
+
+  // AutoUpdater event listeners
   if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
     autoUpdater.on("update-available", (info: UpdateInfo) => {
       console.log("[AutoUpdater] Update available:", info);
@@ -404,19 +436,17 @@ app.whenReady().then(async () => {
       console.log("[AutoUpdater] Update downloaded:", info);
       if (win && !win.isDestroyed()) {
         win.webContents.send("update-downloaded", info);
-        // Prompt user to restart
         dialog
           .showMessageBox(win, {
             type: "info",
             title: "Update Ready to Install",
             message: `Version ${info.version} has been downloaded. Restart the application to apply the updates?`,
             buttons: ["Restart Now", "Later"],
-            defaultId: 0, // Index of 'Restart Now'
-            cancelId: 1, // Index of 'Later'
+            defaultId: 0,
+            cancelId: 1,
           })
           .then((result) => {
             if (result.response === 0) {
-              // If 'Restart Now' was clicked
               autoUpdater.quitAndInstall();
             }
           })
@@ -431,13 +461,12 @@ app.whenReady().then(async () => {
   }
 });
 
-// macOS specific: Handle 'open-url' event for deep links when app is already running.
 app.on("open-url", async (event, urlLink: string) => {
-  event.preventDefault(); // Prevent default OS behavior
+  event.preventDefault();
   await onDeepLinkReceived(urlLink);
 });
 
-// --- IPC Listeners (Your existing listeners, simplified) ---
+// --- IPC Listeners ---
 ipcMain.on("open-external-url", (_event, urlLink: string) => {
   console.log('[Main] Received "open-external-url" with URL:', urlLink);
   if (
@@ -461,14 +490,14 @@ ipcMain.on("open-external-url", (_event, urlLink: string) => {
 ipcMain.on("delete-auth-token", async () => {
   console.log("[Main] Received request to delete auth token.");
   await deleteTokenFromFile();
-  currentAuthToken = null; // Clear in-memory token
+  currentAuthToken = null;
   if (win && win.webContents && !win.webContents.isDestroyed()) {
     win.webContents.send("auth-token-deleted");
     console.log("[Main] Notified renderer of token deletion.");
   }
 });
 
-// --- IPC Handlers for Recently Selected Agents (Your existing handlers, simplified) ---
+// --- IPC Handlers for Recently Selected Agents ---
 const AGENT_CHANNELS = {
   GET_AGENTS: "fs-agents:get",
   ADD_AGENT: "fs-agents:add",
@@ -496,7 +525,7 @@ ipcMain.handle(
 
 ipcMain.handle(AGENT_CHANNELS.CLEAR_AGENTS, async () => {
   await saveRecentlySelectedAgentsToFile([]);
-  return true; // Indicate success
+  return true;
 });
 
 ipcMain.handle(
@@ -558,14 +587,11 @@ ipcMain.on("quit-and-install-update", () => {
 // --- Standard App Lifecycle Handlers ---
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    // macOS apps usually stay active until explicitly quit
     app.quit();
   }
 });
 
 app.on("activate", async () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
     await createWindow();
   }
