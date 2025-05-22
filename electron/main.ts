@@ -317,16 +317,17 @@ async function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    titleBarStyle: "hiddenInset",
+
     // Conditional titleBarStyle and titleBarOverlay
     ...(process.platform === "darwin"
-      ? {}
+      ? { titleBarStyle: "hiddenInset" }
       : {
           // For Windows/Linux, to enable custom title bar area
+          titleBarStyle: "hidden",
           titleBarOverlay: {
             color: "rgba(0, 0, 0, 0)", // Transparent background
             symbolColor: isInitialDarkMode ? "#FFFFFF" : "#000000", // Initial symbol color
-            // height: 30 // Optional: Adjust height if you have a fixed title bar height
+            height: 35,
           },
         }),
   });
