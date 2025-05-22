@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.6
+
+### Patch Changes
+
+- [`43fe123`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/43fe123be5c7a008a4fb18579419eea33e37d5c9) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - windows control icon background removed.
+
 ## 1.0.5
 
 ### Patch Changes
