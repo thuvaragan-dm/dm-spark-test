@@ -282,6 +282,7 @@ if (!gotTheLock) {
 function applyThemeToTitleBarOverlay() {
   if (!win || win.isDestroyed() || process.platform === "darwin") {
     // This function is primarily for Windows titleBarOverlay customization
+    // and not needed if we are fully custom on macOS.
     return;
   }
 
@@ -292,7 +293,6 @@ function applyThemeToTitleBarOverlay() {
     win.setTitleBarOverlay({
       color: "rgba(0, 0, 0, 0)", // Transparent background to blend with web content
       symbolColor: isDarkMode ? "#FFFFFF" : "#000000", // White for dark, Black for light
-      // height: 30 // Optional: if you defined a height at creation, keep it consistent or set it here
     });
   } catch (error) {
     console.error("[Main] Failed to set title bar overlay:", error);
@@ -317,19 +317,21 @@ async function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    titleBarStyle: "hidden",
-    ...(process.platform !== "darwin"
-      ? {
+    titleBarStyle: "hiddenInset",
+    // Conditional titleBarStyle and titleBarOverlay
+    ...(process.platform === "darwin"
+      ? {}
+      : {
+          // For Windows/Linux, to enable custom title bar area
           titleBarOverlay: {
             color: "rgba(0, 0, 0, 0)", // Transparent background
             symbolColor: isInitialDarkMode ? "#FFFFFF" : "#000000", // Initial symbol color
-            // height: 30 // Optional: Adjust height of the overlay bar
+            // height: 30 // Optional: Adjust height if you have a fixed title bar height
           },
-        }
-      : {}),
+        }),
   });
 
-  // Ensure theme is applied after window is created, especially for Windows.
+  // Apply theme to titleBarOverlay for Windows/Linux if it was configured
   if (process.platform !== "darwin") {
     applyThemeToTitleBarOverlay();
   }
@@ -348,6 +350,7 @@ async function createWindow() {
       sendTokenToRenderer(currentAuthToken);
     }
 
+    // AutoUpdater check
     if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
       if (!process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
         console.warn(
@@ -382,6 +385,18 @@ async function createWindow() {
   win.on("closed", () => {
     win = null;
   });
+
+  // Send window focus state to renderer for custom title bar styling (optional)
+  win.on("focus", () => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("window-focused");
+    }
+  });
+  win.on("blur", () => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("window-blurred");
+    }
+  });
 }
 
 // --- App Lifecycle Events ---
@@ -399,6 +414,18 @@ app.whenReady().then(async () => {
     nativeTheme.on("updated", () => {
       console.log("[Main] OS theme updated event received.");
       applyThemeToTitleBarOverlay();
+      // Also notify renderer if theme changes, for custom controls
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("theme-updated", nativeTheme.shouldUseDarkColors);
+      }
+    });
+  } else {
+    // For macOS, still send theme updates for custom controls
+    nativeTheme.on("updated", () => {
+      console.log("[Main] OS theme updated event received on macOS.");
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("theme-updated", nativeTheme.shouldUseDarkColors);
+      }
     });
   }
 
@@ -494,6 +521,32 @@ ipcMain.on("delete-auth-token", async () => {
   if (win && win.webContents && !win.webContents.isDestroyed()) {
     win.webContents.send("auth-token-deleted");
     console.log("[Main] Notified renderer of token deletion.");
+  }
+});
+
+// --- Window Control IPC Listeners ---
+ipcMain.on("window-control-minimize", () => {
+  console.log("[Main] Received request to minimize window.");
+  if (win) {
+    win.minimize();
+  }
+});
+
+ipcMain.on("window-control-maximize-restore", () => {
+  console.log("[Main] Received request to maximize/restore window.");
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize(); // Restores to previous size
+    } else {
+      win.maximize();
+    }
+  }
+});
+
+ipcMain.on("window-control-close", () => {
+  console.log("[Main] Received request to close window.");
+  if (win) {
+    win.close();
   }
 });
 

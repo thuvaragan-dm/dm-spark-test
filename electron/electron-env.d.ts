@@ -7,6 +7,7 @@ declare namespace NodeJS {
   }
 }
 
+// Interface for electron-updater progress object
 interface UpdateProgressInfo {
   percent: number;
   bytesPerSecond: number;
@@ -14,6 +15,7 @@ interface UpdateProgressInfo {
   total: number;
 }
 
+// Interface for electron-updater UpdateInfo object
 interface ElectronUpdateInfo {
   version: string;
   releaseDate?: string;
@@ -21,22 +23,24 @@ interface ElectronUpdateInfo {
   path?: string;
   sha512?: string;
   releaseName?: string;
+  // Add other properties from UpdateInfo if needed
 }
 
 interface Window {
+  // Optional ipcRenderer access (use electronAPI instead for type safety)
   ipcRenderer?: {
-    // Making this optional as direct use might be discouraged
     on: (
       channel: string,
       listener: (
         event: import("electron").IpcRendererEvent,
         ...args: any[]
       ) => void,
-    ) => () => void;
+    ) => () => void; // Return type for cleanup function
     off: (channel: string, listener: (...args: any[]) => void) => void;
     send: (channel: string, ...args: any[]) => void;
     invoke: (channel: string, ...args: any[]) => Promise<any>;
   };
+  // Strongly typed electronAPI
   electronAPI: {
     on: (
       channel: string,
@@ -44,7 +48,7 @@ interface Window {
         event: import("electron").IpcRendererEvent,
         ...args: any[]
       ) => void,
-    ) => (() => void) | undefined;
+    ) => (() => void) | undefined; // Return type for cleanup function
     off: (channel: string, listener: (...args: any[]) => void) => void;
     send: (channel: string, ...args: any[]) => void;
     invoke: (channel: string, ...args: any[]) => Promise<any>;
@@ -70,5 +74,12 @@ interface Window {
     ) => (() => void) | undefined;
     downloadUpdate: () => void;
     quitAndInstallUpdate: () => void;
+
+    minimizeWindow: () => void;
+    maximizeRestoreWindow: () => void;
+    closeWindow: () => void;
+    onThemeUpdated: (callback: (isDarkMode: boolean) => void) => () => void;
+    onWindowFocused: (callback: () => void) => () => void;
+    onWindowBlurred: (callback: () => void) => () => void;
   };
 }

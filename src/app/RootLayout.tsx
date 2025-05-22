@@ -1,6 +1,5 @@
 import { IoArrowBack, IoArrowForward, IoSearch } from "react-icons/io5";
 import { Button } from "../components/Button";
-import usePlatform from "../hooks/usePlatform";
 import { cn } from "../utilities/cn";
 import { Outlet } from "react-router-dom";
 import { useAgent } from "../store/agentStore";
@@ -10,7 +9,6 @@ import { useEffect } from "react";
 import Login from "./Login";
 
 const RootLayout = () => {
-  const platform = usePlatform();
   const { selectedAgent } = useAgent();
   const { user, accessToken } = useAuth();
   const { setAccessToken, refetchUser } = useAuthActions();
@@ -28,10 +26,7 @@ const RootLayout = () => {
         {accessToken && user && (
           <div
             className={cn(
-              "relative flex w-full flex-1 items-center justify-between pr-1.5",
-              {
-                "pr-32": platform !== "darwin",
-              },
+              "relative flex w-full flex-1 items-center justify-between px-1.5",
             )}
           >
             {/* center controls */}

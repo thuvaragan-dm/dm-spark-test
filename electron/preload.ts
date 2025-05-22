@@ -19,6 +19,9 @@ const ALLOWED_LISTEN_CHANNELS = [
   "update-error",
   "update-download-progress",
   "update-downloaded",
+  "theme-updated", // For theme changes
+  "window-focused", // For window focus state
+  "window-blurred", // For window blur state
 ];
 
 const ALLOWED_SEND_CHANNELS = [
@@ -26,6 +29,9 @@ const ALLOWED_SEND_CHANNELS = [
   "delete-auth-token",
   "download-update",
   "quit-and-install-update",
+  "window-control-minimize", // Window control: Minimize
+  "window-control-maximize-restore", // Window control: Maximize/Restore
+  "window-control-close", // Window control: Close
 ];
 
 let currentToken: string | null = null;
@@ -45,13 +51,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
   ) {
     if (ALLOWED_LISTEN_CHANNELS.includes(channel)) {
       ipcRenderer.on(channel, listener);
+      // Return a function to remove the listener
       return () => ipcRenderer.removeListener(channel, listener);
     }
     console.warn(`[Preload] Disallowed listen on channel '${channel}'`);
-    return () => {};
+    return () => {}; // Return an empty function for disallowed channels
   },
   off(channel: string, listener: (...args: unknown[]) => void) {
-    ipcRenderer.off(channel, listener);
+    // It's good practice to check if the channel was allowed for listening
+    // though removeListener won't error if it wasn't.
+    ipcRenderer.removeListener(channel, listener);
   },
   send(channel: string, ...args: unknown[]) {
     if (ALLOWED_SEND_CHANNELS.includes(channel)) {
@@ -115,6 +124,36 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   downloadUpdate: () => ipcRenderer.send("download-update"),
   quitAndInstallUpdate: () => ipcRenderer.send("quit-and-install-update"),
+
+  minimizeWindow: () => {
+    ipcRenderer.send("window-control-minimize");
+  },
+  maximizeRestoreWindow: () => {
+    ipcRenderer.send("window-control-maximize-restore");
+  },
+  closeWindow: () => {
+    ipcRenderer.send("window-control-close");
+  },
+  // Listener for theme updates from main process
+  onThemeUpdated: (callback: (isDarkMode: boolean) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, isDarkMode: boolean) =>
+      callback(isDarkMode);
+    ipcRenderer.on("theme-updated", listener);
+    return () => ipcRenderer.removeListener("theme-updated", listener);
+  },
+  // Listeners for window focus state
+  onWindowFocused: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on("window-focused", listener);
+    return () => ipcRenderer.removeListener("window-focused", listener);
+  },
+  onWindowBlurred: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on("window-blurred", listener);
+    return () => ipcRenderer.removeListener("window-blurred", listener);
+  },
 });
 
-console.log("[Preload] Script loaded and electronAPI exposed.");
+console.log(
+  "[Preload] Script loaded and electronAPI exposed with window controls.",
+);
