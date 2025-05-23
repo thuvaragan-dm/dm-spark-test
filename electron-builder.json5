@@ -61,7 +61,9 @@
   publish: {
     provider: "github",
     // owner: "thuvaragan-dm",
-    // repo: "dm-desktop-release",
+    owner: "NEEDS_OVERRIDE_FROM_GH_OWNER",
+    repo: "NEEDS_OVERRIDE_FROM_GH_REPO",
+    // repo: "dm-desktop-dev-release",
     // "private": false, // Not needed if the release repo is public. electron-builder defaults to public.
     releaseType: "draft",
   },
