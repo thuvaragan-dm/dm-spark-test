@@ -2,4 +2,4 @@
 "dm-electron-vite": patch
 ---
 
-test dev
+from dev
