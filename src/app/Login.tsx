@@ -38,7 +38,7 @@ const Login = () => {
           <div className="mt-10 w-full max-w-xs">
             <Button
               onClick={() => {
-                const signInUrl = "https://copilot.deepmodel.ai/desktop-app";
+                const signInUrl = "http://localhost:3000/desktop-app-login";
                 if (window.electronAPI && window.electronAPI.send) {
                   // Send a message to the main process to open the URL
                   window.electronAPI.send("open-external-url", signInUrl);
