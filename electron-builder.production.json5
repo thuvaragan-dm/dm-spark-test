@@ -1,0 +1,68 @@
+{
+  $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  appId: "com.deepmodel.app",
+  productName: "DeepModel",
+  copyright: "Copyright © 2024 Thuvaragan",
+  asar: true,
+  directories: {
+    output: "release/${version}",
+    buildResources: "assets/build",
+  },
+  files: [
+    "dist/**/*",
+    "dist-electron/**/*",
+    "node_modules/**/*",
+    "!node_modules/@types/**",
+    "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+    "!node_modules/*.d.ts",
+    "!node_modules/.bin",
+    "!**/*.{md,map}",
+    "package.json",
+  ],
+  mac: {
+    icon: "assets/build/icon.icns",
+    target: ["dmg", "zip"],
+    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
+    category: "public.app-category.developer-tools",
+    darkModeSupport: true,
+    // "identity": "Developer ID Application: Your Name (YOUR_TEAM_ID)",
+    // "hardenedRuntime": true,
+    // "entitlements": "assets/build/entitlements.mac.plist",
+    // "entitlementsInherit": "assets/build/entitlements.mac.plist"
+  },
+  win: {
+    icon: "assets/build/icon.ico",
+    target: [
+      { target: "nsis", arch: ["x64"] },
+      { target: "zip", arch: ["x64"] },
+    ],
+    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
+    // "certificateFile": "path/to/your/code_signing_cert.pfx",
+    // "certificatePassword": "YOUR_CERT_PASSWORD"
+    // "verifyUpdateCodeSignature": true,
+  },
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+    deleteAppDataOnUninstall: false,
+    installerIcon: "assets/build/icon.ico",
+    uninstallerIcon: "assets/build/icon.ico",
+    // "license": "assets/build/LICENSE.txt"
+  },
+  linux: {
+    icon: "assets/build/icons",
+    target: ["AppImage", "deb"],
+    category: "Utility",
+    artifactName: "${productName}-Linux-${version}.${ext}",
+    maintainer: "Thuvaragan <thuvaragan@deepmodel.ai>",
+    description: "DeepModel Desktop Application",
+  },
+  publish: {
+    provider: "github",
+    owner: "thuvaragan-dm",
+    repo: "dm-desktop-release",
+    // "private": false, // Not needed if the release repo is public. electron-builder defaults to public.
+    releaseType: "draft",
+  },
+}
