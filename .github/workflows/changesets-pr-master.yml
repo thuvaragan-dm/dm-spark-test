@@ -1,18 +1,23 @@
-# .github/workflows/changesets-pr-master.yml
-name: Changesets Version PR - Master
+# .github/workflows/changesets-pr.yml
+# This file should be at the ROOT of your Git repository (e.g., dm-desktop-test/.github/workflows/changesets-pr.yml)
+
+name: Changesets Version PR
 
 on:
   push:
     branches:
-      - master # Triggers only for the master branch
+      - master # Your primary branch
 
-concurrency: changesets-pr-master-${{ github.ref }}
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   version-pr:
-    if: github.repository == 'thuvaragan-dm/dm-desktop-test' # Ensures it only runs in your main repository
+    # This 'if' condition ensures the action only runs in your main repository,
+    # not on forks, which is good practice.
+    if: github.repository == 'thuvaragan-dm/dm-desktop-test'
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    # Add permissions for the GITHUB_TOKEN
     permissions:
       contents: write # To push the new branch and commit version files
       pull-requests: write # To create the pull request
@@ -26,72 +31,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Match your project's Node.js version
+          node-version: "20" # Match your project's Node.js version (from your root package.json)
 
       - name: Install Dependencies
-        run: npm ci # Assumes package-lock.json or npm-shrinkwrap.json exists
+        # Runs 'npm ci' at the root of your repository, as package.json is at the root
+        run: npm ci
 
-      - name: Create or Update Production Version PR
-        id: changesets-pr-master
+      - name: Create or Update Version PR
+        id: changesets-pr
         uses: changesets/action@v1
         with:
-          # This multi-line script will be executed by the action.
-          # It handles exiting pre-release mode, running 'changeset version', and staging changes.
-          version: |
-            echo "=== Changeset Action Script Start ==="
-            echo "Current branch (within action): $(git rev-parse --abbrev-ref HEAD)"
-            echo "Initial status of relevant files:"
-            git status --porcelain .changeset/pre.json package.json CHANGELOG.md || echo "Some files might not exist yet."
-
-            # Check and display initial package.json version (handle if file or version doesn't exist)
-            if [ -f "package.json" ]; then
-              INITIAL_VERSION=$(node -p "try { require('./package.json').version } catch (e) { 'not_found' }")
-              echo "Initial package.json version: $INITIAL_VERSION"
-            else
-              echo "Initial package.json not found."
-            fi
-
-            if [ -f ".changeset/pre.json" ]; then
-              # Attempt to read the mode from pre.json. If it fails, default to 'none' or 'error_reading_mode'.
-              MODE=$(node -p "try { require('./.changeset/pre.json').mode } catch (e) { 'error_reading_mode' }")
-              echo "Initial pre-release mode detected from pre.json: $MODE"
-              if [ "$MODE" != "exit" ]; then
-                echo "Attempting to exit pre-release mode (running 'npx changeset pre exit')..."
-                npx changeset pre exit
-                echo "Finished 'npx changeset pre exit'."
-                echo "Status of .changeset/pre.json after 'pre exit' (before staging):"
-                git status --porcelain .changeset/pre.json || echo ".changeset/pre.json not modified or not found by git status."
-              else
-                echo "Already in 'exit' pre-release mode or pre.json indicates no active pre-mode."
-              fi
-            else
-              echo "No .changeset/pre.json found. Assuming not in (or already exited) pre-release mode."
-            fi
-
-            echo "Running 'npx changeset version'..."
-            npx changeset version
-            echo "Finished 'npx changeset version'."
-
-            # Check and display package.json version after 'changeset version'
-            if [ -f "package.json" ]; then
-              FINAL_VERSION=$(node -p "try { require('./package.json').version } catch (e) { 'not_found' }")
-              echo "package.json version after 'changeset version': $FINAL_VERSION"
-            else
-              echo "package.json not found after 'changeset version'."
-            fi
-
-            echo "Git status before staging (shows all uncommitted changes from pre exit and version):"
-            git status --porcelain
-
-            echo "Staging all changes (git add .)..."
-            git add .
-            echo "Finished staging changes."
-
-            echo "Git status after staging (shows what will be committed by the action):"
-            git status --porcelain
-            echo "=== Changeset Action Script End ==="
-          title: "chore: Upcoming Production Release Version Bump"
-          commit: "chore: update production version and changelog via Changesets"
+          # This command runs the 'version-script' from your root package.json.
+          # The script should execute 'changeset version' and then 'git add .'
+          # to stage package.json, CHANGELOG.md, and the .changeset folder changes.
+          version: npm run version-script
+          title: "chore: Upcoming Release Version Bump"
+          commit: "chore: update version and changelog via Changesets"
           # setupGitUser: true # This is true by default in changesets/action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
