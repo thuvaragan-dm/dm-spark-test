@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 2.0.3
+
+### Patch Changes
+
+- [`40a97e8`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/40a97e893a11f5789be856fc1d5ba5390f9c41a5) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added app history functions.
+
 ## 2.0.2
 
 ### Patch Changes
