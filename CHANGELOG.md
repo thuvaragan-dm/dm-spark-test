@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.0-dev.0
+
+### Major Changes
+
+- [`bfa196a`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/bfa196a4d0eb2b22df437be4a1624c03274af4d2) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - releasing for dev.
+
 ## 2.0.4
 
 ### Patch Changes
