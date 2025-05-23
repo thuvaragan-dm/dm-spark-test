@@ -4,12 +4,5 @@
   "initialVersions": {
     "dm-electron-vite": "0.0.0"
   },
-  "changesets": [
-    "all-houses-give",
-    "fresh-islands-dress",
-    "good-lizards-do",
-    "light-cases-tie",
-    "thin-needles-wait",
-    "wicked-keys-worry"
-  ]
+  "changesets": []
 }

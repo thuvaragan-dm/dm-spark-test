@@ -2,4 +2,4 @@
 "dm-electron-vite": patch
 ---
 
-separate electron config files.
+build script updated.
