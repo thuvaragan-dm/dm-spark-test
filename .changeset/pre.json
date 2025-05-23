@@ -4,5 +4,7 @@
   "initialVersions": {
     "dm-electron-vite": "2.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "fast-items-allow"
+  ]
 }
