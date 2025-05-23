@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.0-dev.1
+
+### Patch Changes
+
+- [`e0575f8`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/e0575f818926805b0a1ad9fc6935bd560e14f00b) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added debug code to test action script.
+
 ## 1.0.0-dev.0
 
 ### Major Changes
