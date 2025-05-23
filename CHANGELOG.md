@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.0-dev.5
+
+### Patch Changes
+
+- [`fe5d9a3`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/fe5d9a3054dbe37d336b034885f8e2910a540ed3) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - separate electron config files.
+
 ## 1.0.0-dev.4
 
 ### Patch Changes
