@@ -1,7 +1,4 @@
 # .github/workflows/changesets-pr-master.yml
-# (This is the version that should exist on your 'development' branch,
-# ready to be merged into 'master' eventually)
-
 name: Changesets Version PR - Master
 
 on:
@@ -13,50 +10,59 @@ concurrency: changesets-pr-master-${{ github.ref }}
 
 jobs:
   version-pr:
-    if: github.repository == 'thuvaragan-dm/dm-desktop-test'
+    if: github.repository == 'thuvaragan-dm/dm-desktop-test' # Ensures it only runs in your main repository
     timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # To push the new branch and commit version files
+      pull-requests: write # To create the pull request
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Important for Changesets to correctly determine version bumps
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20" # Match your project's Node.js version
 
       - name: Install Dependencies
-        run: npm ci
-
-      - name: Exit Pre-release Mode (if in pre-mode)
-        run: |
-          if [ -f ".changeset/pre.json" ]; then
-            MODE=$(node -p "try { require('./.changeset/pre.json').mode } catch (e) { 'none' }")
-            echo "Current pre-release mode detected on checked-out branch: $MODE"
-            if [ "$MODE" != "exit" ]; then
-              echo "Exiting pre-release mode..."
-              npx changeset pre exit
-              # Changes to .changeset/pre.json will be staged by 'npm run version-script'
-            else
-              echo "Branch already in 'exit' pre-release mode or pre.json is minimal."
-            fi
-          else
-            echo "No .changeset/pre.json found. Assuming not in pre-release mode."
-          fi
-        shell: bash
+        run: npm ci # Assumes package-lock.json or npm-shrinkwrap.json exists
 
       - name: Create or Update Production Version PR
         id: changesets-pr-master
         uses: changesets/action@v1
         with:
-          version: npm run version-script # This is "changeset version && git add ."
+          # This multi-line script will be executed by the action.
+          # It first handles exiting pre-release mode if necessary,
+          # then runs 'changeset version', and finally stages all changes.
+          version: |
+            echo "Current branch (within action): $(git rev-parse --abbrev-ref HEAD)"
+            if [ -f ".changeset/pre.json" ]; then
+              MODE=$(node -p "try { require('./.changeset/pre.json').mode } catch (e) { 'none' }")
+              echo "Initial pre-release mode detected: $MODE"
+              if [ "$MODE" != "exit" ]; then
+                echo "Attempting to exit pre-release mode..."
+                npx changeset pre exit
+                echo "Finished 'changeset pre exit'."
+              else
+                echo "Already in 'exit' pre-release mode or pre.json is minimal."
+              fi
+            else
+              echo "No .changeset/pre.json found. Assuming not in pre-release mode."
+            fi
+
+            echo "Running 'changeset version'..."
+            npx changeset version
+            echo "Finished 'changeset version'."
+
+            echo "Staging all changes..."
+            git add .
+            echo "Finished staging changes."
           title: "chore: Upcoming Production Release Version Bump"
           commit: "chore: update production version and changelog via Changesets"
+          # setupGitUser: true # This is true by default in changesets/action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
