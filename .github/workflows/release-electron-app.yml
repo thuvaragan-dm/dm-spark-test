@@ -68,6 +68,7 @@ jobs:
       # --- END OF DEBUGGING STEP ---
 
       - name: Build and Package Electron App
+        shell: bash
         # Conditionally runs the appropriate npm script for dev or prod packaging.
         # Assumes you have scripts like 'package:dev' and 'package:prod' in your package.json
         # which call electron-builder with --config electron-builder.development.json or electron-builder.production.json
