@@ -48,7 +48,8 @@
   --color-primary: oklch(0.38 0.1961 285.2);
   --color-primary-dark: oklch(0.2 0 0);
   --color-primary-dark-foreground: oklch(0.25 0 0);
-  --color-primary-darker: oklch(0.1194 0.0382 296.42);
+  --color-primary-darker: oklch(0.1916 0.0807 288.95);
+  /* --color-primary-darker: oklch(0.1194 0.0382 296.42); */
   --color-secondary: oklch(0.9 0.0554 297.86);
   --color-accent: oklch(0.8 0.152851 67.8262);
 

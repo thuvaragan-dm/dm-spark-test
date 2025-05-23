@@ -7,6 +7,7 @@ import Avatar from "../components/Avatar";
 import { useAuth, useAuthActions } from "../store/authStore";
 import { useEffect } from "react";
 import Login from "./Login";
+import { useAppHistory } from "../hooks/useAppHistory";
 
 const RootLayout = () => {
   const { selectedAgent } = useAgent();
@@ -18,6 +19,8 @@ const RootLayout = () => {
       refetchUser();
     });
   }, [setAccessToken, refetchUser]);
+
+  const { canGoBack, canGoForward, goBack, goForward } = useAppHistory();
 
   return (
     <main className="from-primary-darker to-primary-dark-foreground @container relative flex h-dvh w-full flex-col bg-gradient-to-br font-sans">
@@ -36,8 +39,10 @@ const RootLayout = () => {
                   variant={"unstyled"}
                   wrapperClass="app-region-no-drag flex items-center"
                   className={
-                    "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10"
+                    "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
                   }
+                  disabled={!canGoBack}
+                  onClick={goBack}
                 >
                   <IoArrowBack className="size-5" />
                 </Button>
@@ -45,21 +50,23 @@ const RootLayout = () => {
                   variant={"unstyled"}
                   wrapperClass="app-region-no-drag flex items-center"
                   className={
-                    "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10"
+                    "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
                   }
+                  disabled={!canGoForward}
+                  onClick={goForward}
                 >
                   <IoArrowForward className="size-5" />
                 </Button>
               </div>
 
-              <div className="w-full max-w-sm">
+              <div className="w-full max-w-lg">
                 <button
                   className={
                     "app-region-no-drag flex w-full items-center justify-start gap-2 rounded-md bg-white/15 px-2 py-1 text-sm font-light tracking-wide text-white/50"
                   }
                 >
                   <IoSearch className="size-4" />
-                  <p>Search across threads</p>
+                  <p>Search...</p>
                 </button>
               </div>
             </div>
@@ -105,7 +112,7 @@ const RootLayout = () => {
       {/* Main content */}
       {accessToken && user && (
         <section className="mt-10 flex w-full flex-1 flex-col overflow-hidden">
-          <div className="flex h-full w-full items-start justify-start overflow-hidden">
+          <div className="mb-1.5 flex h-full w-full items-start justify-start overflow-hidden">
             {/* side panel */}
             <div className="scrollbar flex h-full w-20 flex-col items-center justify-between overflow-y-auto pb-4">
               <div className="flex flex-1 flex-col items-center justify-start gap-3">
@@ -161,7 +168,7 @@ const RootLayout = () => {
             {/* side panel */}
 
             {/* content panel */}
-            <div className="bg-primary-dark mr-2 flex h-full w-full flex-col overflow-hidden rounded-t-2xl border border-b-0 border-white/10">
+            <div className="bg-primary-dark mr-1.5 flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/10">
               <Outlet />
             </div>
             {/* content panel */}

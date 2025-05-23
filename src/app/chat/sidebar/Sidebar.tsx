@@ -246,7 +246,7 @@ const Sidebar = () => {
                 opacity: 0,
               },
             }}
-            className="absolute top-0 left-0 z-[9999999] mt-[--spacing(13.2)] ml-[--spacing(21.5)] hidden items-start justify-start gap-2 md:flex"
+            className="absolute top-0 left-0 z-[9999999] mt-[--spacing(13.2)] ml-[--spacing(22)] hidden items-start justify-start gap-2 md:flex"
           >
             {/* sidebar toggle button */}
             <Button
