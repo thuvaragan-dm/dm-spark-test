@@ -60,8 +60,8 @@
   },
   publish: {
     provider: "github",
-    owner: "thuvaragan-dm", // Owner of the RELEASE repository
-    repo: "dm-desktop-release", // Name of your PUBLIC RELEASE repository
+    owner: "thuvaragan-dm",
+    repo: "dm-desktop-dev-release",
     // "private": false, // Not needed if the release repo is public. electron-builder defaults to public.
     releaseType: "draft",
   },
