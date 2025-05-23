@@ -6,14 +6,13 @@ import { IoReader } from "react-icons/io5";
 import { useSearchParams } from "react-router-dom";
 import { documentKey, EDocument } from "../../../api/document/config";
 import { useUploadDocument } from "../../../api/document/useUploadDocument";
-// import Grid from "../../../components/patterns/Grid";
+import DotPattern from "../../../components/patterns/DotPattern";
 import useFileUpload from "../../../hooks/useFileUpload";
 import { useAgent } from "../../../store/agentStore";
 import {
   useChatInput,
   useChatInputActions,
 } from "../../../store/chatInputStore";
-// import { cn } from "../../../utilities/cn";
 import ChatInput from "./ChatInput";
 import ChatThreads from "./ChatThreads";
 import ChatZeroState from "./ChatZeroState";
@@ -88,7 +87,7 @@ const ChatArea = () => {
   return (
     <section
       {...getRootProps()}
-      className="dark:bg-primary-dark-foreground relative flex w-full flex-1 flex-col items-center justify-center overflow-hidden bg-gray-100 focus:outline-0"
+      className="dark:bg-primary-dark-foreground-dark relative flex w-full flex-1 flex-col items-center justify-center overflow-hidden bg-gray-100 focus:outline-0"
     >
       <AnimatePresence>
         {isDragActive && (
@@ -121,9 +120,8 @@ const ChatArea = () => {
 
       {/* pattern */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        <div className="from-primary/20 dark:from-primary/50 pointer-events-none relative size-full bg-gradient-to-b to-transparent mask-b-from-0 [mask-image:linear-gradient(45deg,transparent,white)] dark:opacity-45"></div>
-        <div className="pattern absolute inset-0 mask-b-from-0.5 mask-b-to-50% opacity-50 dark:hidden"></div>
-        <div className="pattern-dark absolute inset-0 hidden mask-b-from-0.5 mask-b-to-50% opacity-30 dark:block"></div>
+        {/* <div className="from-primary/20 dark:from-primary/50 pointer-events-none relative size-full bg-gradient-to-b to-transparent mask-b-from-0 [mask-image:linear-gradient(45deg,transparent,white)] dark:opacity-45"></div> */}
+        <DotPattern className="inset-0 mask-x-from-0% mask-b-from-0.5 mask-b-to-50% fill-gray-900 dark:fill-white dark:opacity-50" />
       </div>
       {/* pattern */}
 

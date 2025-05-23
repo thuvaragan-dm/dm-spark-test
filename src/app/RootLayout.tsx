@@ -23,7 +23,7 @@ const RootLayout = () => {
   const { canGoBack, canGoForward, goBack, goForward } = useAppHistory();
 
   return (
-    <main className="from-primary-darker to-primary-dark-foreground @container relative flex h-dvh w-full flex-col bg-gradient-to-br font-sans">
+    <main className="@container relative flex h-dvh w-full flex-col bg-gradient-to-br from-[#11072A] to-[#070312] font-sans">
       <div className="app-region-drag pointer-events-none absolute inset-x-0 z-20 h-10"></div>
       <nav className="absolute inset-x-0 top-0 z-10 flex h-10 flex-col items-center justify-center bg-transparent">
         {accessToken && user && (
@@ -155,7 +155,7 @@ const RootLayout = () => {
                   <Avatar
                     Fallback={() => (
                       <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
-                        {user?.first_name[0]} {user?.last_name[0]}
+                        {user?.first_name?.[0]} {user?.last_name?.[0]}
                       </Avatar.Fallback>
                     )}
                     className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-11 w-full shrink-0 items-center justify-center rounded-none object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
@@ -168,7 +168,7 @@ const RootLayout = () => {
             {/* side panel */}
 
             {/* content panel */}
-            <div className="bg-primary-dark mr-1.5 flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/10">
+            <div className="mr-1.5 flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/10">
               <Outlet />
             </div>
             {/* content panel */}
