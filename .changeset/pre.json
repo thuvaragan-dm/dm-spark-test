@@ -5,6 +5,7 @@
     "dm-electron-vite": "0.0.0"
   },
   "changesets": [
+    "all-houses-give",
     "fresh-islands-dress",
     "good-lizards-do",
     "light-cases-tie",
