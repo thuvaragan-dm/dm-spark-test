@@ -20,7 +20,6 @@ import useSendMessage from "./useSendMessage";
 import useStream from "./useStream";
 
 const ChatArea = () => {
-  //new dev change
   const { selectedAgent } = useAgent();
   const [searchParams] = useSearchParams();
 
