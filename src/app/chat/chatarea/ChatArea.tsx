@@ -120,7 +120,7 @@ const ChatArea = () => {
 
       {/* pattern */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        {/* <div className="from-primary/20 dark:from-primary/50 pointer-events-none relative size-full bg-gradient-to-b to-transparent mask-b-from-0 [mask-image:linear-gradient(45deg,transparent,white)] dark:opacity-45"></div> */}
+        <div className="from-primary/20 dark:from-primary/50 pointer-events-none relative size-full bg-gradient-to-b to-transparent mask-b-from-0 [mask-image:linear-gradient(45deg,transparent,white)] dark:opacity-50"></div>
         <DotPattern className="inset-0 mask-x-from-0% mask-b-from-0.5 mask-b-to-50% fill-gray-900 dark:fill-white dark:opacity-50" />
       </div>
       {/* pattern */}
