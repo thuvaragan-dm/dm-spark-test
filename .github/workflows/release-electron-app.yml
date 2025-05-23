@@ -41,6 +41,31 @@ jobs:
         # Runs 'npm ci' at the root of your repository
         run: npm ci
 
+      # --- ADD THIS DEBUGGING STEP ---
+      - name: Debug Environment and Variables
+        run: |
+          echo "Workflow triggered by tag: ${{ github.ref_name }}"
+          echo "Condition for dev environment (startsWith 'dev-'): ${{ startsWith(github.ref_name, 'dev-') }}"
+          echo "Selected environment should be: ${{ startsWith(github.ref_name, 'dev-') && 'development' || 'production' }}"
+          echo "--- Values from selected GitHub Environment ---"
+          echo "TARGET_OWNER from vars: ${{ vars.TARGET_OWNER }}"
+          echo "TARGET_REPO_NAME from vars: ${{ vars.TARGET_REPO_NAME }}"
+          echo "--- Token Info ---"
+          echo "Secret name used for GITHUB_TOKEN in next step: GH_RELEASE_PAT (Ensure this matches your actual config)"
+          if [ -n "${{ secrets.GH_RELEASE_PAT }}" ]; then
+            echo "GH_RELEASE_PAT secret IS SET."
+          else
+            echo "GH_RELEASE_PAT secret IS NOT SET or empty (check environment: ${{ startsWith(github.ref_name, 'dev-') && 'development' || 'production' }})."
+          fi
+          echo "--- Checking other secrets for macOS (example, will only show if set) ---"
+          if [ -n "${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}" ]; then
+            echo "APPLE_DEVELOPER_ID_P12_BASE64 IS SET."
+          else
+            echo "APPLE_DEVELOPER_ID_P12_BASE64 IS NOT SET or empty."
+          fi
+        shell: bash
+      # --- END OF DEBUGGING STEP ---
+
       - name: Build and Package Electron App
         # This command runs your 'build' script (defined in your root package.json)
         # which should execute 'tsc && vite build && electron-builder'.
