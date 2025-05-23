@@ -4,5 +4,7 @@
   "initialVersions": {
     "dm-electron-vite": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "clean-areas-build"
+  ]
 }
