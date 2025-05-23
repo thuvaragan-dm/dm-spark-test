@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "echo '>>>> Build Script ENV: GH_OWNER=$GH_OWNER, GH_REPO=$GH_REPO' && tsc && vite build && electron-builder",
+    "build": "echo \"NPM SCRIPT DEBUG: GH_OWNER=$GH_OWNER, GH_REPO=$GH_REPO\" && tsc && vite build && electron-builder --publish onTag",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "changeset:add": "changeset add",
