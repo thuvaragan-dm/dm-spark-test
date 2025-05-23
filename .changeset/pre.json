@@ -5,6 +5,7 @@
     "dm-electron-vite": "0.0.0"
   },
   "changesets": [
-    "clean-areas-build"
+    "clean-areas-build",
+    "crazy-jobs-invent"
   ]
 }
