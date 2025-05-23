@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 2.1.1
+
+### Patch Changes
+
+- [#32](https://github.com/thuvaragan-dm/dm-desktop-test/pull/32) [`c7f4440`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/c7f4440723e7d07377e5e2ed1e6fa2d2a3be8eea) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - increased opacity in chat area.
+
 ## 2.1.1-dev.0
 
 ### Patch Changes
