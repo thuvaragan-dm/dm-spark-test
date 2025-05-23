@@ -5,6 +5,7 @@
     "dm-electron-vite": "0.0.0"
   },
   "changesets": [
-    "fresh-islands-dress"
+    "fresh-islands-dress",
+    "light-cases-tie"
   ]
 }
