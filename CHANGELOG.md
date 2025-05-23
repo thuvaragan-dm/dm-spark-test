@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 2.1.2
+
+### Patch Changes
+
+- [`c869343`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/c86934301b6dafef8d3b753cb12ab4d291fcc45b) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - master yaml reverted.
+
 ## 2.1.1
 
 ### Patch Changes
