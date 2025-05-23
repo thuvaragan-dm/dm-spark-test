@@ -6,7 +6,7 @@ name: Changesets Version PR
 on:
   push:
     branches:
-      - master # Your primary branch
+      - development # Your primary branch
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
