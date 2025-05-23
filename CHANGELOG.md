@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 2.1.0
+
+### Minor Changes
+
+- [`b436593`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/b436593e3b364b3e82c6b254b448795c9f6dfbff) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - now handles environments.
+
 ## 2.0.4
 
 ### Patch Changes
