@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 2.0.4
+
+### Patch Changes
+
+- [`1b02598`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/1b02598e790f70422f3d1c32e2b5f62252de6141) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - implemented fallback when no agents configured
+
 ## 2.0.3
 
 ### Patch Changes
