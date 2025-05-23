@@ -1,5 +1,11 @@
 # dm-electron-vite
 
+## 1.0.0-dev.8
+
+### Patch Changes
+
+- [`eeb5d41`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/eeb5d419d604ff0f954797dab919acd0cf8e555b) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - login url updated.
+
 ## 1.0.0-dev.7
 
 ### Patch Changes
