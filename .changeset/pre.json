@@ -1,0 +1,10 @@
+{
+  "mode": "pre",
+  "tag": "dev",
+  "initialVersions": {
+    "dm-electron-vite": "2.1.0"
+  },
+  "changesets": [
+    "fast-items-allow"
+  ]
+}
