@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.2.1
+
+### Patch Changes
+
+- [`b30bcbe`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/b30bcbe0def5d71fcd770348290c14735b8a42bc) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - tooltip bug fixed.
+
 ## 2.2.0
 
 ### Minor Changes
