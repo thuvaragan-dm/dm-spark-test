@@ -1,22 +1,10 @@
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { ComponentProps } from "react";
+import { TooltipTrigger } from "react-aria-components";
 
-type ITooltipRoot = ComponentProps<typeof Tooltip.Root> & {
-  delayDuration?: number;
-};
+type ITooltipRoot = ComponentProps<typeof TooltipTrigger>;
 
-const TooltipRoot = ({
-  children,
-  delayDuration = 700,
-  ...props
-}: ITooltipRoot) => {
-  return (
-    <Tooltip.Provider delayDuration={delayDuration}>
-      <Tooltip.Root disableHoverableContent={false} {...props}>
-        {children}
-      </Tooltip.Root>
-    </Tooltip.Provider>
-  );
+const TooltipRoot = ({ children, ...props }: ITooltipRoot) => {
+  return <TooltipTrigger {...props}>{children}</TooltipTrigger>;
 };
 
 export default TooltipRoot;

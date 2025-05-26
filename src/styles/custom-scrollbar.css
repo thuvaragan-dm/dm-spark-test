@@ -5,8 +5,8 @@
 /* Webkit browser-specific scrollbar styles */
 .scrollbar::-webkit-scrollbar {
   background-color: rgba(0, 0, 0, 0);
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   z-index: 999999;
 }
 
@@ -38,4 +38,8 @@
 .scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #838386;
   border: 0px;
+}
+
+.scrollbar::-webkit-scrollbar-corner {
+  background-color: transparent;
 }

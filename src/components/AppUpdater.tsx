@@ -33,7 +33,7 @@ const AppUpdater: React.FC = () => {
               title={`Update Available: v${info.version}`}
               description="A new version is ready to download."
               Custom={() => (
-                <div className="mt-5 flex w-full items-center justify-end gap-2">
+                <div className="mt-3 flex w-full items-center justify-end gap-2">
                   <Button
                     onClick={() => toast.dismiss("update-available-toast")}
                     className={"rounded-md px-2 py-1 text-xs md:px-2 md:py-1"}

@@ -16,13 +16,20 @@ interface UpdateProgressInfo {
 }
 
 // Interface for electron-updater UpdateInfo object
+// (Matches the structure from electron-updater's UpdateInfo)
 interface ElectronUpdateInfo {
-  version: string;
-  releaseDate?: string;
-  files?: Array<{ url: string; sha512: string; size?: number }>;
-  path?: string;
-  sha512?: string;
-  releaseName?: string;
+  readonly version: string;
+  readonly files: Array<{
+    readonly url: string;
+    readonly sha512: string;
+    size?: number | null;
+    blockMapSize?: number | null;
+  }>;
+  readonly path: string;
+  readonly sha512: string;
+  readonly releaseDate: string;
+  releaseName?: string | null;
+  releaseNotes?: string | object | Array<object> | null;
   // Add other properties from UpdateInfo if needed
 }
 
@@ -81,5 +88,7 @@ interface Window {
     onThemeUpdated: (callback: (isDarkMode: boolean) => void) => () => void;
     onWindowFocused: (callback: () => void) => () => void;
     onWindowBlurred: (callback: () => void) => () => void;
+    // Added for the sidebar toggle functionality
+    onToggleSidebar: (callback: () => void) => () => void;
   };
 }

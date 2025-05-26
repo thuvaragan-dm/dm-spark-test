@@ -1,3 +1,4 @@
+// In your main process file (e.g., main.ts)
 import {
   app,
   BrowserWindow,
@@ -5,10 +6,13 @@ import {
   shell,
   dialog,
   nativeTheme,
+  Menu,
+  // MenuItem, // MenuItem is not directly used if building from template
+  MenuItemConstructorOptions, // Import this type for the template
 } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath, URL } from "node:url";
+import { fileURLToPath, URL } from "node:url"; // Added URL for parsing
 import { autoUpdater, UpdateInfo } from "electron-updater";
 
 // Determine the correct __dirname for ESM context.
@@ -156,7 +160,7 @@ async function handleUrlAndExtractToken(urlLink: string) {
   console.log("[Main] Handling URL:", urlLink);
   let extractedToken: string | null = null;
   try {
-    const parsedUrl = new URL(urlLink);
+    const parsedUrl = new URL(urlLink); // Using Node.js URL
     if (parsedUrl.protocol === "dm:") {
       extractedToken = parsedUrl.searchParams.get("authtoken");
 
@@ -187,7 +191,7 @@ async function handleUrlAndExtractToken(urlLink: string) {
           win &&
           win.webContents &&
           !win.webContents.isDestroyed() &&
-          !win.webContents.isLoading()
+          !win.webContents.isLoading() // Check if not loading
         ) {
           sendTokenToRenderer(currentAuthToken);
         } else {
@@ -241,9 +245,9 @@ async function onDeepLinkReceived(urlLink: string) {
     console.log(
       "[Main] Window not available after deep link. Queuing URL or creating window.",
     );
-    deeplinkUrlToProcess = urlLink;
+    deeplinkUrlToProcess = urlLink; // Re-queue if window creation is needed
     if (BrowserWindow.getAllWindows().length === 0) {
-      await createWindow();
+      await createWindow(); // Ensure window is created if none exist
     }
   } else {
     if (win.isMinimized()) win.restore();
@@ -281,8 +285,6 @@ if (!gotTheLock) {
 // --- Function to Apply Theme to TitleBar Overlay ---
 function applyThemeToTitleBarOverlay() {
   if (!win || win.isDestroyed() || process.platform === "darwin") {
-    // This function is primarily for Windows titleBarOverlay customization
-    // and not needed if we are fully custom on macOS.
     return;
   }
 
@@ -291,8 +293,8 @@ function applyThemeToTitleBarOverlay() {
 
   try {
     win.setTitleBarOverlay({
-      color: "rgba(0, 0, 0, 0)", // Transparent background to blend with web content
-      symbolColor: isDarkMode ? "#FFFFFF" : "#000000", // White for dark, Black for light
+      color: "rgba(0, 0, 0, 0)",
+      symbolColor: isDarkMode ? "#FFFFFF" : "#000000",
     });
   } catch (error) {
     console.error("[Main] Failed to set title bar overlay:", error);
@@ -317,22 +319,18 @@ async function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-
-    // Conditional titleBarStyle and titleBarOverlay
     ...(process.platform === "darwin"
       ? { titleBarStyle: "hiddenInset" }
       : {
-          // For Windows/Linux, to enable custom title bar area
           titleBarStyle: "hidden",
           titleBarOverlay: {
-            color: "rgba(0, 0, 0, 0)", // Transparent background
-            symbolColor: isInitialDarkMode ? "#FFFFFF" : "#000000", // Initial symbol color
+            color: "rgba(0, 0, 0, 0)",
+            symbolColor: isInitialDarkMode ? "#FFFFFF" : "#000000",
             height: 35,
           },
         }),
   });
 
-  // Apply theme to titleBarOverlay for Windows/Linux if it was configured
   if (process.platform !== "darwin") {
     applyThemeToTitleBarOverlay();
   }
@@ -347,11 +345,11 @@ async function createWindow() {
       deeplinkUrlToProcess = null;
       await handleUrlAndExtractToken(urlToProcess);
     }
+    // Ensure token is sent even if not from a fresh deep link but loaded from file
     if (currentAuthToken) {
       sendTokenToRenderer(currentAuthToken);
     }
 
-    // AutoUpdater check
     if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
       if (!process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
         console.warn(
@@ -378,7 +376,7 @@ async function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
-    // win.webContents.openDevTools(); // Uncomment for dev tools
+    // win.webContents.openDevTools(); // Ensure DevTools do NOT open on startup, use menu instead
   } else {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
@@ -387,7 +385,6 @@ async function createWindow() {
     win = null;
   });
 
-  // Send window focus state to renderer for custom title bar styling (optional)
   win.on("focus", () => {
     if (win && !win.isDestroyed()) {
       win.webContents.send("window-focused");
@@ -405,23 +402,157 @@ app.whenReady().then(async () => {
   currentAuthToken = await loadTokenFromFile();
   const initialUrlFromArgs = process.argv.find((arg) => arg.startsWith("dm:"));
   if (initialUrlFromArgs) {
-    deeplinkUrlToProcess = initialUrlFromArgs;
+    deeplinkUrlToProcess = initialUrlFromArgs; // Process this after window creation
   }
 
-  await createWindow();
+  await createWindow(); // Create the main window
 
-  // Listen for OS theme changes to update title bar symbols (Windows specific for color options)
+  // --- Application Menu Setup ---
+  const menuTemplateElements: MenuItemConstructorOptions[] = [];
+
+  // App Menu (macOS only)
+  if (process.platform === "darwin") {
+    menuTemplateElements.push({
+      role: "appMenu",
+    } as MenuItemConstructorOptions);
+  }
+
+  // Go Menu (always present)
+  menuTemplateElements.push({
+    label: "Go",
+    submenu: [
+      {
+        label: "History",
+        submenu: [
+          {
+            label: "Back",
+            accelerator: process.platform === "darwin" ? "Cmd+[" : "Ctrl+Left", // Adjusted for common Ctrl usage
+            click: () => {
+              const focusedWindow = BrowserWindow.getFocusedWindow();
+              if (focusedWindow && focusedWindow.webContents.canGoBack()) {
+                focusedWindow.webContents.goBack();
+              }
+            },
+          },
+          {
+            label: "Forward",
+            accelerator: process.platform === "darwin" ? "Cmd+]" : "Ctrl+Right", // Adjusted for common Ctrl usage
+            click: () => {
+              const focusedWindow = BrowserWindow.getFocusedWindow();
+              if (focusedWindow && focusedWindow.webContents.canGoForward()) {
+                focusedWindow.webContents.goForward();
+              }
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  // --- View Menu Setup ---
+  const viewMenuSubItems: MenuItemConstructorOptions[] = [
+    {
+      label: "Toggle Sidebar",
+      accelerator: "CmdOrCtrl+B",
+      click: () => {
+        if (win && !win.isDestroyed()) {
+          console.log("[Menu] Toggle Sidebar clicked");
+          win.webContents.send("toggle-sidebar");
+        }
+      },
+    },
+    { type: "separator" },
+    { role: "togglefullscreen" },
+  ];
+
+  // Add developer-specific items to View menu only in development
+  if (VITE_DEV_SERVER_URL) {
+    viewMenuSubItems.unshift(
+      // Add to the beginning of the submenu
+      { role: "reload" },
+      { role: "forceReload" },
+      { role: "toggleDevTools" },
+      { type: "separator" },
+      { role: "resetZoom" },
+      { role: "zoomIn" },
+      { role: "zoomOut" },
+      { type: "separator" },
+    );
+  }
+
+  menuTemplateElements.push({
+    label: "View",
+    submenu: viewMenuSubItems,
+  });
+  // --- End of View Menu Setup ---
+
+  // Window Menu (always present)
+  menuTemplateElements.push({
+    label: "Window",
+    role: "windowMenu",
+  });
+
+  // Help Menu (always present)
+  menuTemplateElements.push({
+    label: "Help",
+    role: "help",
+    submenu: [
+      {
+        label: "Learn More",
+        click: async () => {
+          await shell.openExternal("https://deepmodel.ai");
+        },
+      },
+      {
+        label: "Check for Updates...",
+        click: () => {
+          console.log("[Menu] User requested Check for Updates...");
+          if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
+            autoUpdater.checkForUpdates().catch((err) => {
+              console.error(
+                "[AutoUpdater] Error checking for updates via menu:",
+                err.message || err,
+              );
+              if (win && !win.isDestroyed()) {
+                dialog.showErrorBox(
+                  "Update Check Failed",
+                  "Could not check for updates at this time. " +
+                    (err.message || err),
+                );
+              }
+            });
+          } else {
+            if (win && !win.isDestroyed()) {
+              // Ensure win exists before showing dialog
+              dialog.showMessageBox(win, {
+                type: "info",
+                title: "Check for Updates",
+                message: "Update checks are disabled in development mode.",
+              });
+            } else {
+              console.warn(
+                "[Menu] Window not available to show 'Check for Updates' dialog in dev mode.",
+              );
+            }
+          }
+        },
+      },
+    ],
+  });
+
+  const menu = Menu.buildFromTemplate(menuTemplateElements);
+  Menu.setApplicationMenu(menu);
+  // --- End of Application Menu Setup ---
+
   if (process.platform !== "darwin") {
     nativeTheme.on("updated", () => {
       console.log("[Main] OS theme updated event received.");
       applyThemeToTitleBarOverlay();
-      // Also notify renderer if theme changes, for custom controls
       if (win && !win.isDestroyed()) {
         win.webContents.send("theme-updated", nativeTheme.shouldUseDarkColors);
       }
     });
   } else {
-    // For macOS, still send theme updates for custom controls
     nativeTheme.on("updated", () => {
       console.log("[Main] OS theme updated event received on macOS.");
       if (win && !win.isDestroyed()) {
@@ -430,7 +561,6 @@ app.whenReady().then(async () => {
     });
   }
 
-  // AutoUpdater event listeners
   if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
     autoUpdater.on("update-available", (info: UpdateInfo) => {
       console.log("[AutoUpdater] Update available:", info);
@@ -537,7 +667,7 @@ ipcMain.on("window-control-maximize-restore", () => {
   console.log("[Main] Received request to maximize/restore window.");
   if (win) {
     if (win.isMaximized()) {
-      win.unmaximize(); // Restores to previous size
+      win.unmaximize();
     } else {
       win.maximize();
     }
@@ -624,6 +754,14 @@ ipcMain.on("download-update", () => {
     });
   } else {
     console.log("[AutoUpdater] Download update skipped in development mode.");
+    if (win && !win.isDestroyed()) {
+      // Ensure win exists
+      dialog.showMessageBox(win, {
+        type: "info",
+        title: "Download Update",
+        message: "Update downloads are disabled in development mode.",
+      });
+    }
   }
 });
 
@@ -635,6 +773,14 @@ ipcMain.on("quit-and-install-update", () => {
     console.log(
       "[AutoUpdater] Quit and install update skipped in development mode.",
     );
+    if (win && !win.isDestroyed()) {
+      // Ensure win exists
+      dialog.showMessageBox(win, {
+        type: "info",
+        title: "Install Update",
+        message: "Update installation is disabled in development mode.",
+      });
+    }
   }
 });
 

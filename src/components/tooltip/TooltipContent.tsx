@@ -1,20 +1,20 @@
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { ComponentProps, useEffect, useState } from "react";
+import { ComponentProps } from "react";
+import { Tooltip } from "react-aria-components";
+import { cn } from "../../utilities/cn";
 
-type ITooltipContent = ComponentProps<typeof Tooltip.Content>;
+type ITooltipContent = ComponentProps<typeof Tooltip>;
 
-const TooltipContent = ({ children, ...props }: ITooltipContent) => {
-  const [doc, setDoc] = useState<Document | undefined>(undefined);
-  useEffect(() => {
-    if (window) {
-      setDoc(window.document);
-    }
-  }, []);
-
+const TooltipContent = ({ children, className, ...props }: ITooltipContent) => {
   return (
-    <Tooltip.Portal container={doc?.getElementById("tooltip-container")}>
-      <Tooltip.Content {...props}>{children}</Tooltip.Content>
-    </Tooltip.Portal>
+    <Tooltip
+      className={cn(
+        "relative flex flex-col rounded-lg border border-gray-300 bg-white/90 p-3 shadow-lg backdrop-blur-lg dark:border-white/10 dark:bg-white/5",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </Tooltip>
   );
 };
 

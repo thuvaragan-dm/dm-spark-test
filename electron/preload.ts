@@ -22,6 +22,7 @@ const ALLOWED_LISTEN_CHANNELS = [
   "theme-updated", // For theme changes
   "window-focused", // For window focus state
   "window-blurred", // For window blur state
+  "toggle-sidebar", // <--- ADD THIS CHANNEL
 ];
 
 const ALLOWED_SEND_CHANNELS = [
@@ -60,7 +61,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   off(channel: string, listener: (...args: unknown[]) => void) {
     // It's good practice to check if the channel was allowed for listening
     // though removeListener won't error if it wasn't.
-    ipcRenderer.removeListener(channel, listener);
+    if (ALLOWED_LISTEN_CHANNELS.includes(channel)) {
+      // Optional: check before removing
+      ipcRenderer.removeListener(channel, listener);
+    }
   },
   send(channel: string, ...args: unknown[]) {
     if (ALLOWED_SEND_CHANNELS.includes(channel)) {
@@ -152,8 +156,24 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("window-blurred", listener);
     return () => ipcRenderer.removeListener("window-blurred", listener);
   },
+
+  // --- ADD THIS FUNCTION for Toggle Sidebar ---
+  onToggleSidebar: (callback: () => void): (() => void) => {
+    const channel = "toggle-sidebar";
+    // Make sure the channel is allowed (optional, but good for consistency if you change ALLOWED_LISTEN_CHANNELS later)
+    if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
+      console.warn(
+        `[Preload] Attempted to listen on disallowed channel '${channel}' via onToggleSidebar`,
+      );
+      return () => {}; // Return a no-op cleanup function
+    }
+    const listener = () => callback(); // Event object is stripped
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
+  // --- END OF ADDED FUNCTION ---
 });
 
 console.log(
-  "[Preload] Script loaded and electronAPI exposed with window controls.",
+  "[Preload] Script loaded and electronAPI exposed with window controls and sidebar toggle listener.",
 );

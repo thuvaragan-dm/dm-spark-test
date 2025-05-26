@@ -4,7 +4,7 @@ import {
   motion,
   useAnimationControls,
 } from "motion/react";
-import { forwardRef } from "react";
+import { ComponentProps, forwardRef } from "react";
 import { Button as Btn, ButtonProps, PressEvent } from "react-aria-components";
 import { cn } from "../utilities/cn";
 import Spinner from "./Spinner";
@@ -164,7 +164,10 @@ const ButtonWithLoader = forwardRef<HTMLButtonElement, IButton>(
           }}
           onPress={handleClick}
           isDisabled={disabled || isLoading}
-          className={cn("relative", ButtonVariants({ variant, className }))}
+          className={cn(
+            "relative [--border-highlight-radius:var(--radius-xl)]",
+            ButtonVariants({ variant, className }),
+          )}
           {...props}
           aria-disabled={disabled || isLoading}
         >
@@ -253,14 +256,25 @@ Button.displayName = "Button";
 
 export { Button, ButtonWithLoader };
 
-const BorderHighligher = () => {
+interface IBorderHighligher extends ComponentProps<"div"> {}
+const BorderHighligher = ({ className }: IBorderHighligher) => {
   return (
     <>
-      <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-        <div className="size-full rounded-xl border-t-2 border-white/20"></div>
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-0 overflow-hidden rounded-[var(--border-highlight-radius)]",
+          className,
+        )}
+      >
+        <div className="size-full rounded-[var(--border-highlight-radius)] border-t-2 border-white/20"></div>
       </span>
-      <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-        <div className="size-full rounded-xl border border-t-0 border-white/10"></div>
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-0 overflow-hidden rounded-[var(--border-highlight-radius)]",
+          className,
+        )}
+      >
+        <div className="size-full rounded-[var(--border-highlight-radius)] border border-t-0 border-white/10"></div>
       </span>
     </>
   );

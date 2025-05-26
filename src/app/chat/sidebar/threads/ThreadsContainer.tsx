@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import { ComponentProps } from "react";
-import { IoChatboxOutline, IoClipboardOutline } from "react-icons/io5";
-import ThreadButton from "./ThreadButton";
-import { BinnedThreads } from "./binThreads";
+import { VscComment, VscTasklist } from "react-icons/vsc";
 import { useAgent } from "../../../../store/agentStore";
 import { useRerenderer } from "../../../../store/rerendererStore";
+import ThreadButton from "./ThreadButton";
+import { BinnedThreads } from "./binThreads";
 
 interface IThreadsContainer extends ComponentProps<"div"> {
   threads: BinnedThreads;
@@ -20,7 +20,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
       <div className="w-full">
         {today && today.length > 0 && (
           <>
-            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
+            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 min-w-0 shrink-0 overflow-hidden bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
               Today
             </p>
 
@@ -38,9 +38,9 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       id={thread.id}
                       Icon={() =>
                         thread.has_task ? (
-                          <IoClipboardOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscTasklist className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         ) : (
-                          <IoChatboxOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscComment className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         )
                       }
                       key={thread.id}
@@ -58,7 +58,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
       <div className="w-full">
         {yesterday && yesterday.length > 0 && (
           <>
-            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
+            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 min-w-0 shrink-0 overflow-hidden bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
               Yesterday
             </p>
 
@@ -76,9 +76,9 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       id={thread.id}
                       Icon={() =>
                         thread.has_task ? (
-                          <IoClipboardOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscTasklist className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         ) : (
-                          <IoChatboxOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscComment className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         )
                       }
                       key={thread.id}
@@ -96,7 +96,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
       <div className="w-full">
         {lastWeek && lastWeek.length > 0 && (
           <>
-            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
+            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 min-w-0 shrink-0 overflow-hidden bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
               Last week
             </p>
 
@@ -114,9 +114,9 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       id={thread.id}
                       Icon={() =>
                         thread.has_task ? (
-                          <IoClipboardOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscTasklist className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         ) : (
-                          <IoChatboxOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscComment className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         )
                       }
                       key={thread.id}
@@ -134,7 +134,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
       <div className="w-full">
         {last30Days && last30Days.length > 0 && (
           <>
-            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
+            <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 min-w-0 shrink-0 overflow-hidden bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
               Last 30 days
             </p>
 
@@ -152,9 +152,9 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       id={thread.id}
                       Icon={() =>
                         thread.has_task ? (
-                          <IoClipboardOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscTasklist className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         ) : (
-                          <IoChatboxOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                          <VscComment className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                         )
                       }
                       key={thread.id}
@@ -173,7 +173,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
         <div key={month} className="w-full">
           {month && histories.length > 0 && (
             <>
-              <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
+              <p className="dark:bg-primary-dark sticky top-0 z-10 -mx-3 min-w-0 shrink-0 overflow-hidden bg-white pt-2 pb-3 pl-3 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-500/60 uppercase dark:text-white/60">
                 {month}
               </p>
 
@@ -191,9 +191,9 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                         id={thread.id}
                         Icon={() =>
                           thread.has_task ? (
-                            <IoClipboardOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                            <VscTasklist className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                           ) : (
-                            <IoChatboxOutline className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
+                            <VscComment className="size-5 shrink-0 text-gray-600 dark:text-white/80" />
                           )
                         }
                         key={thread.id}

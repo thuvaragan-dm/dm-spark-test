@@ -15,6 +15,7 @@ import { useChatInputActions } from "../../../../store/chatInputStore";
 import { useRerendererActions } from "../../../../store/rerendererStore";
 import { CustomSlottedComponent } from "../../../../types/type-utils";
 import { cn } from "../../../../utilities/cn";
+import { VscEdit, VscTrash } from "react-icons/vsc";
 
 interface IThreadButton extends LinkProps {
   id: string;
@@ -88,7 +89,7 @@ const ThreadButton = ({
     <>
       <div className="group relative flex w-full items-center justify-center">
         {isEditable && (
-          <div className="dark:bg-primary-dark-foreground absolute inset-0 z-30 -mx-2 flex items-center justify-start gap-2 rounded-lg bg-gray-100 px-2">
+          <div className="absolute inset-0 z-30 -mx-2 flex items-center justify-start gap-2 rounded-lg bg-gray-100 px-2 dark:bg-[#1C1E1E]">
             <Icon />
             <input
               ref={inputRef}
@@ -113,11 +114,11 @@ const ThreadButton = ({
             reset();
           }}
           className={cn(
-            "dark:group-hover:bg-primary-dark-foreground -ml-2 line-clamp-1 flex w-full flex-1 items-center justify-center gap-2 rounded-lg p-2 font-normal group-hover:bg-gray-100 md:p-2",
+            "-ml-2 line-clamp-1 flex w-full flex-1 items-center justify-center gap-2 rounded-lg p-2 font-normal group-hover:bg-gray-100 md:p-2 dark:group-hover:bg-[#1C1E1E]",
             {
-              "dark:bg-primary-dark-foreground -mr-2 bg-gray-100":
+              "-mr-2 bg-gray-100 dark:bg-[#1C1E1E]":
                 isActive || searchParams.get("thread") === id,
-              "dark:bg-primary-dark-foreground bg-gray-100": isMenuOpen,
+              "bg-gray-100 dark:bg-[#1C1E1E]": isMenuOpen,
               "-mr-2": isEditable,
             },
           )}
@@ -140,7 +141,7 @@ const ThreadButton = ({
             <Dropdown open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <Dropdown.Button
                 className={cn(
-                  "dark:to-primary-dark-foreground cursor-pointer rounded-r-lg bg-gradient-to-r from-transparent to-gray-100 to-30% p-2 pl-4 text-gray-600 opacity-0 group-hover:opacity-100 hover:text-gray-800 data-[state=open]:text-gray-800 data-[state=open]:opacity-100 dark:text-white/80 dark:hover:text-white dark:data-[state=open]:text-white",
+                  "cursor-pointer rounded-r-lg bg-gradient-to-r from-transparent to-gray-100 to-30% p-2 pl-4 text-gray-600 opacity-0 group-hover:opacity-100 hover:text-gray-800 data-[state=open]:text-gray-800 data-[state=open]:opacity-100 dark:to-[#1C1E1E] dark:text-white/80 dark:hover:text-white dark:data-[state=open]:text-white",
                   {
                     "opacity-100":
                       isActive || searchParams.get("thread") === id,
@@ -161,7 +162,10 @@ const ThreadButton = ({
 
               <Dropdown.Menu
                 align="start"
-                className="dark:from-primary-dark dark:to-primary-dark-foreground rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-xl ring-[1px] ring-gray-300 dark:ring-white/10"
+                side="right"
+                alignOffset={-4}
+                sideOffset={5}
+                className="dark:bg-primary-dark/60 w-44 rounded-xl bg-gray-100/60 p-1 shadow-xl ring-[1px] ring-gray-300 dark:ring-white/10"
               >
                 <Dropdown.Item
                   onSelect={() => {
@@ -170,20 +174,9 @@ const ThreadButton = ({
                       inputRef?.current?.setSelectionRange(0, _name.length);
                     }, 10);
                   }}
-                  className="flex items-center gap-2 dark:text-white/80 dark:data-[highlighted]:text-white"
+                  className="flex items-center gap-2 rounded-[calc(var(--radius-xl)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="size-5"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      d="M14.36 4.079l.927-.927a3.932 3.932 0 015.561 5.561l-.927.927m-5.56-5.561s.115 1.97 1.853 3.707C17.952 9.524 19.92 9.64 19.92 9.64m-5.56-5.561l-8.522 8.52c-.577.578-.866.867-1.114 1.185a6.556 6.556 0 00-.749 1.211c-.173.364-.302.752-.56 1.526l-1.094 3.281m17.6-10.162L11.4 18.16c-.577.577-.866.866-1.184 1.114a6.554 6.554 0 01-1.211.749c-.364.173-.751.302-1.526.56l-3.281 1.094m0 0l-.802.268a1.06 1.06 0 01-1.342-1.342l.268-.802m1.876 1.876l-1.876-1.876"
-                    />
-                  </svg>
+                  <VscEdit className="size-4" />
 
                   <span>Rename</span>
                 </Dropdown.Item>
@@ -191,24 +184,12 @@ const ThreadButton = ({
                 <Dropdown.Item
                   color="rgb(220,38,38)"
                   highlightColor="rgba(220,38,38,0.2)"
-                  className="inline-flex w-28 items-center gap-2 text-red-600 data-[highlighted]:bg-red-500/20 data-[highlighted]:text-red-600"
+                  className="inline-flex w-full items-center gap-2 rounded-[calc(var(--radius-xl)-(--spacing(1)))] py-1.5 text-red-600 data-[highlighted]:bg-red-500/20 data-[highlighted]:text-red-600"
                   onSelect={() => {
                     setIsDeleteOpen(true);
                   }}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="size-5"
-                    viewBox="0 0 24 24"
-                  >
-                    <g fill="none" stroke="currentColor" strokeWidth={1.5}>
-                      <path
-                        strokeLinecap="round"
-                        d="M20.5 6h-17m15.333 2.5l-.46 6.9c-.177 2.654-.265 3.981-1.13 4.79-.865.81-2.196.81-4.856.81h-.774c-2.66 0-3.991 0-4.856-.81-.865-.809-.954-2.136-1.13-4.79l-.46-6.9"
-                      />
-                      <path d="M6.5 6h.11a2 2 0 001.83-1.32l.034-.103.097-.291c.083-.249.125-.373.18-.479a1.5 1.5 0 011.094-.788C9.962 3 10.093 3 10.355 3h3.29c.262 0 .393 0 .51.019a1.5 1.5 0 011.094.788c.055.106.097.23.18.479l.097.291A2 2 0 0017.5 6" />
-                    </g>
-                  </svg>
+                  <VscTrash className="size-5" />
                   Delete
                 </Dropdown.Item>
               </Dropdown.Menu>
@@ -232,19 +213,21 @@ const ThreadButton = ({
           </Link>
           .
         </p>
-        <div className="mt-2 flex w-full flex-col items-center justify-end gap-5 px-5 pt-5 pb-5 md:flex-row">
+        <div className="mt-2 flex w-full flex-col items-center justify-end gap-3 px-5 py-5 md:flex-row">
           <Modal.Close
             autoFocus={false}
             className={cn(
               ButtonVariants({ variant: "secondary" }),
-              "w-full md:w-auto",
+              "w-full rounded-md py-1 md:w-auto",
             )}
           >
             cancel
           </Modal.Close>
           <Button
             wrapperClass="w-full md:w-auto"
-            className={"w-full md:w-auto"}
+            className={
+              "w-full rounded-md py-1 [--border-highlight-radius:var(--radius-sm)] md:w-auto"
+            }
             variant={"danger"}
             onClick={async () => {
               const currentThread = searchParams.get("thread");
