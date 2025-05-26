@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.2.2
+
+### Patch Changes
+
+- [`c994b6f`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/c994b6fa656c447d1db30ccca786ddacb1ecfce2) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added logout.
+
 ## 2.2.1
 
 ### Patch Changes
