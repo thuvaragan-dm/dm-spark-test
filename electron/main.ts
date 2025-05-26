@@ -310,7 +310,7 @@ async function createWindow() {
 
   win = new BrowserWindow({
     width: 1250,
-    height: 850,
+    height: 800,
     minWidth: 950,
     minHeight: 650,
     icon: path.join(process.env.VITE_PUBLIC!, "electron-vite.svg"),

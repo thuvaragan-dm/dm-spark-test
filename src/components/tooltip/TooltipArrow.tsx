@@ -25,9 +25,9 @@ const TooltipArrow = ({ className, ...props }: ITooltipArrow) => {
         <rect width="24" height="2" />
         <path
           d="M24 1C18 1 17 11 12 11C7 11 6 0.999999 8.74228e-07 0.999999"
-          strokeWidth="1.5"
+          strokeWidth="2"
           strokeLinejoin="miter"
-          className="fill-white stroke-gray-300 dark:fill-[#262626] dark:stroke-white/10"
+          className="fill-white stroke-gray-300 dark:fill-[#262626] dark:stroke-[#3C3B3B]"
         />
       </svg>
     </OverlayArrow>

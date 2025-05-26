@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IoArrowBack, IoArrowForward, IoSearch } from "react-icons/io5";
 import { VscLayoutSidebarLeft, VscLayoutSidebarLeftOff } from "react-icons/vsc";
 import { Outlet, useNavigate } from "react-router-dom";
@@ -12,10 +12,11 @@ import { useSidebar, useSidebarActions } from "../store/sidebarStore";
 import { cn } from "../utilities/cn";
 import Login from "./Login";
 import { Focusable } from "react-aria-components";
+import Dropdown from "../components/dropdown";
 
 const RootLayout = () => {
   const { user, accessToken } = useAuth();
-  const { setAccessToken, refetchUser } = useAuthActions();
+  const { setAccessToken, refetchUser, logout } = useAuthActions();
   useEffect(() => {
     window.electronAPI.onTokenReceived((token) => {
       setAccessToken(token);
@@ -42,6 +43,8 @@ const RootLayout = () => {
       cleanupToggleSidebarListener();
     };
   }, [setIsSidebarExpanded]);
+
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
     <main className="from-primary-darker to-primary-darker-2 @container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
@@ -197,7 +200,7 @@ const RootLayout = () => {
         <section className="mt-10 flex w-full flex-1 flex-col overflow-hidden">
           <div className="mb-1.5 flex h-full w-full items-start justify-start overflow-hidden">
             {/* side panel */}
-            <div className="scrollbar flex h-full w-20 flex-col items-center justify-between overflow-y-auto pb-4">
+            <div className="flex h-full w-20 flex-col items-center justify-between overflow-hidden pb-4">
               <div className="flex flex-1 flex-col items-center justify-start gap-3">
                 {/* logo */}
                 <div className="bg-primary w-min rounded-xl p-2 text-white">
@@ -220,17 +223,97 @@ const RootLayout = () => {
 
               {/* user details */}
               <div className="flex flex-col items-center justify-center gap-2">
-                <div className="aspect-square size-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/10">
-                  <Avatar
-                    Fallback={() => (
-                      <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
-                        {user?.first_name?.[0]} {user?.last_name?.[0]}
-                      </Avatar.Fallback>
-                    )}
-                    className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-11 w-full shrink-0 items-center justify-center rounded-none object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
-                    src={user?.original_profile_picture_url || ""}
-                  />
-                </div>
+                <Dropdown
+                  open={isUserMenuOpen}
+                  onOpenChange={setIsUserMenuOpen}
+                >
+                  <Tooltip delay={700}>
+                    <Dropdown.Button asChild>
+                      <Button
+                        onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                        variant={"ghost"}
+                        wrapperClass="flex items-center justify-center"
+                        className="size-11 w-min cursor-pointer p-0 md:p-0"
+                      >
+                        <div className="aspect-square size-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/10">
+                          <Avatar
+                            Fallback={() => (
+                              <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
+                                {user?.first_name?.[0]} {user?.last_name?.[0]}
+                              </Avatar.Fallback>
+                            )}
+                            className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-11 w-full shrink-0 items-center justify-center rounded-none object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
+                            src={user?.original_profile_picture_url || ""}
+                          />
+                        </div>
+                      </Button>
+                    </Dropdown.Button>
+
+                    <Tooltip.Content
+                      className={"max-w-40"}
+                      placement="right"
+                      offset={10}
+                    >
+                      <h3 className="text-sm text-gray-800 dark:text-white">
+                        {user.first_name} {user.last_name}
+                      </h3>
+                      <Tooltip.Arrow className={"-mt-1.5"} />
+                    </Tooltip.Content>
+                  </Tooltip>
+
+                  <Dropdown.Menu
+                    side="right"
+                    align="end"
+                    className="dark:bg-primary-dark-foreground w-72 rounded-lg border border-gray-300 bg-white/90 p-1 shadow-xl backdrop-blur-lg dark:border-white/10"
+                    sideOffset={-10}
+                  >
+                    <div className="flex w-full items-center justify-start gap-3 p-3">
+                      <div className="aspect-square size-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/10">
+                        <Avatar
+                          Fallback={() => (
+                            <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
+                              {user?.first_name?.[0]} {user?.last_name?.[0]}
+                            </Avatar.Fallback>
+                          )}
+                          className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-11 w-full shrink-0 items-center justify-center rounded-none object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
+                          src={user?.original_profile_picture_url || ""}
+                        />
+                      </div>
+
+                      <div className="select-none">
+                        <h3 className="text-base font-medium text-gray-800 dark:text-white">
+                          {user.first_name} {user?.last_name}
+                        </h3>
+                        <p className="text-xs text-gray-600 dark:text-white/60">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <Dropdown.Divider className="my-2 dark:border-white/10" />
+                    <Dropdown.Item
+                      className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
+                      onSelect={() => navigate("/profile")}
+                    >
+                      Profile
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
+                      onSelect={() => navigate("/profile")}
+                    >
+                      Preferences
+                    </Dropdown.Item>
+
+                    <Dropdown.Divider className="mt-2 mb-1 dark:border-white/10" />
+                    <Dropdown.Item
+                      className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
+                      onSelect={() => {
+                        logout();
+                      }}
+                    >
+                      Sign out of Deepmodel
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
               </div>
               {/* user details */}
             </div>
