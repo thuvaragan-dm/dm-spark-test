@@ -27,7 +27,7 @@ const TooltipKeyboardShortcut = ({
           {shortcuts.map((shortcut, idx) => (
             <pre
               key={idx}
-              className="flex size-5 items-center justify-center rounded-sm bg-gray-200 text-sm font-medium shadow-sm dark:bg-white/10"
+              className="flex h-5 items-center justify-center rounded-sm bg-gray-200 px-2 text-sm font-medium shadow-sm dark:bg-white/10"
             >
               {shortcut}
             </pre>

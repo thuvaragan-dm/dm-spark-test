@@ -426,7 +426,7 @@ app.whenReady().then(async () => {
         submenu: [
           {
             label: "Back",
-            accelerator: process.platform === "darwin" ? "Cmd+[" : "Ctrl+Left", // Adjusted for common Ctrl usage
+            accelerator: process.platform === "darwin" ? "Cmd+[" : "Ctrl+[", // Adjusted for common Ctrl usage
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
               if (focusedWindow && focusedWindow.webContents.canGoBack()) {
@@ -436,7 +436,7 @@ app.whenReady().then(async () => {
           },
           {
             label: "Forward",
-            accelerator: process.platform === "darwin" ? "Cmd+]" : "Ctrl+Right", // Adjusted for common Ctrl usage
+            accelerator: process.platform === "darwin" ? "Cmd+]" : "Ctrl+]", // Adjusted for common Ctrl usage
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
               if (focusedWindow && focusedWindow.webContents.canGoForward()) {

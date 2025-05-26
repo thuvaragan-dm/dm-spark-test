@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { Button } from "../../components/Button";
 import { toast } from "sonner";
-import Success from "../../components/alerts/Success";
-import Information from "../../components/alerts/Information";
-import Warning from "../../components/alerts/Warning";
 import Error from "../../components/alerts/Error";
+import Information from "../../components/alerts/Information";
+import Success from "../../components/alerts/Success";
+import Warning from "../../components/alerts/Warning";
+import { Button } from "../../components/Button";
 
 const Explore = () => {
   return (
@@ -190,12 +190,6 @@ const Explore = () => {
           }
         >
           Version Update
-        </Button>
-      </div>
-
-      <div className="mt-5">
-        <Button className={"[--border-highlight-radius:var(--radius-xl)]"}>
-          hello
         </Button>
       </div>
     </div>
