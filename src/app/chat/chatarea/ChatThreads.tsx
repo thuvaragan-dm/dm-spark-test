@@ -379,11 +379,11 @@ const ChatThreads = ({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="bg-primary relative w-min rounded-full p-2 text-white dark:bg-black/10 dark:text-white/50"
+                  className="bg-primary dark:bg-primary-dark-foreground relative w-min rounded-full p-0.5 text-white dark:text-white/50"
                 >
                   <div className="absolute -inset-1 animate-spin rounded-full bg-gradient-to-b from-[#EDEEF1] from-20% to-transparent dark:from-[#1C1C1C]"></div>
                   <svg
-                    className="size-8"
+                    className="size-4"
                     fill="none"
                     viewBox="0 0 227 228"
                     xmlns="http://www.w3.org/2000/svg"

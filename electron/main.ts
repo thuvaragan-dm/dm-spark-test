@@ -413,9 +413,44 @@ app.whenReady().then(async () => {
   // App Menu (macOS only)
   if (process.platform === "darwin") {
     menuTemplateElements.push({
-      role: "appMenu",
-    } as MenuItemConstructorOptions);
+      role: "appMenu" as MenuItemConstructorOptions["role"],
+    });
   }
+
+  // Edit Menu
+  const editSubMenuConditionalItems: MenuItemConstructorOptions[] =
+    process.platform === "darwin"
+      ? [
+          { role: "pasteAndMatchStyle" as MenuItemConstructorOptions["role"] },
+          { role: "delete" as MenuItemConstructorOptions["role"] },
+          { role: "selectAll" as MenuItemConstructorOptions["role"] },
+          { type: "separator" },
+          {
+            label: "Speech",
+            submenu: [
+              { role: "startSpeaking" as MenuItemConstructorOptions["role"] },
+              { role: "stopSpeaking" as MenuItemConstructorOptions["role"] },
+            ],
+          },
+        ]
+      : [
+          { role: "delete" as MenuItemConstructorOptions["role"] },
+          { type: "separator" },
+          { role: "selectAll" as MenuItemConstructorOptions["role"] },
+        ];
+
+  menuTemplateElements.push({
+    label: "Edit",
+    submenu: [
+      { role: "undo" as MenuItemConstructorOptions["role"] },
+      { role: "redo" as MenuItemConstructorOptions["role"] },
+      { type: "separator" },
+      { role: "cut" as MenuItemConstructorOptions["role"] },
+      { role: "copy" as MenuItemConstructorOptions["role"] },
+      { role: "paste" as MenuItemConstructorOptions["role"] },
+      ...editSubMenuConditionalItems,
+    ],
+  });
 
   // Go Menu (always present)
   menuTemplateElements.push({
@@ -426,7 +461,7 @@ app.whenReady().then(async () => {
         submenu: [
           {
             label: "Back",
-            accelerator: process.platform === "darwin" ? "Cmd+[" : "Ctrl+[", // Adjusted for common Ctrl usage
+            accelerator: "CmdOrCtrl+[",
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
               if (focusedWindow && focusedWindow.webContents.canGoBack()) {
@@ -436,7 +471,7 @@ app.whenReady().then(async () => {
           },
           {
             label: "Forward",
-            accelerator: process.platform === "darwin" ? "Cmd+]" : "Ctrl+]", // Adjusted for common Ctrl usage
+            accelerator: "CmdOrCtrl+]",
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
               if (focusedWindow && focusedWindow.webContents.canGoForward()) {
@@ -450,7 +485,7 @@ app.whenReady().then(async () => {
   });
 
   // --- View Menu Setup ---
-  const viewMenuSubItems: MenuItemConstructorOptions[] = [
+  const viewMenuBaseSubItems: MenuItemConstructorOptions[] = [
     {
       label: "Toggle Sidebar",
       accelerator: "CmdOrCtrl+B",
@@ -462,40 +497,41 @@ app.whenReady().then(async () => {
       },
     },
     { type: "separator" },
-    { role: "togglefullscreen" },
+    { role: "togglefullscreen" as MenuItemConstructorOptions["role"] },
   ];
 
-  // Add developer-specific items to View menu only in development
+  let viewMenuFinalSubItems: MenuItemConstructorOptions[];
   if (VITE_DEV_SERVER_URL) {
-    viewMenuSubItems.unshift(
-      // Add to the beginning of the submenu
-      { role: "reload" },
-      { role: "forceReload" },
-      { role: "toggleDevTools" },
+    viewMenuFinalSubItems = [
+      { role: "reload" as MenuItemConstructorOptions["role"] },
+      { role: "forceReload" as MenuItemConstructorOptions["role"] },
+      { role: "toggleDevTools" as MenuItemConstructorOptions["role"] },
       { type: "separator" },
-      { role: "resetZoom" },
-      { role: "zoomIn" },
-      { role: "zoomOut" },
+      { role: "resetZoom" as MenuItemConstructorOptions["role"] },
+      { role: "zoomIn" as MenuItemConstructorOptions["role"] },
+      { role: "zoomOut" as MenuItemConstructorOptions["role"] },
       { type: "separator" },
-    );
+      ...viewMenuBaseSubItems,
+    ];
+  } else {
+    viewMenuFinalSubItems = viewMenuBaseSubItems;
   }
-
   menuTemplateElements.push({
     label: "View",
-    submenu: viewMenuSubItems,
+    submenu: viewMenuFinalSubItems,
   });
   // --- End of View Menu Setup ---
 
   // Window Menu (always present)
   menuTemplateElements.push({
     label: "Window",
-    role: "windowMenu",
+    role: "windowMenu" as MenuItemConstructorOptions["role"],
   });
 
   // Help Menu (always present)
   menuTemplateElements.push({
     label: "Help",
-    role: "help",
+    role: "help" as MenuItemConstructorOptions["role"],
     submenu: [
       {
         label: "Learn More",

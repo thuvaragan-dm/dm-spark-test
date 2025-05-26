@@ -130,7 +130,10 @@ const CopyButton = ({ message }: { message: string }) => {
         </AnimatePresence>
       </Button>
 
-      <Tooltip.Content placement="bottom">Copy</Tooltip.Content>
+      <Tooltip.Content placement="bottom" className={"p-1"} offset={10}>
+        <p className="text-sm text-gray-800 dark:text-white">Copy</p>
+        <Tooltip.Arrow />
+      </Tooltip.Content>
     </Tooltip>
   );
 };
@@ -193,7 +196,10 @@ const LikeButton = ({
         </svg>
       </Button>
 
-      <Tooltip.Content placement="bottom">Love this</Tooltip.Content>
+      <Tooltip.Content placement="bottom" className={"p-1"} offset={10}>
+        <p className="text-sm text-gray-800 dark:text-white">Love this</p>
+        <Tooltip.Arrow />
+      </Tooltip.Content>
     </Tooltip>
   );
 };
@@ -256,11 +262,11 @@ const DislikeButton = ({
         </svg>
       </Button>
 
-      <Tooltip.Content
-        placement="bottom"
-        className="dark:bg-primary-dark pointer-events-none rounded-lg bg-gray-200 p-1 px-2 text-sm text-gray-800 dark:text-white"
-      >
-        Needs improvement
+      <Tooltip.Content placement="bottom" className={"p-1"} offset={10}>
+        <p className="text-sm text-gray-800 dark:text-white">
+          Needs improvement
+        </p>
+        <Tooltip.Arrow />
       </Tooltip.Content>
     </Tooltip>
   );
@@ -278,16 +284,21 @@ const Sources = ({
   return (
     <Dropdown open={isOpen} onOpenChange={setIsOpen}>
       <Tooltip>
-        <Dropdown.Button
-          // onClick={async () => {}} // onClick for Dropdown.Button might not be needed if onOpenChange handles it
-          className={cn(
-            "cursor-pointer rounded-full p-2 text-gray-600 hover:bg-gray-300 md:p-2 dark:text-white/60 dark:hover:bg-white/10",
-          )}
-        >
-          <IoReaderOutline className="size-4" />
+        <Dropdown.Button asChild>
+          <Button
+            onClick={() => setIsOpen((prev) => !prev)}
+            variant={"ghost"}
+            wrapperClass="flex items-center justify-center"
+            className="cursor-pointer rounded-full p-2 text-gray-600 hover:bg-gray-300 md:p-2 dark:text-white/60 dark:hover:bg-white/10"
+          >
+            <IoReaderOutline className="size-4" />
+          </Button>
         </Dropdown.Button>
 
-        <Tooltip.Content placement="bottom">Sources</Tooltip.Content>
+        <Tooltip.Content placement="bottom" className={"p-1"} offset={10}>
+          <p className="text-sm text-gray-800 dark:text-white">Sources</p>
+          <Tooltip.Arrow />
+        </Tooltip.Content>
       </Tooltip>
 
       <Dropdown.Menu
