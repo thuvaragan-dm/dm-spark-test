@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.2.3
+
+### Patch Changes
+
+- [`df61a95`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/df61a95968bde1737df4b726499edf74eafc4f7e) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - fixed minor shortcut bugs
+
 ## 2.2.2
 
 ### Patch Changes
