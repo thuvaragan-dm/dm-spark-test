@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.2.4
+
+### Patch Changes
+
+- [`5143ecb`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/5143ecb5cf374f77ebc877f44863edf8be116afd) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - added combobox
+
 ## 2.2.3
 
 ### Patch Changes
