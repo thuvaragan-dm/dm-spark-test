@@ -1,18 +1,25 @@
-import { useEffect, useState } from "react";
-import { IoArrowBack, IoArrowForward, IoSearch } from "react-icons/io5";
-import { VscLayoutSidebarLeft, VscLayoutSidebarLeftOff } from "react-icons/vsc";
+import { ComboboxOption } from "@headlessui/react";
+import { useEffect, useMemo, useState } from "react";
+import { Focusable } from "react-aria-components";
+import { IoArrowBack, IoArrowForward } from "react-icons/io5";
+import {
+  VscLayoutSidebarLeft,
+  VscLayoutSidebarLeftOff,
+  VscSearch,
+} from "react-icons/vsc";
 import { Outlet, useNavigate } from "react-router-dom";
 import Avatar from "../components/Avatar";
 import { Button } from "../components/Button";
+import Combobox from "../components/Combobox";
+import Dropdown from "../components/dropdown";
 import Tooltip from "../components/tooltip";
 import { COMMAND_KEY } from "../components/tooltip/TooltipKeyboardShortcut";
 import { useAppHistory } from "../hooks/useAppHistory";
 import { useAuth, useAuthActions } from "../store/authStore";
+import { useCombobox, useComboboxActions } from "../store/comboboxStore";
 import { useSidebar, useSidebarActions } from "../store/sidebarStore";
 import { cn } from "../utilities/cn";
 import Login from "./Login";
-import { Focusable } from "react-aria-components";
-import Dropdown from "../components/dropdown";
 
 const RootLayout = () => {
   const { user, accessToken } = useAuth();
@@ -45,6 +52,67 @@ const RootLayout = () => {
   }, [setIsSidebarExpanded]);
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const { isLoading, isOpen, query } = useCombobox();
+  const { setIsOpen, setQuery } = useComboboxActions();
+
+  useEffect(() => {
+    let cleanupToggleSearchBarListener = () => {};
+
+    if (window.electronAPI && window.electronAPI.onToggleSearchBar) {
+      cleanupToggleSearchBarListener = window.electronAPI.onToggleSearchBar(
+        () => {
+          setIsOpen((prev) => !prev);
+        },
+      );
+    }
+
+    return () => {
+      cleanupToggleSearchBarListener();
+    };
+  }, [setIsOpen]);
+
+  interface ComboboxResult {
+    id: string;
+    name: string;
+  }
+
+  const defaultSearchOptions: ComboboxResult[] = useMemo(
+    () => [
+      {
+        id: "1",
+        name: "toggle: sidebar",
+      },
+      {
+        id: "2",
+        name: "toggle: searchbar",
+      },
+      {
+        id: "3",
+        name: "settings: user preferences",
+      },
+    ],
+    [],
+  );
+
+  const filteredSearchOptions = useMemo(() => {
+    if (!query) return defaultSearchOptions;
+
+    const filteredResults = defaultSearchOptions.filter((option) =>
+      option.name.toLowerCase().includes(query.toLowerCase()),
+    );
+
+    if (filteredResults.length <= 0) {
+      return [
+        {
+          id: "default-no-results",
+          name: `search: ${query}`,
+        },
+      ];
+    }
+
+    return filteredResults;
+  }, [query, defaultSearchOptions]);
 
   return (
     <main className="from-primary-darker to-primary-darker-2 @container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
@@ -108,12 +176,13 @@ const RootLayout = () => {
                 <Tooltip>
                   <Focusable>
                     <button
+                      onClick={() => setIsOpen((prev) => !prev)}
                       className={
                         "app-region-no-drag flex w-full cursor-pointer items-center justify-start gap-2 rounded-md bg-white/15 px-2 py-1 text-sm font-light tracking-wide text-white/50"
                       }
                     >
-                      <IoSearch className="size-4" />
-                      <p>Search...</p>
+                      <VscSearch className="size-4" />
+                      <p>Deepmodel Search...</p>
                     </button>
                   </Focusable>
 
@@ -321,6 +390,33 @@ const RootLayout = () => {
 
             {/* content panel */}
             <div className="mr-1.5 flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/10">
+              <Combobox<ComboboxResult>
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                placeholder="Deepmodel Search"
+                query={query}
+                setQuery={setQuery}
+                isLoading={isLoading}
+                onSelect={(option) => {
+                  console.log({ option });
+                  setIsOpen(false);
+                }}
+                Option={({ optionValue }) => (
+                  <ComboboxOption
+                    key={optionValue.id}
+                    className={
+                      "dark:data-[focus]:bg-primary/30 data-[focus]:bg-primary -mx-3 cursor-pointer rounded-lg px-3 py-1.5 text-gray-800 data-[focus]:text-white dark:text-white"
+                    }
+                    value={optionValue}
+                  >
+                    <div className="flex flex-shrink-0 items-center justify-start gap-2">
+                      <VscSearch className="size-4 flex-shrink-0" />
+                      <span>{optionValue.name}</span>
+                    </div>
+                  </ComboboxOption>
+                )}
+                searchResults={filteredSearchOptions}
+              />
               <Outlet />
             </div>
             {/* content panel */}

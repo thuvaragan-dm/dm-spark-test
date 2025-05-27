@@ -90,5 +90,6 @@ interface Window {
     onWindowBlurred: (callback: () => void) => () => void;
     // Added for the sidebar toggle functionality
     onToggleSidebar: (callback: () => void) => () => void;
+    onToggleSearchBar: (callback: () => void) => () => void;
   };
 }

@@ -487,6 +487,16 @@ app.whenReady().then(async () => {
   // --- View Menu Setup ---
   const viewMenuBaseSubItems: MenuItemConstructorOptions[] = [
     {
+      label: "Toggle Search Bar",
+      accelerator: "CmdOrCtrl+K",
+      click: () => {
+        if (win && !win.isDestroyed()) {
+          console.log("[Menu] Toggle Search Bar clicked");
+          win.webContents.send("toggle-search-bar");
+        }
+      },
+    },
+    {
       label: "Toggle Sidebar",
       accelerator: "CmdOrCtrl+B",
       click: () => {

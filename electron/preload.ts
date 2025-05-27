@@ -23,6 +23,7 @@ const ALLOWED_LISTEN_CHANNELS = [
   "window-focused", // For window focus state
   "window-blurred", // For window blur state
   "toggle-sidebar", // <--- ADD THIS CHANNEL
+  "toggle-search-bar", // <--- ADD THIS CHANNEL
 ];
 
 const ALLOWED_SEND_CHANNELS = [
@@ -172,6 +173,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return () => ipcRenderer.removeListener(channel, listener);
   },
   // --- END OF ADDED FUNCTION ---
+
+  onToggleSearchBar: (callback: () => void): (() => void) => {
+    const channel = "toggle-search-bar";
+    // Make sure the channel is allowed (optional, but good for consistency if you change ALLOWED_LISTEN_CHANNELS later)
+    if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
+      console.warn(
+        `[Preload] Attempted to listen on disallowed channel '${channel}' via onToggleSearchBar`,
+      );
+      return () => {}; // Return a no-op cleanup function
+    }
+    const listener = () => callback(); // Event object is stripped
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
 });
 
 console.log(
