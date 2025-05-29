@@ -36,6 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   actions: {
     logout: () => {
       window.electronAPI.deleteToken();
+      window.electronAPI.deleteRecentAgentsFile();
       set(({ states }) => ({
         states: {
           ...states,

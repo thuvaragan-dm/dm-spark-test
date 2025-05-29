@@ -55,7 +55,7 @@ interface Window {
         event: import("electron").IpcRendererEvent,
         ...args: any[]
       ) => void,
-    ) => (() => void) | undefined; // Return type for cleanup function
+    ) => () => void; // MODIFIED: Always returns a cleanup function
     off: (channel: string, listener: (...args: any[]) => void) => void;
     send: (channel: string, ...args: any[]) => void;
     invoke: (channel: string, ...args: any[]) => Promise<any>;
@@ -66,19 +66,17 @@ interface Window {
     onTokenDeleted: (callback: () => void) => () => void;
     onUpdateAvailable: (
       callback: (info: ElectronUpdateInfo) => void,
-    ) => (() => void) | undefined;
+    ) => () => void; // MODIFIED: Always returns a cleanup function
     onUpdateNotAvailable: (
       callback: (info: ElectronUpdateInfo) => void,
-    ) => (() => void) | undefined;
-    onUpdateError: (
-      callback: (errorMessage: string) => void,
-    ) => (() => void) | undefined;
+    ) => () => void; // MODIFIED: Always returns a cleanup function
+    onUpdateError: (callback: (errorMessage: string) => void) => () => void; // MODIFIED: Always returns a cleanup function
     onUpdateDownloadProgress: (
       callback: (progressObj: UpdateProgressInfo) => void,
-    ) => (() => void) | undefined;
+    ) => () => void; // MODIFIED: Always returns a cleanup function
     onUpdateDownloaded: (
       callback: (info: ElectronUpdateInfo) => void,
-    ) => (() => void) | undefined;
+    ) => () => void; // MODIFIED: Always returns a cleanup function
     downloadUpdate: () => void;
     quitAndInstallUpdate: () => void;
 
@@ -91,5 +89,6 @@ interface Window {
     // Added for the sidebar toggle functionality
     onToggleSidebar: (callback: () => void) => () => void;
     onToggleSearchBar: (callback: () => void) => () => void;
+    deleteRecentAgentsFile: () => () => void;
   };
 }

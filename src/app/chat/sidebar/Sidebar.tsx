@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { IoGrid } from "react-icons/io5";
-import { VscNewFile } from "react-icons/vsc";
+import { VscNewFile, VscRobot } from "react-icons/vsc";
 import { Link, useLocation, useParams } from "react-router-dom";
 import Avatar from "../../../components/Avatar";
 import { useAgent, useAgentActions } from "../../../store/agentStore";
@@ -96,7 +96,7 @@ const Sidebar = () => {
             {recentlySelectedAgents
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((agent) => (
-                <HoverCard.Root>
+                <HoverCard.Root key={agent.id}>
                   <HoverCard.Trigger asChild>
                     <Link
                       to={`/chat/${agent.path}`}
@@ -114,7 +114,7 @@ const Sidebar = () => {
                       className={cn(
                         "-mx-1 flex min-w-0 items-center justify-start gap-2 overflow-hidden rounded-lg px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/5",
                         {
-                          "dark:from-primary-800 from-primary-800 dark:to-primary-900 to-primary-900 hover:bg-primary dark:hover:bg-primary bg-gradient-to-br text-white dark:bg-gradient-to-br":
+                          "dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/20 bg-primary text-white":
                             param && param.agentPath === agent.path,
                         },
                       )}
@@ -197,8 +197,8 @@ const Sidebar = () => {
               className={cn(
                 "-mx-1 flex min-w-0 items-center justify-start gap-2 overflow-hidden rounded-lg px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/5",
                 {
-                  "dark:bg-primary hover:bg-primary dark:hover:bg-primary bg-primary text-white":
-                    path.includes("agents/explore"),
+                  "dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/20 bg-primary text-white":
+                    path.includes("/explore"),
                 },
               )}
             >
@@ -210,6 +210,24 @@ const Sidebar = () => {
                 <p className="truncate text-sm font-medium">
                   Explore other agents
                 </p>
+              </div>
+            </Link>
+            <Link
+              to={"/worker-agents"}
+              className={cn(
+                "-mx-1 flex min-w-0 items-center justify-start gap-2 overflow-hidden rounded-lg px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/5",
+                {
+                  "dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/20 bg-primary text-white":
+                    path.includes("/worker-agents"),
+                },
+              )}
+            >
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+                <VscRobot className="size-4" />
+              </div>
+
+              <div className="w-full truncate text-left">
+                <p className="truncate text-sm font-medium">Worker Agents</p>
               </div>
             </Link>
           </div>

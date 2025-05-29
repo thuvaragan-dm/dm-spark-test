@@ -21,7 +21,7 @@ const variants = {
 };
 
 const defaultStyles = cn(
-  "touch-none select-none cursor-pointer overflow-hidden disabled:cursor-not-allowed rounded-xl bg-[var(--color-btn)] dark:bg-[var(--color-btn-dark)] text-[var(--color-btn-text)] text-sm font-medium outline-none ring-[var(--color-btn-ring)] ring-offset-2 ring-offset-inherit hover:bg-[var(--color-btn-hover)] focus:outline-none disabled:text-[var(--color-btn-text-disabled)] disabled:bg-[var(--color-btn-disabled)] data-[pressed]:bg-[var(--color-btn-active)] data-[focus-visible]:ring-2 px-5 py-3",
+  "touch-none select-none cursor-pointer overflow-hidden disabled:cursor-not-allowed rounded-xl [--border-highlight-radius:var(--radius-xl)] bg-[var(--color-btn)] dark:bg-[var(--color-btn-dark)] text-[var(--color-btn-text)] text-sm font-medium outline-none ring-[var(--color-btn-ring)] ring-offset-2 ring-offset-inherit hover:bg-[var(--color-btn-hover)] focus:outline-none disabled:text-[var(--color-btn-text-disabled)] disabled:bg-[var(--color-btn-disabled)] data-[pressed]:bg-[var(--color-btn-active)] data-[focus-visible]:ring-2 px-5 py-3",
 );
 
 export const ButtonVariants = cva(defaultStyles, {

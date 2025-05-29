@@ -19,7 +19,7 @@ const toastService = {
       (t) => <ErrorAlert t={t} title="Error" description={message} />,
       {
         id: "apiFactory",
-      }
+      },
     );
   },
 };
@@ -40,7 +40,7 @@ interface CreateMutationParams<TData, TParams, TBody, TOptimisticData> {
   optimisticUpdate?: (
     previousValue: TOptimisticData | undefined,
     variables: TBody,
-    params?: TParams
+    params?: TParams,
   ) => TOptimisticData | undefined;
   errorMessage?: string | ((error: AxiosError) => string | null);
   invalidateQueryKey?: unknown[];
@@ -59,7 +59,7 @@ export function useCreateMutation<
   TParams extends Record<string, any> = Record<string, any>,
   TBody = unknown,
   TData = unknown,
-  TOptimisticData = unknown
+  TOptimisticData = unknown,
 >({
   apiClient,
   method,
@@ -129,7 +129,7 @@ export function useCreateMutation<
         // Optimistically update to the new value
         if (previousData) {
           queryClient.setQueryData<TOptimisticData>(invalidateQueryKey, (pv) =>
-            optimisticUpdate(pv, variables.body!, variables.params)
+            optimisticUpdate(pv, variables.body!, variables.params),
           );
         }
 
@@ -144,7 +144,7 @@ export function useCreateMutation<
       if (invalidateQueryKey && context?.previousData !== undefined) {
         queryClient.setQueryData<TOptimisticData>(
           invalidateQueryKey,
-          context.previousData
+          context.previousData,
         );
       }
       if (mutationOptions?.onError) {
@@ -243,7 +243,7 @@ export interface CreateInfiniteQueryParams<TData, TQueryParams> {
 
 export function useCreateInfiniteQuery<
   TData = unknown,
-  TQueryParams = Record<string, any>
+  TQueryParams = Record<string, any>,
 >({
   apiClient,
   url,
@@ -259,7 +259,7 @@ export function useCreateInfiniteQuery<
 
   const filteredQueryParams = filterQueryParams(
     queryParams || {},
-    keysToRemove
+    keysToRemove,
   );
 
   return useInfiniteQuery<
@@ -310,7 +310,7 @@ export function useCreateInfiniteQuery<
 
 const filterQueryParams = <T extends Record<string, any>>(
   object: T,
-  keysToRemove: string[]
+  keysToRemove: string[],
 ): Partial<T> => {
   const tempObject = { ...object }; // Shallow copy of the object
 

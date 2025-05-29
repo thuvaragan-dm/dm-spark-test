@@ -5,6 +5,7 @@ import RootLayout from "./app/RootLayout";
 import ChatPage from "./app/chat/ChatPage";
 import Explore from "./app/explore/Explore";
 import AppUpdater from "./components/AppUpdater";
+import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
 
 function App() {
   return (
@@ -17,8 +18,9 @@ function App() {
           <Route element={<AgentLayout />}>
             <Route path="/" index element={<MainPage />} />
             <Route path="chat/:agentPath" element={<ChatPage />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/worker-agents" element={<ViewWorkerAgents />} />
           </Route>
-          <Route path="/explore" element={<Explore />} />
         </Route>
       </Routes>
     </>

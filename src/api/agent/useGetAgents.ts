@@ -4,7 +4,7 @@ import { useCreateQuery } from "../apiFactory";
 import { agentKey, EAgent } from "./config";
 import { Agent, AgentParams } from "./types";
 
-export const useGetAgents = (params: AgentParams) => {
+export const useGetAgents = (params?: AgentParams) => {
   const { apiClient } = useApi();
 
   return useCreateQuery<PaginatedResult<Agent>>({

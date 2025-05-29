@@ -145,6 +145,28 @@ async function saveRecentlySelectedAgentsToFile(
   }
 }
 
+async function deleteRecentlySelectedAgentsFile(): Promise<void> {
+  try {
+    const filePath = getRecentlySelectedAgentsFilePath();
+    await fs.unlink(filePath);
+    console.log(
+      "[Main] Recently selected agents file deleted successfully:",
+      filePath,
+    );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      console.log(
+        "[Main] Recently selected agents file not found, nothing to delete.",
+      );
+    } else {
+      console.error(
+        "[Main] Failed to delete recently selected agents file:",
+        error,
+      );
+    }
+  }
+}
+
 // --- Deep Linking Setup ---
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -731,9 +753,10 @@ ipcMain.on("window-control-close", () => {
 const AGENT_CHANNELS = {
   GET_AGENTS: "fs-agents:get",
   ADD_AGENT: "fs-agents:add",
-  CLEAR_AGENTS: "fs-agents:clear",
+  CLEAR_AGENTS: "fs-agents:clear", // This already calls saveRecentlySelectedAgentsToFile([]) which empties the file.
   REMOVE_AGENT: "fs-agents:remove",
   INITIALIZE_AGENTS: "fs-agents:initialize",
+  DELETE_AGENTS_FILE: "fs-agents:delete-file",
 };
 
 ipcMain.handle(AGENT_CHANNELS.GET_AGENTS, async () =>
@@ -753,9 +776,25 @@ ipcMain.handle(
   },
 );
 
+// This handler *clears the content* of the file, it does not delete the file itself.
 ipcMain.handle(AGENT_CHANNELS.CLEAR_AGENTS, async () => {
-  await saveRecentlySelectedAgentsToFile([]);
+  await saveRecentlySelectedAgentsToFile([]); // This makes the file an empty array `[]`
+  console.log(
+    "[Main] Recently selected agents list cleared (file content set to []).",
+  );
   return true;
+});
+
+ipcMain.handle(AGENT_CHANNELS.DELETE_AGENTS_FILE, async () => {
+  console.log(
+    "[Main] Received request to delete recently selected agents file.",
+  );
+  await deleteRecentlySelectedAgentsFile();
+  // You might want to notify the renderer or return a status
+  if (win && win.webContents && !win.webContents.isDestroyed()) {
+    win.webContents.send("recently-agents-file-deleted"); // Example notification
+  }
+  return true; // Or a status object
 });
 
 ipcMain.handle(

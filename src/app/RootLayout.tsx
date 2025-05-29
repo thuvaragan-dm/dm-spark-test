@@ -359,16 +359,10 @@ const RootLayout = () => {
                       </div>
                     </div>
                     <Dropdown.Divider className="my-2 dark:border-white/10" />
-                    <Dropdown.Item
-                      className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
-                      onSelect={() => navigate("/profile")}
-                    >
+                    <Dropdown.Item className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white">
                       Profile
                     </Dropdown.Item>
-                    <Dropdown.Item
-                      className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
-                      onSelect={() => navigate("/profile")}
-                    >
+                    <Dropdown.Item className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white">
                       Preferences
                     </Dropdown.Item>
 

@@ -3,11 +3,13 @@ import { ipcRenderer, contextBridge, IpcRendererEvent } from "electron";
 const AGENT_IPC_CHANNELS = {
   GET_AGENTS: "fs-agents:get",
   ADD_AGENT: "fs-agents:add",
-  CLEAR_AGENTS: "fs-agents:clear",
+  CLEAR_AGENTS: "fs-agents:clear", // Clears the content of the agents list
   REMOVE_AGENT: "fs-agents:remove",
   INITIALIZE_AGENTS: "fs-agents:initialize",
+  DELETE_AGENTS_FILE: "fs-agents:delete-file", // <-- ADDED THIS CHANNEL for deleting the file itself
 };
 
+// ALLOWED_INVOKE_CHANNELS will automatically include "fs-agents:delete-file"
 const ALLOWED_INVOKE_CHANNELS = [...Object.values(AGENT_IPC_CHANNELS)];
 
 const ALLOWED_LISTEN_CHANNELS = [
@@ -22,8 +24,9 @@ const ALLOWED_LISTEN_CHANNELS = [
   "theme-updated", // For theme changes
   "window-focused", // For window focus state
   "window-blurred", // For window blur state
-  "toggle-sidebar", // <--- ADD THIS CHANNEL
-  "toggle-search-bar", // <--- ADD THIS CHANNEL
+  "toggle-sidebar",
+  "toggle-search-bar",
+  // "recently-agents-file-deleted", // Optional: If you add a notification from main when file is deleted
 ];
 
 const ALLOWED_SEND_CHANNELS = [
@@ -60,10 +63,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return () => {}; // Return an empty function for disallowed channels
   },
   off(channel: string, listener: (...args: unknown[]) => void) {
-    // It's good practice to check if the channel was allowed for listening
-    // though removeListener won't error if it wasn't.
     if (ALLOWED_LISTEN_CHANNELS.includes(channel)) {
-      // Optional: check before removing
       ipcRenderer.removeListener(channel, listener);
     }
   },
@@ -139,14 +139,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
   closeWindow: () => {
     ipcRenderer.send("window-control-close");
   },
-  // Listener for theme updates from main process
   onThemeUpdated: (callback: (isDarkMode: boolean) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, isDarkMode: boolean) =>
       callback(isDarkMode);
     ipcRenderer.on("theme-updated", listener);
     return () => ipcRenderer.removeListener("theme-updated", listener);
   },
-  // Listeners for window focus state
   onWindowFocused: (callback: () => void): (() => void) => {
     const listener = () => callback();
     ipcRenderer.on("window-focused", listener);
@@ -157,38 +155,38 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("window-blurred", listener);
     return () => ipcRenderer.removeListener("window-blurred", listener);
   },
-
-  // --- ADD THIS FUNCTION for Toggle Sidebar ---
   onToggleSidebar: (callback: () => void): (() => void) => {
     const channel = "toggle-sidebar";
-    // Make sure the channel is allowed (optional, but good for consistency if you change ALLOWED_LISTEN_CHANNELS later)
     if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
       console.warn(
         `[Preload] Attempted to listen on disallowed channel '${channel}' via onToggleSidebar`,
       );
-      return () => {}; // Return a no-op cleanup function
+      return () => {};
     }
-    const listener = () => callback(); // Event object is stripped
+    const listener = () => callback();
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
   },
-  // --- END OF ADDED FUNCTION ---
-
   onToggleSearchBar: (callback: () => void): (() => void) => {
     const channel = "toggle-search-bar";
-    // Make sure the channel is allowed (optional, but good for consistency if you change ALLOWED_LISTEN_CHANNELS later)
     if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
       console.warn(
         `[Preload] Attempted to listen on disallowed channel '${channel}' via onToggleSearchBar`,
       );
-      return () => {}; // Return a no-op cleanup function
+      return () => {};
     }
-    const listener = () => callback(); // Event object is stripped
+    const listener = () => callback();
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
+  },
+  deleteRecentAgentsFile: (): Promise<any> => {
+    console.log(
+      "[Preload] Requesting deletion of recently selected agents file.",
+    );
+    return ipcRenderer.invoke(AGENT_IPC_CHANNELS.DELETE_AGENTS_FILE);
   },
 });
 
 console.log(
-  "[Preload] Script loaded and electronAPI exposed with window controls and sidebar toggle listener.",
+  "[Preload] Script loaded and electronAPI exposed. New agent file deletion channel enabled for invoke.",
 );

@@ -8,7 +8,7 @@ import { Button } from "../../components/Button";
 
 const Explore = () => {
   return (
-    <div className="dark:bg-primary-dark-foreground flex h-dvh w-full flex-col items-center justify-center bg-gray-100">
+    <div className="dark:bg-primary-dark-foreground flex w-full flex-1 flex-col items-center justify-center bg-gray-100">
       <div className="">
         <h1 className="text-center text-2xl text-gray-800 dark:text-white">
           Explore Agents
