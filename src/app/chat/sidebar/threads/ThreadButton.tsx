@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { VscEdit, VscTrash } from "react-icons/vsc";
 import {
   Link,
   LinkProps,
@@ -15,7 +16,11 @@ import { useChatInputActions } from "../../../../store/chatInputStore";
 import { useRerendererActions } from "../../../../store/rerendererStore";
 import { CustomSlottedComponent } from "../../../../types/type-utils";
 import { cn } from "../../../../utilities/cn";
-import { VscEdit, VscTrash } from "react-icons/vsc";
+import { useAgent } from "../../../../store/agentStore";
+import { useStreamManager } from "../../../../store/streamStore";
+import { StreamStatus } from "../../chatarea/MessageHandler";
+import Spinner from "../../../../components/Spinner";
+import { AnimatePresence, motion } from "motion/react";
 
 interface IThreadButton extends LinkProps {
   id: string;
@@ -37,6 +42,7 @@ const ThreadButton = ({
 }: IThreadButton) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { selectedAgent } = useAgent();
 
   const { reset } = useChatInputActions();
 
@@ -84,6 +90,19 @@ const ThreadButton = ({
       setIsEditable(false);
     }
   };
+
+  const { getHandler } = useStreamManager();
+  const handler = getHandler(id);
+
+  const [status, setStatus] = useState<StreamStatus>("idle");
+
+  useEffect(() => {
+    if (handler) {
+      handler.on("status", (status) => {
+        setStatus(status);
+      });
+    }
+  }, [handler]);
 
   return (
     <>
@@ -135,6 +154,18 @@ const ThreadButton = ({
             </p>
           </div>
         </Link>
+
+        <AnimatePresence>
+          {(status === "streaming" || status === "loading") && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Spinner className="size-4 dark:text-white" />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {!isEditable && (
           <div className="absolute inset-y-0 right-0 -mr-2">
@@ -231,10 +262,10 @@ const ThreadButton = ({
             variant={"danger"}
             onClick={async () => {
               const currentThread = searchParams.get("thread");
-              onDelete && onDelete(id);
               if (currentThread && currentThread === id) {
-                navigate("/agents");
+                navigate(`/chat/${selectedAgent?.path}`);
               }
+              onDelete && onDelete(id);
               await handleDeleteThread({ params: { id } });
               setIsDeleteOpen(false);
             }}

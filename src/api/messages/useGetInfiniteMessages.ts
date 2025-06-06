@@ -5,10 +5,13 @@ import { Message, MessageParams } from "./types";
 
 const DEAFULT_PAGE_LIMIT = 10;
 
-export const useGetInfiniteMessages = (
-  threadId: string,
-  params: MessageParams
-) => {
+export const useGetInfiniteMessages = ({
+  params,
+  threadId,
+}: {
+  threadId: string;
+  params: MessageParams;
+}) => {
   const { apiClient } = useApi();
 
   return useCreateInfiniteQuery<Message[], MessageParams>({

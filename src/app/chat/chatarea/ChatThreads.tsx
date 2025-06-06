@@ -22,11 +22,13 @@ const ChatThreads = ({
   streamData,
   isStreamDone,
   isStreamLoading,
+  resetStream,
 }: {
   streamData: StreamData;
   isStreamDone: boolean;
   isStreamLoading: boolean;
   chatContainerRef: HTMLUListElement | null;
+  resetStream: () => void;
 }) => {
   const [searchParams] = useSearchParams();
 
@@ -72,7 +74,10 @@ const ChatThreads = ({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetInfiniteMessages(threadId ?? "", messageOptions);
+  } = useGetInfiniteMessages({
+    threadId: threadId ?? "",
+    params: messageOptions,
+  });
 
   const [initialMoveToBottom, setInitialMoveToBottom] = useState(false);
 
@@ -99,7 +104,7 @@ const ChatThreads = ({
   });
 
   useEffect(() => {
-    const handleCreateMessage = async (message: string) => {
+    const handleCreateMessage = async (message: string, threadId: string) => {
       const createdMessage = await createMessage({
         body: {
           message,
@@ -109,16 +114,13 @@ const ChatThreads = ({
           thread_id: threadId || "",
         },
       });
-
       queryClient.setQueryData<InfiniteData<Message[]>>(
         [messageKey[EMessage.FETCH_ALL] + threadId],
         (prevData) => {
           const updatedData = JSON.parse(
             JSON.stringify(prevData),
           ) as InfiniteData<Message[]>;
-
           const lastMessage = updatedData.pages[0][0];
-
           if (lastMessage.id === "TEMP") {
             updatedData.pages[0][0] = {
               id: createdMessage.id,
@@ -130,7 +132,6 @@ const ChatThreads = ({
               thread_id: createdMessage.thread_id,
             };
           }
-
           return updatedData;
         },
       );
@@ -144,9 +145,7 @@ const ChatThreads = ({
             const updatedData = JSON.parse(
               JSON.stringify(prevData),
             ) as InfiniteData<Message[]>;
-
             const lastMessage = updatedData.pages[0][0];
-
             if (lastMessage.id !== "TEMP") {
               updatedData.pages[0].unshift({
                 id: "TEMP",
@@ -168,17 +167,18 @@ const ChatThreads = ({
                 thread_id: threadId || "",
               };
             }
-
             return updatedData;
           }
         },
       );
 
       if (isStreamDone) {
-        handleCreateMessage(streamData.message);
+        handleCreateMessage(streamData.message, threadId || "");
+
+        resetStream();
       }
     }
-  }, [streamData, threadId, createMessage, isStreamDone]);
+  }, [streamData, threadId, createMessage, isStreamDone, resetStream]);
 
   useEffect(() => {
     if (!isUserScroll) {

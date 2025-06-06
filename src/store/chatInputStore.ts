@@ -10,10 +10,12 @@ interface ChatInputState {
     fileData: Document | null; //TODO extend this to include multiple files
     suggestions: Suggestion[];
     videos: Video[];
+    activeStreamOriginThreadIdRef: string | null;
   };
 
   actions: {
     setQuery: Dispatch<SetStateAction<string>>;
+    setActiveStreamOriginThreadIdRef: Dispatch<SetStateAction<string | null>>;
     setFiles: Dispatch<SetStateAction<File[]>>;
     setFileData: Dispatch<SetStateAction<Document | null>>;
     setSuggestions: Dispatch<SetStateAction<Suggestion[]>>;
@@ -29,6 +31,7 @@ const useChatInputStore = create<ChatInputState>()((set) => ({
     fileData: null,
     suggestions: [],
     videos: [],
+    activeStreamOriginThreadIdRef: null,
   },
   actions: {
     setQuery: (value) =>
@@ -36,6 +39,16 @@ const useChatInputStore = create<ChatInputState>()((set) => ({
         states: {
           ...states,
           query: typeof value === "function" ? value(states.query) : value,
+        },
+      })),
+    setActiveStreamOriginThreadIdRef: (value) =>
+      set(({ states }) => ({
+        states: {
+          ...states,
+          activeStreamOriginThreadIdRef:
+            typeof value === "function"
+              ? value(states.activeStreamOriginThreadIdRef)
+              : value,
         },
       })),
 
@@ -74,8 +87,9 @@ const useChatInputStore = create<ChatInputState>()((set) => ({
       })),
 
     reset: () =>
-      set(() => ({
+      set(({ states }) => ({
         states: {
+          ...states,
           fileData: null,
           files: [],
           query: "",

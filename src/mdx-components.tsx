@@ -23,6 +23,12 @@ export function useMDXComponents(
         {...props}
       />
     ),
+    h3: ({ node: _node, ...props }) => (
+      <h2
+        className="mt-6 mb-3 text-xl font-bold text-gray-800 dark:text-white"
+        {...props}
+      />
+    ),
     p: ({ node: _node, ...props }) => (
       <p
         className="my-4 text-base leading-7 text-gray-800 dark:text-white"

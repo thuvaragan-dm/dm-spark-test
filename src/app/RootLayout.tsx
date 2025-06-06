@@ -23,13 +23,21 @@ import Login from "./Login";
 
 const RootLayout = () => {
   const { user, accessToken } = useAuth();
-  const { setAccessToken, refetchUser, logout } = useAuthActions();
+  const { setAccessToken, refetchUser, setMCP, logout } = useAuthActions();
   useEffect(() => {
     window.electronAPI.onTokenReceived((token) => {
       setAccessToken(token);
       refetchUser();
     });
   }, [setAccessToken, refetchUser]);
+
+  useEffect(() => {
+    window.electronAPI.onMCPTokensReceived((tokens) => {
+      setMCP({
+        accessToken: tokens.access_token || "",
+      });
+    });
+  }, [setMCP]);
 
   const { canGoBack, canGoForward } = useAppHistory();
   const navigate = useNavigate();

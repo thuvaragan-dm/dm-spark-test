@@ -18,6 +18,7 @@ export interface StreamControl {
   streamData: StreamData;
   startStream: (message: string, agentId?: string) => void;
   stopStream: () => void;
+  resetStream: () => void;
 }
 
 const useStream = (): StreamControl => {
@@ -197,6 +198,12 @@ const useStream = (): StreamControl => {
     };
   }, [stopStream]); // Dependency: the stable stopStream function
 
+  const resetStream = () => {
+    setIsStreamActive(false);
+    setIsStreamLoading(false);
+    setIsStreamDone(false);
+  };
+
   // Return the state and control functions
   return {
     isStreamLoading,
@@ -205,6 +212,7 @@ const useStream = (): StreamControl => {
     streamData,
     startStream,
     stopStream,
+    resetStream,
   };
 };
 

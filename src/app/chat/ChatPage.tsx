@@ -1,7 +1,8 @@
-import { useParams } from "react-router-dom";
-import ChatArea from "./chatarea/ChatArea";
 import { useEffect, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { useAgent, useAgentActions } from "../../store/agentStore";
+import NewChatArea from "./chatarea/NewChatArea";
+import GlobalStreamManager from "./GlobalStreamManager";
 
 const ChatPage = () => {
   const { agents } = useAgent();
@@ -18,7 +19,8 @@ const ChatPage = () => {
 
   return (
     <section className="flex w-full flex-1 flex-col overflow-hidden">
-      <ChatArea />
+      <GlobalStreamManager />
+      <NewChatArea />
     </section>
   );
 };

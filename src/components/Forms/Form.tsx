@@ -2,8 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ComponentProps,
   createContext,
+  Dispatch,
   ReactNode,
+  SetStateAction,
   useContext,
+  useEffect,
   useMemo,
 } from "react";
 import { useForm, UseFormProps, UseFormReturn } from "react-hook-form";
@@ -34,6 +37,7 @@ interface IForm<T extends z.ZodType<any, any>>
   formOptions?: UseFormProps<z.infer<T>>;
   isLoading?: boolean;
   "aria-label"?: string;
+  setFormMethod?: Dispatch<SetStateAction<UseFormReturn<T, any, T> | null>>;
 }
 
 const Form = <T extends z.ZodType<any, any>>({
@@ -45,6 +49,7 @@ const Form = <T extends z.ZodType<any, any>>({
   formOptions = { mode: "onSubmit" },
   isLoading = false,
   "aria-label": ariaLabel = "Form",
+  setFormMethod,
   ...rest
 }: IForm<T>) => {
   const methods = useForm<T>({
@@ -68,6 +73,12 @@ const Form = <T extends z.ZodType<any, any>>({
     }),
     [isSubmitting, isLoading, isDirty, isValid, errors],
   );
+
+  useEffect(() => {
+    if (setFormMethod) {
+      setFormMethod(methods);
+    }
+  }, [methods, setFormMethod, methods.formState]);
 
   return (
     <FormContext.Provider value={methods}>

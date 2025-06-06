@@ -43,6 +43,9 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 let win: BrowserWindow | null = null;
 let deeplinkUrlToProcess: string | null = null;
 let currentAuthToken: string | null = null;
+// currentAccessToken is removed as we now handle all MCP params as an object
+// let currentAccessToken: string | null = null;
+let currentMcpParams: Record<string, string | null> | null = null;
 
 const TOKEN_FILE_NAME = "authToken.txt";
 const RECENTLY_SELECTED_AGENTS_FILE_NAME = "recentlySelectedAgents.json";
@@ -61,14 +64,14 @@ function getRecentlySelectedAgentsFilePath(): string {
   return path.join(app.getPath("userData"), RECENTLY_SELECTED_AGENTS_FILE_NAME);
 }
 
-// --- File Operations for Token and Agents ---
+// --- File Operations for Auth Token and Agents ---
 async function saveTokenToFile(token: string): Promise<void> {
   try {
     const filePath = getTokenFilePath();
     await fs.writeFile(filePath, token, "utf8");
     console.log("[Main] Auth token saved to file:", filePath);
   } catch (error) {
-    console.error("[Main] Failed to save token to file:", error);
+    console.error("[Main] Failed to save auth token to file:", error);
   }
 }
 
@@ -82,7 +85,7 @@ async function loadTokenFromFile(): Promise<string | null> {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       console.log("[Main] Auth token file not found. No token loaded.");
     } else {
-      console.error("[Main] Failed to load token from file:", error);
+      console.error("[Main] Failed to load auth token from file:", error);
     }
     return null;
   }
@@ -97,7 +100,7 @@ async function deleteTokenFromFile(): Promise<void> {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       console.log("[Main] Auth token file not found, nothing to delete.");
     } else {
-      console.error("[Main] Failed to delete token file:", error);
+      console.error("[Main] Failed to delete auth token file:", error);
     }
   }
 }
@@ -178,80 +181,126 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient("dm");
 }
 
-async function handleUrlAndExtractToken(urlLink: string) {
+async function handleUrlAndExtractParams(urlLink: string) {
   console.log("[Main] Handling URL:", urlLink);
-  let extractedToken: string | null = null;
+  let extractedAuthToken: string | null = null;
+  let extractedMcpParams: Record<string, string | null> | null = null;
+
   try {
     const parsedUrl = new URL(urlLink); // Using Node.js URL
     if (parsedUrl.protocol === "dm:") {
-      extractedToken = parsedUrl.searchParams.get("authtoken");
+      // Check if it's an MCP link (e.g., dm://mcp?accessToken=...)
+      if (parsedUrl.hostname === "mcp") {
+        extractedMcpParams = {};
+        parsedUrl.searchParams.forEach((value, key) => {
+          (extractedMcpParams as Record<string, string | null>)[key] = value;
+        });
+        console.log("[Main] MCP params extracted:", extractedMcpParams);
 
-      if (extractedToken) {
-        console.log(
-          "[Main] Auth token extracted via query param:",
-          extractedToken,
-        );
+        if (Object.keys(extractedMcpParams).length > 0) {
+          currentMcpParams = extractedMcpParams;
+          if (
+            win &&
+            win.webContents &&
+            !win.webContents.isDestroyed() &&
+            !win.webContents.isLoading()
+          ) {
+            sendMcpParamsToRenderer(currentMcpParams);
+          } else {
+            console.log(
+              "[Main] Window/webContents not ready for immediate MCP params send after extraction.",
+            );
+          }
+        } else {
+          console.warn(
+            "[Main] dm://mcp link had no query parameters.",
+            urlLink,
+          );
+        }
       } else {
-        const pathPart = parsedUrl.pathname.startsWith("/")
-          ? parsedUrl.pathname.substring(1)
-          : parsedUrl.pathname;
-        const hostAndPath = `${parsedUrl.hostname}${pathPart}`;
-        const tokenPrefix = "authtoken=";
-        if (hostAndPath.startsWith(tokenPrefix)) {
-          extractedToken = hostAndPath.substring(tokenPrefix.length);
+        // Handle original authtoken logic (dm://authtoken=... or dm:authtoken=...)
+        let authtokenFoundInUrl = false;
+        extractedAuthToken = parsedUrl.searchParams.get("authtoken");
+        if (extractedAuthToken) {
           console.log(
-            "[Main] Auth token extracted via path prefix:",
-            extractedToken,
+            "[Main] Auth token extracted via query param 'authtoken':",
+            extractedAuthToken,
+          );
+          authtokenFoundInUrl = true;
+        } else {
+          const pathPart = parsedUrl.pathname.startsWith("/")
+            ? parsedUrl.pathname.substring(1)
+            : parsedUrl.pathname;
+          const combinedPathForTokenSearch = `${parsedUrl.hostname}${pathPart}`;
+          const authTokenPrefix = "authtoken=";
+          if (combinedPathForTokenSearch.startsWith(authTokenPrefix)) {
+            extractedAuthToken = combinedPathForTokenSearch.substring(
+              authTokenPrefix.length,
+            );
+            console.log(
+              "[Main] Auth token extracted via path prefix 'authtoken=':",
+              extractedAuthToken,
+            );
+            authtokenFoundInUrl = true;
+          }
+        }
+
+        if (authtokenFoundInUrl && extractedAuthToken) {
+          currentAuthToken = extractedAuthToken;
+          await saveTokenToFile(currentAuthToken);
+          if (
+            win &&
+            win.webContents &&
+            !win.webContents.isDestroyed() &&
+            !win.webContents.isLoading()
+          ) {
+            sendAuthTokenToRenderer(currentAuthToken);
+          } else {
+            console.log(
+              "[Main] Window/webContents not ready for immediate auth token send after extraction.",
+            );
+          }
+        } else {
+          console.warn(
+            "[Main] Deep link URL was not an MCP link and did not contain a recognized 'authtoken'. URL:",
+            urlLink,
           );
         }
       }
-
-      if (extractedToken) {
-        currentAuthToken = extractedToken;
+    }
+  } catch (e) {
+    console.error(
+      "[Main] Failed to parse deep link URL or extract token/params:",
+      e,
+      "URL was:",
+      urlLink,
+    );
+    // Fallback for dm://authtoken= if URL parsing failed
+    const authTokenPrefixString = "dm://authtoken=";
+    if (urlLink.startsWith(authTokenPrefixString)) {
+      const tempAuthToken = urlLink.substring(authTokenPrefixString.length);
+      if (tempAuthToken) {
+        extractedAuthToken = tempAuthToken;
+        console.log(
+          "[Main] Auth token extracted via fallback string prefix 'dm://authtoken=':",
+          extractedAuthToken,
+        );
+        currentAuthToken = extractedAuthToken;
         await saveTokenToFile(currentAuthToken);
         if (
           win &&
           win.webContents &&
           !win.webContents.isDestroyed() &&
-          !win.webContents.isLoading() // Check if not loading
+          !win.webContents.isLoading()
         ) {
-          sendTokenToRenderer(currentAuthToken);
-        } else {
-          console.log(
-            "[Main] Window/webContents not ready for immediate token send after extraction.",
-          );
+          sendAuthTokenToRenderer(currentAuthToken);
         }
-      } else {
-        console.warn(
-          "[Main] Deep link URL did not contain an 'authtoken'. URL:",
-          urlLink,
-        );
       }
-    }
-  } catch (e) {
-    console.error(
-      "[Main] Failed to parse deep link URL or extract token:",
-      e,
-      "URL was:",
-      urlLink,
-    );
-    const prefix = "dm://authtoken=";
-    if (urlLink.startsWith(prefix)) {
-      extractedToken = urlLink.substring(prefix.length);
-      console.log(
-        "[Main] Auth token extracted via fallback string prefix:",
-        extractedToken,
+    } else {
+      console.warn(
+        "[Main] No token or MCP params could be extracted from deep link via fallback:",
+        urlLink,
       );
-      currentAuthToken = extractedToken;
-      await saveTokenToFile(currentAuthToken);
-      if (
-        win &&
-        win.webContents &&
-        !win.webContents.isDestroyed() &&
-        !win.webContents.isLoading()
-      ) {
-        sendTokenToRenderer(currentAuthToken);
-      }
     }
   }
 }
@@ -262,14 +311,13 @@ async function onDeepLinkReceived(urlLink: string) {
     deeplinkUrlToProcess = urlLink;
     return;
   }
-  await handleUrlAndExtractToken(urlLink);
+  await handleUrlAndExtractParams(urlLink); // Updated function name
   if (!win || win.isDestroyed()) {
     console.log(
       "[Main] Window not available after deep link. Queuing URL or creating window.",
     );
-    deeplinkUrlToProcess = urlLink; // Re-queue if window creation is needed
     if (BrowserWindow.getAllWindows().length === 0) {
-      await createWindow(); // Ensure window is created if none exist
+      await createWindow();
     }
   } else {
     if (win.isMinimized()) win.restore();
@@ -277,14 +325,17 @@ async function onDeepLinkReceived(urlLink: string) {
   }
 }
 
-function sendTokenToRenderer(token: string | null) {
+function sendAuthTokenToRenderer(token: string | null) {
   if (win && win.webContents && !win.webContents.isDestroyed() && token) {
-    console.log("[Main] Sending token to renderer:", token);
+    console.log("[Main] Sending auth token to renderer:", token);
     win.webContents.send("deep-link-token", token);
-  } else {
-    console.warn(
-      "[Main] Could not send token to renderer: window/webContents not available or token is null.",
-    );
+  }
+}
+
+function sendMcpParamsToRenderer(params: Record<string, string | null> | null) {
+  if (win && win.webContents && !win.webContents.isDestroyed() && params) {
+    console.log("[Main] Sending MCP params to renderer:", params);
+    win.webContents.send("deep-link-mcp-tokens", params); // Channel name from user's preload
   }
 }
 
@@ -365,11 +416,15 @@ async function createWindow() {
     if (deeplinkUrlToProcess) {
       const urlToProcess = deeplinkUrlToProcess;
       deeplinkUrlToProcess = null;
-      await handleUrlAndExtractToken(urlToProcess);
+      await handleUrlAndExtractParams(urlToProcess); // Updated function name
     }
-    // Ensure token is sent even if not from a fresh deep link but loaded from file
+
     if (currentAuthToken) {
-      sendTokenToRenderer(currentAuthToken);
+      sendAuthTokenToRenderer(currentAuthToken);
+    }
+    if (currentMcpParams) {
+      // Send stored MCP params if any
+      sendMcpParamsToRenderer(currentMcpParams);
     }
 
     if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
@@ -398,7 +453,6 @@ async function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
-    // win.webContents.openDevTools(); // Ensure DevTools do NOT open on startup, use menu instead
   } else {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
@@ -424,57 +478,45 @@ app.whenReady().then(async () => {
   currentAuthToken = await loadTokenFromFile();
   const initialUrlFromArgs = process.argv.find((arg) => arg.startsWith("dm:"));
   if (initialUrlFromArgs) {
-    deeplinkUrlToProcess = initialUrlFromArgs; // Process this after window creation
+    deeplinkUrlToProcess = initialUrlFromArgs;
   }
 
-  await createWindow(); // Create the main window
+  await createWindow();
 
   // --- Application Menu Setup ---
   const menuTemplateElements: MenuItemConstructorOptions[] = [];
 
-  // App Menu (macOS only)
   if (process.platform === "darwin") {
-    menuTemplateElements.push({
-      role: "appMenu" as MenuItemConstructorOptions["role"],
-    });
+    menuTemplateElements.push({ role: "appMenu" });
   }
 
-  // Edit Menu
   const editSubMenuConditionalItems: MenuItemConstructorOptions[] =
     process.platform === "darwin"
       ? [
-          { role: "pasteAndMatchStyle" as MenuItemConstructorOptions["role"] },
-          { role: "delete" as MenuItemConstructorOptions["role"] },
-          { role: "selectAll" as MenuItemConstructorOptions["role"] },
+          { role: "pasteAndMatchStyle" },
+          { role: "delete" },
+          { role: "selectAll" },
           { type: "separator" },
           {
             label: "Speech",
-            submenu: [
-              { role: "startSpeaking" as MenuItemConstructorOptions["role"] },
-              { role: "stopSpeaking" as MenuItemConstructorOptions["role"] },
-            ],
+            submenu: [{ role: "startSpeaking" }, { role: "stopSpeaking" }],
           },
         ]
-      : [
-          { role: "delete" as MenuItemConstructorOptions["role"] },
-          { type: "separator" },
-          { role: "selectAll" as MenuItemConstructorOptions["role"] },
-        ];
+      : [{ role: "delete" }, { type: "separator" }, { role: "selectAll" }];
 
   menuTemplateElements.push({
     label: "Edit",
     submenu: [
-      { role: "undo" as MenuItemConstructorOptions["role"] },
-      { role: "redo" as MenuItemConstructorOptions["role"] },
+      { role: "undo" },
+      { role: "redo" },
       { type: "separator" },
-      { role: "cut" as MenuItemConstructorOptions["role"] },
-      { role: "copy" as MenuItemConstructorOptions["role"] },
-      { role: "paste" as MenuItemConstructorOptions["role"] },
+      { role: "cut" },
+      { role: "copy" },
+      { role: "paste" },
       ...editSubMenuConditionalItems,
     ],
   });
 
-  // Go Menu (always present)
   menuTemplateElements.push({
     label: "Go",
     submenu: [
@@ -486,7 +528,7 @@ app.whenReady().then(async () => {
             accelerator: "CmdOrCtrl+[",
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
-              if (focusedWindow && focusedWindow.webContents.canGoBack()) {
+              if (focusedWindow?.webContents.canGoBack()) {
                 focusedWindow.webContents.goBack();
               }
             },
@@ -496,7 +538,7 @@ app.whenReady().then(async () => {
             accelerator: "CmdOrCtrl+]",
             click: () => {
               const focusedWindow = BrowserWindow.getFocusedWindow();
-              if (focusedWindow && focusedWindow.webContents.canGoForward()) {
+              if (focusedWindow?.webContents.canGoForward()) {
                 focusedWindow.webContents.goForward();
               }
             },
@@ -506,14 +548,12 @@ app.whenReady().then(async () => {
     ],
   });
 
-  // --- View Menu Setup ---
   const viewMenuBaseSubItems: MenuItemConstructorOptions[] = [
     {
       label: "Toggle Search Bar",
       accelerator: "CmdOrCtrl+K",
       click: () => {
         if (win && !win.isDestroyed()) {
-          console.log("[Menu] Toggle Search Bar clicked");
           win.webContents.send("toggle-search-bar");
         }
       },
@@ -523,47 +563,43 @@ app.whenReady().then(async () => {
       accelerator: "CmdOrCtrl+B",
       click: () => {
         if (win && !win.isDestroyed()) {
-          console.log("[Menu] Toggle Sidebar clicked");
           win.webContents.send("toggle-sidebar");
         }
       },
     },
     { type: "separator" },
-    { role: "togglefullscreen" as MenuItemConstructorOptions["role"] },
+    { role: "togglefullscreen" },
   ];
 
   let viewMenuFinalSubItems: MenuItemConstructorOptions[];
   if (VITE_DEV_SERVER_URL) {
     viewMenuFinalSubItems = [
-      { role: "reload" as MenuItemConstructorOptions["role"] },
-      { role: "forceReload" as MenuItemConstructorOptions["role"] },
-      { role: "toggleDevTools" as MenuItemConstructorOptions["role"] },
+      { role: "reload" },
+      { role: "forceReload" },
+      { role: "toggleDevTools" },
       { type: "separator" },
-      { role: "resetZoom" as MenuItemConstructorOptions["role"] },
-      { role: "zoomIn" as MenuItemConstructorOptions["role"] },
-      { role: "zoomOut" as MenuItemConstructorOptions["role"] },
+      { role: "resetZoom" },
+      { role: "zoomIn" },
+      { role: "zoomOut" },
       { type: "separator" },
       ...viewMenuBaseSubItems,
     ];
   } else {
-    viewMenuFinalSubItems = viewMenuBaseSubItems;
+    viewMenuFinalSubItems = [
+      { role: "toggleDevTools" },
+      ...viewMenuBaseSubItems,
+    ];
   }
   menuTemplateElements.push({
     label: "View",
     submenu: viewMenuFinalSubItems,
   });
-  // --- End of View Menu Setup ---
 
-  // Window Menu (always present)
-  menuTemplateElements.push({
-    label: "Window",
-    role: "windowMenu" as MenuItemConstructorOptions["role"],
-  });
+  menuTemplateElements.push({ label: "Window", role: "windowMenu" });
 
-  // Help Menu (always present)
   menuTemplateElements.push({
     label: "Help",
-    role: "help" as MenuItemConstructorOptions["role"],
+    role: "help",
     submenu: [
       {
         label: "Learn More",
@@ -574,33 +610,22 @@ app.whenReady().then(async () => {
       {
         label: "Check for Updates...",
         click: () => {
-          console.log("[Menu] User requested Check for Updates...");
           if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
             autoUpdater.checkForUpdates().catch((err) => {
-              console.error(
-                "[AutoUpdater] Error checking for updates via menu:",
-                err.message || err,
-              );
               if (win && !win.isDestroyed()) {
                 dialog.showErrorBox(
                   "Update Check Failed",
-                  "Could not check for updates at this time. " +
-                    (err.message || err),
+                  "Could not check for updates: " + (err.message || err),
                 );
               }
             });
           } else {
             if (win && !win.isDestroyed()) {
-              // Ensure win exists before showing dialog
               dialog.showMessageBox(win, {
                 type: "info",
                 title: "Check for Updates",
                 message: "Update checks are disabled in development mode.",
               });
-            } else {
-              console.warn(
-                "[Menu] Window not available to show 'Check for Updates' dialog in dev mode.",
-              );
             }
           }
         },
@@ -610,77 +635,50 @@ app.whenReady().then(async () => {
 
   const menu = Menu.buildFromTemplate(menuTemplateElements);
   Menu.setApplicationMenu(menu);
-  // --- End of Application Menu Setup ---
 
-  if (process.platform !== "darwin") {
-    nativeTheme.on("updated", () => {
-      console.log("[Main] OS theme updated event received.");
+  nativeTheme.on("updated", () => {
+    if (process.platform !== "darwin") {
       applyThemeToTitleBarOverlay();
-      if (win && !win.isDestroyed()) {
-        win.webContents.send("theme-updated", nativeTheme.shouldUseDarkColors);
-      }
-    });
-  } else {
-    nativeTheme.on("updated", () => {
-      console.log("[Main] OS theme updated event received on macOS.");
-      if (win && !win.isDestroyed()) {
-        win.webContents.send("theme-updated", nativeTheme.shouldUseDarkColors);
-      }
-    });
-  }
+    }
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("theme-updated", nativeTheme.shouldUseDarkColors);
+    }
+  });
 
   if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
     autoUpdater.on("update-available", (info: UpdateInfo) => {
-      console.log("[AutoUpdater] Update available:", info);
       if (win && !win.isDestroyed())
         win.webContents.send("update-available", info);
     });
-
     autoUpdater.on("update-not-available", (info: UpdateInfo) => {
-      console.log("[AutoUpdater] Update not available:", info);
       if (win && !win.isDestroyed())
         win.webContents.send("update-not-available", info);
     });
-
     autoUpdater.on("error", (err) => {
-      console.error("[AutoUpdater] Error: ", err.message || err);
       if (win && !win.isDestroyed())
         win.webContents.send(
           "update-error",
           "Update error: " + (err.message || err),
         );
     });
-
     autoUpdater.on("download-progress", (progressObj) => {
-      const log_message = `[AutoUpdater] Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total}, ${progressObj.bytesPerSecond} bytes/s)`;
-      console.log(log_message);
       if (win && !win.isDestroyed())
         win.webContents.send("update-download-progress", progressObj);
     });
-
     autoUpdater.on("update-downloaded", (info: UpdateInfo) => {
-      console.log("[AutoUpdater] Update downloaded:", info);
       if (win && !win.isDestroyed()) {
         win.webContents.send("update-downloaded", info);
         dialog
           .showMessageBox(win, {
             type: "info",
-            title: "Update Ready to Install",
-            message: `Version ${info.version} has been downloaded. Restart the application to apply the updates?`,
-            buttons: ["Restart Now", "Later"],
+            title: "Update Ready",
+            message: `Version ${info.version} downloaded. Restart to apply?`,
+            buttons: ["Restart", "Later"],
             defaultId: 0,
             cancelId: 1,
           })
           .then((result) => {
-            if (result.response === 0) {
-              autoUpdater.quitAndInstall();
-            }
-          })
-          .catch((err) => {
-            console.error(
-              "[Main] Error showing update downloaded dialog:",
-              err,
-            );
+            if (result.response === 0) autoUpdater.quitAndInstall();
           });
       }
     });
@@ -692,77 +690,40 @@ app.on("open-url", async (event, urlLink: string) => {
   await onDeepLinkReceived(urlLink);
 });
 
-// --- IPC Listeners ---
 ipcMain.on("open-external-url", (_event, urlLink: string) => {
-  console.log('[Main] Received "open-external-url" with URL:', urlLink);
-  if (
-    urlLink &&
-    (urlLink.startsWith("http://") || urlLink.startsWith("https://"))
-  ) {
+  if (urlLink?.startsWith("http")) {
     shell
       .openExternal(urlLink)
-      .then(() =>
-        console.log("[Main] Successfully opened URL in external browser."),
-      )
       .catch((err) => console.error("[Main] Failed to open URL:", err));
-  } else {
-    console.warn(
-      "[Main] Invalid or missing URL received for open-external-url:",
-      urlLink,
-    );
   }
 });
 
 ipcMain.on("delete-auth-token", async () => {
-  console.log("[Main] Received request to delete auth token.");
   await deleteTokenFromFile();
   currentAuthToken = null;
-  if (win && win.webContents && !win.webContents.isDestroyed()) {
-    win.webContents.send("auth-token-deleted");
-    console.log("[Main] Notified renderer of token deletion.");
+  currentMcpParams = null; // Also clear MCP params on logout/token deletion
+  if (win?.webContents && !win.webContents.isDestroyed()) {
+    win.webContents.send("auth-token-deleted"); // Notifies renderer to clear its state
   }
 });
 
-// --- Window Control IPC Listeners ---
-ipcMain.on("window-control-minimize", () => {
-  console.log("[Main] Received request to minimize window.");
-  if (win) {
-    win.minimize();
-  }
-});
-
+ipcMain.on("window-control-minimize", () => win?.minimize());
 ipcMain.on("window-control-maximize-restore", () => {
-  console.log("[Main] Received request to maximize/restore window.");
-  if (win) {
-    if (win.isMaximized()) {
-      win.unmaximize();
-    } else {
-      win.maximize();
-    }
-  }
+  if (win?.isMaximized()) win.unmaximize();
+  else win?.maximize();
 });
+ipcMain.on("window-control-close", () => win?.close());
 
-ipcMain.on("window-control-close", () => {
-  console.log("[Main] Received request to close window.");
-  if (win) {
-    win.close();
-  }
-});
-
-// --- IPC Handlers for Recently Selected Agents ---
 const AGENT_CHANNELS = {
   GET_AGENTS: "fs-agents:get",
   ADD_AGENT: "fs-agents:add",
-  CLEAR_AGENTS: "fs-agents:clear", // This already calls saveRecentlySelectedAgentsToFile([]) which empties the file.
+  CLEAR_AGENTS: "fs-agents:clear",
   REMOVE_AGENT: "fs-agents:remove",
   INITIALIZE_AGENTS: "fs-agents:initialize",
   DELETE_AGENTS_FILE: "fs-agents:delete-file",
 };
 
-ipcMain.handle(AGENT_CHANNELS.GET_AGENTS, async () =>
-  loadRecentlySelectedAgentsFromFile(),
-);
-
+ipcMain.handle(AGENT_CHANNELS.GET_AGENTS, loadRecentlySelectedAgentsFromFile);
 ipcMain.handle(
   AGENT_CHANNELS.ADD_AGENT,
   async (_event, agentToAdd: StoredAgent, maxItems = 4) => {
@@ -775,40 +736,27 @@ ipcMain.handle(
     return updatedList;
   },
 );
-
-// This handler *clears the content* of the file, it does not delete the file itself.
 ipcMain.handle(AGENT_CHANNELS.CLEAR_AGENTS, async () => {
-  await saveRecentlySelectedAgentsToFile([]); // This makes the file an empty array `[]`
-  console.log(
-    "[Main] Recently selected agents list cleared (file content set to []).",
-  );
+  await saveRecentlySelectedAgentsToFile([]);
   return true;
 });
-
 ipcMain.handle(AGENT_CHANNELS.DELETE_AGENTS_FILE, async () => {
-  console.log(
-    "[Main] Received request to delete recently selected agents file.",
-  );
   await deleteRecentlySelectedAgentsFile();
-  // You might want to notify the renderer or return a status
-  if (win && win.webContents && !win.webContents.isDestroyed()) {
-    win.webContents.send("recently-agents-file-deleted"); // Example notification
+  if (win?.webContents && !win.webContents.isDestroyed()) {
+    win.webContents.send("recently-agents-file-deleted");
   }
-  return true; // Or a status object
+  return true;
 });
-
 ipcMain.handle(
   AGENT_CHANNELS.REMOVE_AGENT,
   async (_event, agentIdToRemove: string) => {
-    const currentList = await loadRecentlySelectedAgentsFromFile();
-    const updatedList = currentList.filter(
+    const updatedList = (await loadRecentlySelectedAgentsFromFile()).filter(
       (agent) => agent.id !== agentIdToRemove,
     );
     await saveRecentlySelectedAgentsToFile(updatedList);
     return updatedList;
   },
 );
-
 ipcMain.handle(
   AGENT_CHANNELS.INITIALIZE_AGENTS,
   async (_event, initialAgentsToStore: StoredAgent[]) => {
@@ -821,63 +769,41 @@ ipcMain.handle(
   },
 );
 
-// --- IPC Listeners for Renderer to Control Updates ---
 ipcMain.on("download-update", () => {
-  console.log("[AutoUpdater] Renderer requested to download update.");
   if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
     autoUpdater.downloadUpdate().catch((err) => {
-      console.error(
-        "[AutoUpdater] Error downloading update:",
-        err.message || err,
-      );
-      if (win && !win.isDestroyed()) {
+      if (win && !win.isDestroyed())
         win.webContents.send(
           "update-error",
           "Failed to download update: " + (err.message || err),
         );
-      }
     });
   } else {
-    console.log("[AutoUpdater] Download update skipped in development mode.");
-    if (win && !win.isDestroyed()) {
-      // Ensure win exists
+    if (win && !win.isDestroyed())
       dialog.showMessageBox(win, {
         type: "info",
         title: "Download Update",
-        message: "Update downloads are disabled in development mode.",
+        message: "Update downloads disabled in dev.",
       });
-    }
   }
 });
-
 ipcMain.on("quit-and-install-update", () => {
-  console.log("[AutoUpdater] Renderer requested to quit and install update.");
   if (process.env.NODE_ENV === "production" || !VITE_DEV_SERVER_URL) {
     autoUpdater.quitAndInstall();
   } else {
-    console.log(
-      "[AutoUpdater] Quit and install update skipped in development mode.",
-    );
-    if (win && !win.isDestroyed()) {
-      // Ensure win exists
+    if (win && !win.isDestroyed())
       dialog.showMessageBox(win, {
         type: "info",
         title: "Install Update",
-        message: "Update installation is disabled in development mode.",
+        message: "Update installation disabled in dev.",
       });
-    }
   }
 });
 
-// --- Standard App Lifecycle Handlers ---
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  if (process.platform !== "darwin") app.quit();
 });
 
 app.on("activate", async () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    await createWindow();
-  }
+  if (BrowserWindow.getAllWindows().length === 0) await createWindow();
 });
