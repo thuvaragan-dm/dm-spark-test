@@ -113,7 +113,9 @@ export const useSendMessage = () => {
       // --- Stop loading state ---
       // This block executes after the try/catch, ensuring the loading state
       // is always reset before the function exits.
-      setIsPreparing(false);
+      setTimeout(() => {
+        setIsPreparing(false);
+      }, 500);
     }
   };
 
