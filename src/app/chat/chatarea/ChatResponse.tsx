@@ -27,34 +27,36 @@ const ChatResponse = ({
       <div className="flex w-full flex-1 flex-col">
         {/* Pass the raw markdown string directly */}
         <MDRenderer markdownContent={message.message} />
-        <div
-          className={cn(
-            "mb-5 -ml-2 flex items-center justify-start gap-1 group-hover:opacity-100 md:opacity-0",
-            {
-              "md:opacity-100": isLast || isSourcesOpen,
-            },
-          )}
-        >
-          <CopyButton message={message.message} />
-          <LikeButton
-            id={message.id}
-            threadId={message.thread_id}
-            isActive={message.reaction === "like"}
-          />
-          <DislikeButton
-            id={message.id}
-            threadId={message.thread_id}
-            isActive={message.reaction === "dislike"}
-          />
-          {message.sources &&
-            message.sources.length > 0 && ( // Added check for message.sources existence
-              <Sources
-                isOpen={isSourcesOpen}
-                setIsOpen={setIsSourcesOpen}
-                sources={message.sources}
-              />
+        {message.message.length > 0 && (
+          <div
+            className={cn(
+              "mb-5 -ml-2 flex items-center justify-start gap-1 group-hover:opacity-100 md:opacity-0",
+              {
+                "md:opacity-100": isLast || isSourcesOpen,
+              },
             )}
-        </div>
+          >
+            <CopyButton message={message.message} />
+            <LikeButton
+              id={message.id}
+              threadId={message.thread_id}
+              isActive={message.reaction === "like"}
+            />
+            <DislikeButton
+              id={message.id}
+              threadId={message.thread_id}
+              isActive={message.reaction === "dislike"}
+            />
+            {message.sources &&
+              message.sources.length > 0 && ( // Added check for message.sources existence
+                <Sources
+                  isOpen={isSourcesOpen}
+                  setIsOpen={setIsSourcesOpen}
+                  sources={message.sources}
+                />
+              )}
+          </div>
+        )}
       </div>
     </div>
   );

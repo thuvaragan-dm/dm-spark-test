@@ -1,7 +1,5 @@
-"use client";
-
 import { AnimatePresence, motion } from "motion/react";
-import { ComponentProps, Fragment, useEffect, useRef, useState } from "react";
+import { ComponentProps, Fragment, useRef, useState } from "react";
 import {
   IoArrowUpOutline,
   IoCloudUpload,
@@ -43,24 +41,11 @@ const ChatInput = ({
   const { query, files } = useChatInput();
   const { setQuery, setFiles } = useChatInputActions();
 
-  const recalculateHeight = () => {
-    if (textAreaRef && textAreaRef.current) {
-      const textAreaEl = textAreaRef.current;
-      textAreaEl.style.height = `auto`;
-      textAreaEl.style.height = `${textAreaEl.scrollHeight}px`;
-    }
-  };
-
-  useEffect(() => {
-    recalculateHeight();
-  }, [query]);
-
   const submit = () => {
     if (query.length > 0) {
       handleSubmit(query);
       setQuery("");
       setFiles([]);
-      recalculateHeight();
     }
   };
 
@@ -150,7 +135,7 @@ const ChatInput = ({
 
         <textarea
           ref={textAreaRef}
-          className="scrollbar h-11 max-h-[25dvh] w-full resize-none overflow-y-auto py-3 pr-2 text-sm text-gray-800 [word-wrap:break-word] focus:outline-none dark:text-white"
+          className="scrollbar field-sizing-content max-h-[25dvh] w-full resize-none overflow-y-auto py-3 pr-2 text-sm text-gray-800 [word-wrap:break-word] focus:outline-none dark:text-white"
           placeholder={placeholder}
           rows={1}
           value={query}
@@ -163,14 +148,9 @@ const ChatInput = ({
             if (e.key === "Enter" && e.shiftKey) {
               e.preventDefault();
               setQuery(textAreaRef?.current?.value + "\n");
-
-              setTimeout(() => {
-                recalculateHeight();
-              }, 1);
             }
           }}
           onChange={(e) => {
-            recalculateHeight();
             setQuery(e.target.value);
           }}
         ></textarea>
