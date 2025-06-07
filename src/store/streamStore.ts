@@ -1,221 +1,300 @@
 import { create } from "zustand";
-import { useAuthStore } from "./authStore"; // Import the auth store
-import { useAgentStore } from "./agentStore"; // Import the auth store
-import { Source, Suggestion } from "../api/messages/types";
+import { InfiniteData } from "@tanstack/react-query";
+import {
+  MessageHandler,
+  StreamStatus,
+} from "../app/chat/chatarea/MessageHandler"; // Adjust path as needed
+import {
+  EnumSender,
+  Message,
+  MessageInput,
+  Suggestion,
+  Video,
+} from "../api/messages/types"; // Adjust path as needed
+import queryClient from "../api/queryClient"; // Adjust path as needed
+import { EMessage, messageKey } from "../api/messages/config"; // Adjust path as needed
 
-// Define the structure for the state data
-interface StreamData {
-  message: string;
-  sources: Source[];
-  suggestedVideos: string[];
-  suggestedQuestions: Suggestion[];
+/**
+ * Defines the shape of a completed stream event, which is queued for persistence.
+ */
+interface CompletedStream {
+  completionId: string; // A unique ID for this specific completion event
+  threadId: string;
+  finalData: MessageInput;
 }
 
-// Define the structure of the Zustand store
-interface StreamStore {
-  states: {
-    isStreamLoading: boolean;
-    isStreamActive: boolean;
-    streamData: StreamData;
-  };
-  actions: {
-    // **** Modify startStream signature ****
-    startStream: (message: string) => void; // No longer takes accessToken or agentId
-    stopStream: () => void;
-    // Internal helper actions (optional, but can clean up listeners)
-    _updateStreamData: (updater: (prevData: StreamData) => StreamData) => void;
-    _setLoading: (isLoading: boolean) => void;
-    _setActive: (isActive: boolean) => void;
-  };
+/**
+ * Defines the state and actions for managing real-time message streams.
+ */
+interface StreamManagerState {
+  handlers: Map<string, MessageHandler>;
+  messages: Map<string, { botId: string; message: string }>;
+  statuses: Map<string, StreamStatus>;
+  suggestions: Map<string, Suggestion[]>; // Changed to Suggestion[]
+  videos: Map<string, Video[]>; // Changed to Video[]
+  completedStreams: CompletedStream[];
+
+  getHandler: (threadId: string) => MessageHandler | undefined;
+  getOrCreateHandler: (
+    threadId: string,
+    agentId: string,
+    accessToken: string,
+  ) => MessageHandler;
+  updateMessage: (threadId: string, message: string, botId: string) => void;
+  getMessage: (
+    threadId: string,
+  ) => { botId: string; message: string } | undefined;
+  updateStatus: (threadId: string, status: StreamStatus) => void;
+  getStatus: (threadId: string) => StreamStatus | undefined;
+  updateSuggestions: (threadId: string, suggestions: Suggestion[]) => void; // Changed to Suggestion[]
+  getSuggestions: (threadId: string) => Suggestion[] | undefined; // Changed to Suggestion[]
+  updateVideos: (threadId: string, videos: Video[]) => void; // Changed to Video[]
+  getVideos: (threadId: string) => Video[] | undefined; // Changed to Video[]
+  clearSuggestionsAndVideos: (threadId: string) => void; // Added function
+  removeHandler: (threadId: string) => void;
+  processCompletedStreams: (completionIdsToRemove: string[]) => void;
 }
 
-// Internal variable to hold the EventSource instance (not part of the store's state)
-let eventSourceInstance: EventSource | null = null;
+export const useStreamManager = create<StreamManagerState>()((set, get) => ({
+  // STATE
+  handlers: new Map(),
+  messages: new Map(),
+  statuses: new Map(),
+  suggestions: new Map(),
+  videos: new Map(),
+  completedStreams: [],
 
-const useStreamStore = create<StreamStore>()((set, get) => ({
-  states: {
-    isStreamLoading: false,
-    isStreamActive: false,
-    streamData: {
-      message: "",
-      sources: [],
-      suggestedVideos: [],
-      suggestedQuestions: [],
-    },
+  // GETTERS & ACTIONS
+  getHandler: (threadId) => {
+    return get().handlers.get(threadId);
   },
-  actions: {
-    // --- Internal State Updaters ---
-    _setLoading: (isLoading) =>
-      set((state) => ({
-        states: { ...state.states, isStreamLoading: isLoading },
-      })),
-    _setActive: (isActive) =>
-      set((state) => ({
-        states: { ...state.states, isStreamActive: isActive },
-      })),
-    _updateStreamData: (updater) =>
-      set((state) => ({
-        states: {
-          ...state.states,
-          streamData: updater(state.states.streamData),
-        },
-      })),
 
-    // --- Stop Stream Action ---
-    stopStream: () => {
-      if (eventSourceInstance) {
-        console.log("Closing EventSource connection (Zustand).");
-        eventSourceInstance.close();
-        eventSourceInstance = null;
-      }
-      get().actions._setActive(false);
-      get().actions._setLoading(false);
-    },
+  getOrCreateHandler: (threadId, agentId, accessToken) => {
+    let handler = get().handlers.get(threadId);
+    if (!handler) {
+      // Create a new handler if one doesn't exist for the thread
+      handler = new MessageHandler(threadId, agentId, accessToken);
 
-    // --- Start Stream Action ---
-    // **** Updated startStream implementation ****
-    startStream: (message) => {
-      // Takes only message now
-      const { stopStream, _setActive, _setLoading, _updateStreamData } =
-        get().actions;
-
-      // --- Get dependencies directly from other stores ---
-      // Use getState() which synchronously reads the current state
-      const { accessToken } = useAuthStore.getState().states;
-      const { selectedAgent } = useAgentStore.getState().states;
-      const agentId = selectedAgent?.id;
-      // ----------------------------------------------------
-
-      // Ensure any previous stream is stopped
-      if (eventSourceInstance) {
-        stopStream();
-      }
-
-      // Reset state for the new request
-      _updateStreamData(() => ({
-        message: "",
-        sources: [],
-        suggestedVideos: [],
-        suggestedQuestions: [],
-      }));
-      _setLoading(true);
-      _setActive(false);
-
-      // --- Check dependencies ---
-      if (!accessToken) {
-        console.error(
-          "Cannot start stream: Access token is missing (checked in store)."
+      // --- Event Listener for incoming message chunks ---
+      handler.on("messageChunk", (id, message) => {
+        // Optimistically update the React Query cache for a smooth UI
+        queryClient.setQueryData<InfiniteData<Message[]>>(
+          [messageKey[EMessage.FETCH_ALL] + threadId],
+          (prev) =>
+            updateMessageInCache(prev, id, (msg) => (msg.message += message)),
         );
-        _setLoading(false); // Stop loading state
-        return; // Exit the function
-      }
-      if (!agentId) {
-        console.error(
-          "Cannot start stream: Agent ID is missing (checked in store)."
-        );
-        _setLoading(false); // Stop loading state
-        return; // Exit the function
-      }
-      // -------------------------
+        // Also update the internal message state if needed elsewhere
+        get().updateMessage(threadId, message, id);
+      });
 
-      const query = encodeURIComponent(message);
-      const url = `/api/stream?q=${query}&agent_id=${agentId}&token=${accessToken}`;
+      // --- Event Listener for suggestions ---
+      handler.on("suggestions", (_id, suggestions: Suggestion[]) => {
+        // Changed to Suggestion[]
+        get().updateSuggestions(threadId, suggestions);
+      });
 
-      console.log(
-        "Initializing EventSource (Zustand with internal deps):",
-        url
-      );
-      try {
-        const es = new EventSource(url);
-        eventSourceInstance = es; // Store the instance internally
+      // --- Event Listener for videos ---
+      handler.on("suggestedVideos", (_id, videos: Video[]) => {
+        // Changed to suggestedVideos and Video[]
+        get().updateVideos(threadId, videos);
+      });
 
-        // --- Event Listeners ---
-        es.onopen = () => {
-          console.log("EventSource connection opened (Zustand).");
-          _setLoading(false);
-          _setActive(true);
+      // --- Event Listener for status changes (e.g., 'loading', 'streaming', 'idle') ---
+      handler.on("status", (status) => {
+        get().updateStatus(threadId, status);
+      });
+
+      // --- Event Listener for when the entire stream is finished ---
+      handler.on("streamConcluded", (_messageId, finalStreamData) => {
+        const finalData: MessageInput = {
+          thread_id: threadId,
+          message: finalStreamData.message,
+          sender: EnumSender.BOT,
+          sources: finalStreamData.sources,
+          flag: null,
         };
 
-        es.onerror = (event) => {
-          console.error("EventSource error (Zustand):", event);
-          if (es.readyState === EventSource.CLOSED) {
-            console.log(
-              "EventSource closed due to error or completion (Zustand)."
-            );
-          }
-          stopStream(); // Clean up on error
-        };
+        // Add the completed stream to the global queue for processing
+        set((state) => ({
+          completedStreams: [
+            ...state.completedStreams,
+            {
+              completionId: `${threadId}-${Date.now()}`, // Create a unique ID
+              threadId: threadId,
+              finalData: finalData,
+            },
+          ],
+        }));
 
-        es.addEventListener("status", (event: MessageEvent) => {
-          const data = event.data.trim();
-          console.log("Status event (Zustand):", data);
-          if (data === "done") {
-            console.log("Stream finished (status: done) (Zustand).");
-            stopStream();
-          }
-        });
-
-        es.addEventListener("message", (event: MessageEvent) => {
-          const data = event.data;
-          _updateStreamData((prev) => ({
-            ...prev,
-            message: prev.message + data,
-          }));
-        });
-
-        // Generic handler for JSON array data (no changes needed here)
-        const handleJsonArrayEvent = <T>(
-          eventName: string,
-          key: keyof StreamData
-        ) => {
-          // ... (implementation remains the same) ...
-          es.addEventListener(eventName, (event: MessageEvent) => {
-            const rawData = event.data.trim();
-            if (!rawData) return;
-
-            try {
-              // Assuming the data is always a JSON array string
-              const parsedData = JSON.parse(rawData) as T[];
-              if (Array.isArray(parsedData)) {
-                _updateStreamData((prev) => {
-                  const currentArray = prev[key] as T[]; // Assert type
-                  return {
-                    ...prev,
-                    [key]: [...currentArray, ...parsedData],
-                  };
-                });
-              } else {
-                console.error(
-                  `Error parsing ${eventName}: Expected an array, received:`,
-                  parsedData,
-                  "Raw data:",
-                  rawData
-                );
-              }
-            } catch (e) {
-              console.error(
-                `Error parsing ${eventName} (Zustand):`,
-                e,
-                "Raw data:",
-                rawData
-              );
-            }
-          });
-        };
-
-        handleJsonArrayEvent<Source>("sources", "sources");
-        handleJsonArrayEvent<string>("suggested_videos", "suggestedVideos");
-        handleJsonArrayEvent<Suggestion>(
-          "suggested_questions",
-          "suggestedQuestions"
+        console.log(
+          `Stream done for thread ${threadId}. Added to completion queue.`,
         );
-      } catch (error) {
-        console.error("Failed to create EventSource:", error);
-        stopStream(); // Ensure cleanup if constructor fails
+        get().updateStatus(threadId, "idle");
+      });
+
+      // Add the newly created handler to the store's state
+      set((state) => {
+        const newHandlers = new Map(state.handlers);
+        newHandlers.set(threadId, handler!);
+        return { handlers: newHandlers };
+      });
+    }
+    return handler;
+  },
+
+  updateMessage: (threadId, message, botId) => {
+    set((state) => {
+      const newMessages = new Map(state.messages);
+      const current = newMessages.get(threadId);
+      newMessages.set(threadId, {
+        botId: current?.botId || botId,
+        message: (current?.message || "") + message,
+      });
+      return { messages: newMessages };
+    });
+  },
+
+  getMessage: (threadId) => {
+    return get().messages.get(threadId);
+  },
+
+  updateStatus: (threadId, status) => {
+    set((state) => {
+      const newStatuses = new Map(state.statuses);
+      newStatuses.set(threadId, status);
+      return { statuses: newStatuses };
+    });
+  },
+
+  getStatus: (threadId) => {
+    return get().statuses.get(threadId);
+  },
+
+  // --- Actions and Getters for Suggestions ---
+  updateSuggestions: (threadId, suggestions) => {
+    set((state) => {
+      const newSuggestions = new Map(state.suggestions);
+      newSuggestions.set(threadId, suggestions);
+      return { suggestions: newSuggestions };
+    });
+  },
+
+  getSuggestions: (threadId) => {
+    return get().suggestions.get(threadId);
+  },
+
+  // --- Actions and Getters for Videos ---
+  updateVideos: (threadId, videos) => {
+    set((state) => {
+      const newVideos = new Map(state.videos);
+      newVideos.set(threadId, videos);
+      return { videos: newVideos };
+    });
+  },
+
+  getVideos: (threadId) => {
+    return get().videos.get(threadId);
+  },
+
+  /**
+   * Clears suggestions and videos for a given thread.
+   */
+  clearSuggestionsAndVideos: (threadId) => {
+    set((state) => {
+      const newSuggestions = new Map(state.suggestions);
+      newSuggestions.delete(threadId);
+
+      const newVideos = new Map(state.videos);
+      newVideos.delete(threadId);
+
+      return {
+        suggestions: newSuggestions,
+        videos: newVideos,
+      };
+    });
+  },
+
+  /**
+   * Action to remove streams from the queue after they have been processed
+   * by the GlobalStreamCompletionHandler.
+   */
+  processCompletedStreams: (completionIdsToRemove) => {
+    set((state) => ({
+      completedStreams: state.completedStreams.filter(
+        (stream) => !completionIdsToRemove.includes(stream.completionId),
+      ),
+    }));
+  },
+
+  /**
+   * Stops any active stream and cleans up all state associated with a threadId.
+   */
+  removeHandler: (threadId) => {
+    set((state) => {
+      const newHandlers = new Map(state.handlers);
+      const handler = newHandlers.get(threadId);
+
+      if (handler) {
+        handler.stopStreaming(); // Ensure background processes are stopped
+        newHandlers.delete(threadId);
+
+        const newMessages = new Map(state.messages);
+        newMessages.delete(threadId);
+
+        const newStatuses = new Map(state.statuses);
+        newStatuses.delete(threadId);
+
+        const newSuggestions = new Map(state.suggestions); // Cleanup suggestions
+        newSuggestions.delete(threadId);
+
+        const newVideos = new Map(state.videos); // Cleanup videos
+        newVideos.delete(threadId);
+
+        // Note: We don't clean up 'completedStreams' here, as another thread might be
+        // processing it. The 'processCompletedStreams' action is responsible for that.
+
+        return {
+          handlers: newHandlers,
+          messages: newMessages,
+          statuses: newStatuses,
+          suggestions: newSuggestions,
+          videos: newVideos,
+        };
       }
-    },
+      return state; // Return original state if no handler was found
+    });
   },
 }));
 
-export const useStream = () => useStreamStore((state) => state.states);
-export const useStreamActions = () => useStreamStore((state) => state.actions);
+/**
+ * A helper function to immutably update a specific message within the
+ * deeply nested React Query cache structure for infinite queries.
+ * @param prevData The previous cache data.
+ * @param messageId The ID of the message to update.
+ * @param updateFn A function that receives and modifies a draft of the message.
+ * @returns The updated cache data.
+ */
+const updateMessageInCache = (
+  prevData: InfiniteData<Message[]> | undefined,
+  messageId: string,
+  updateFn: (message: Message) => void,
+): InfiniteData<Message[]> | undefined => {
+  if (!prevData) return undefined;
+
+  // Use map to create new arrays for pages and messages to ensure immutability
+  const newData = {
+    ...prevData,
+    pages: prevData.pages.map((page) =>
+      page.map((msg) => {
+        if (msg.id === messageId) {
+          // Create a new message object to avoid direct mutation
+          const newMsg = { ...msg };
+          updateFn(newMsg); // Apply the update
+          return newMsg;
+        }
+        return msg;
+      }),
+    ),
+  };
+  return newData;
+};

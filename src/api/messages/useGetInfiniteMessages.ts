@@ -7,7 +7,7 @@ const DEAFULT_PAGE_LIMIT = 10;
 
 export const useGetInfiniteMessages = (
   threadId: string,
-  params: MessageParams
+  params: MessageParams,
 ) => {
   const { apiClient } = useApi();
 
@@ -18,6 +18,12 @@ export const useGetInfiniteMessages = (
     errorMessage: "Failed to fetch messages.",
     queryOptions: {
       enabled: !!threadId,
+      // Treat the data as fresh forever, preventing automatic refetches
+      // when switching back to a thread.
+      staleTime: Infinity,
+      // Keep the data in the cache forever for the duration of the session,
+      // even if we navigate away from the thread.
+      gcTime: Infinity,
     },
     queryParams: params,
     keysToRemoveFromQueryParams: ["order", "limit", "offset"],

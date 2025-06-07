@@ -1,4 +1,3 @@
-// ChatResponse.tsx
 import { AnimatePresence, motion } from "motion/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { IoCheckmark, IoReaderOutline } from "react-icons/io5";
@@ -8,7 +7,7 @@ import { useAddMessageReaction } from "../../../api/messages/useAddMessageReacti
 import { useRemoveMessageReaction } from "../../../api/messages/useRemoveMessageReaction";
 import { Button } from "../../../components/Button";
 import Dropdown from "../../../components/dropdown";
-import MDRenderer from "../../../components/MDRenderer";
+import { MemoizedMarkdown } from "../../../components/MemMDRenderer";
 import Tooltip from "../../../components/tooltip";
 import { cn } from "../../../utilities/cn";
 import copyTextToClipboard from "../../../utilities/copyToClipboard";
@@ -16,45 +15,52 @@ import copyTextToClipboard from "../../../utilities/copyToClipboard";
 const ChatResponse = ({
   message,
   isLast,
+  isStreaming,
 }: {
   message: Message;
   isLast: boolean;
+  isStreaming: boolean;
 }) => {
   const [isSourcesOpen, setIsSourcesOpen] = useState(false);
 
   return (
     <div className="group mr-auto flex h-full w-full items-start justify-start gap-2 pb-5">
       <div className="flex w-full flex-1 flex-col">
-        {/* Pass the raw markdown string directly */}
-        <MDRenderer markdownContent={message.message} />
-        <div
-          className={cn(
-            "mb-5 -ml-2 flex items-center justify-start gap-1 group-hover:opacity-100 md:opacity-0",
-            {
-              "md:opacity-100": isLast || isSourcesOpen,
-            },
-          )}
-        >
-          <CopyButton message={message.message} />
-          <LikeButton
-            id={message.id}
-            threadId={message.thread_id}
-            isActive={message.reaction === "like"}
-          />
-          <DislikeButton
-            id={message.id}
-            threadId={message.thread_id}
-            isActive={message.reaction === "dislike"}
-          />
-          {message.sources &&
-            message.sources.length > 0 && ( // Added check for message.sources existence
-              <Sources
-                isOpen={isSourcesOpen}
-                setIsOpen={setIsSourcesOpen}
-                sources={message.sources}
-              />
+        <MemoizedMarkdown
+          id={message.thread_id}
+          content={message.message}
+          showDot={isStreaming && isLast}
+        />
+        {message.message.length > 0 && (
+          <div
+            className={cn(
+              "mt-2 mb-5 -ml-2 flex items-center justify-start gap-1 group-hover:opacity-100 md:opacity-0",
+              {
+                "md:opacity-100": isLast || isSourcesOpen,
+              },
             )}
-        </div>
+          >
+            <CopyButton message={message.message} />
+            <LikeButton
+              id={message.id}
+              threadId={message.thread_id}
+              isActive={message.reaction === "like"}
+            />
+            <DislikeButton
+              id={message.id}
+              threadId={message.thread_id}
+              isActive={message.reaction === "dislike"}
+            />
+            {message.sources &&
+              message.sources.length > 0 && ( // Added check for message.sources existence
+                <Sources
+                  isOpen={isSourcesOpen}
+                  setIsOpen={setIsSourcesOpen}
+                  sources={message.sources}
+                />
+              )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -284,11 +290,11 @@ const Sources = ({
   return (
     <Dropdown open={isOpen} onOpenChange={setIsOpen}>
       <Tooltip>
-        <Dropdown.Button asChild>
+        <Dropdown.Button className="flex p-0" asChild>
           <Button
             onClick={() => setIsOpen((prev) => !prev)}
             variant={"ghost"}
-            wrapperClass="flex items-center justify-center"
+            wrapperClass="flex w-min items-center justify-center"
             className="cursor-pointer rounded-full p-2 text-gray-600 hover:bg-gray-300 md:p-2 dark:text-white/60 dark:hover:bg-white/10"
           >
             <IoReaderOutline className="size-4" />

@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import ChatArea from "./chatarea/ChatArea";
 import { useEffect, useMemo } from "react";
 import { useAgent, useAgentActions } from "../../store/agentStore";
+import { GlobalStreamCompletionHandler } from "./GlobalStreamCompletionHandler";
 
 const ChatPage = () => {
   const { agents } = useAgent();
@@ -18,6 +19,7 @@ const ChatPage = () => {
 
   return (
     <section className="flex w-full flex-1 flex-col overflow-hidden">
+      <GlobalStreamCompletionHandler />
       <ChatArea />
     </section>
   );

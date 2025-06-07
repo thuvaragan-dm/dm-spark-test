@@ -55,6 +55,8 @@ export const useCreateMessage = ({
           reaction: null,
         };
 
+        console.log({ newMessage });
+
         // Create a new copy of the data with the new message added
         const updated = {
           ...oldMessages,

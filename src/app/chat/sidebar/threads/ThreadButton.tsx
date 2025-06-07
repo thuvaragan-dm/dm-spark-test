@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import { VscEdit, VscTrash } from "react-icons/vsc";
 import {
   Link,
   LinkProps,
@@ -11,11 +12,13 @@ import { useRenameThread } from "../../../../api/thread/useRenameThread";
 import { Button, ButtonVariants } from "../../../../components/Button";
 import Dropdown from "../../../../components/dropdown";
 import Modal from "../../../../components/modal";
+import Spinner from "../../../../components/Spinner";
+import { useAgent } from "../../../../store/agentStore";
 import { useChatInputActions } from "../../../../store/chatInputStore";
 import { useRerendererActions } from "../../../../store/rerendererStore";
+import { useStreamManager } from "../../../../store/streamStore";
 import { CustomSlottedComponent } from "../../../../types/type-utils";
 import { cn } from "../../../../utilities/cn";
-import { VscEdit, VscTrash } from "react-icons/vsc";
 
 interface IThreadButton extends LinkProps {
   id: string;
@@ -37,6 +40,7 @@ const ThreadButton = ({
 }: IThreadButton) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { selectedAgent } = useAgent();
 
   const { reset } = useChatInputActions();
 
@@ -84,6 +88,8 @@ const ThreadButton = ({
       setIsEditable(false);
     }
   };
+
+  const status = useStreamManager((state) => state.statuses.get(id || ""));
 
   return (
     <>
@@ -135,6 +141,12 @@ const ThreadButton = ({
             </p>
           </div>
         </Link>
+
+        {(status === "streaming" || status === "loading") && (
+          <div className="">
+            <Spinner className="size-4 dark:text-white" />
+          </div>
+        )}
 
         {!isEditable && (
           <div className="absolute inset-y-0 right-0 -mr-2">
@@ -233,7 +245,7 @@ const ThreadButton = ({
               const currentThread = searchParams.get("thread");
               onDelete && onDelete(id);
               if (currentThread && currentThread === id) {
-                navigate("/agents");
+                navigate(`/chat/${selectedAgent?.path}`);
               }
               await handleDeleteThread({ params: { id } });
               setIsDeleteOpen(false);
@@ -247,4 +259,4 @@ const ThreadButton = ({
   );
 };
 
-export default ThreadButton;
+export default memo(ThreadButton);

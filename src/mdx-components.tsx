@@ -103,6 +103,9 @@ export function useMDXComponents(
         {...props}
       />
     ),
+    div: ({ node: _node, isHeader: _isHeader, ...props }) => (
+      <div className="my-5 text-gray-800 dark:text-white" {...props} />
+    ),
     // Spread any additional components passed in, allowing overrides
     ...(components || {}),
   };
