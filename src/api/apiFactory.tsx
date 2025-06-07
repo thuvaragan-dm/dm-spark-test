@@ -269,11 +269,10 @@ export interface CreateInfiniteQueryParams<TData, TQueryParams> {
   queryParams?: TQueryParams;
   queryOptions?: Omit<
     UseInfiniteQueryOptions<
-      TData,
-      AxiosError,
-      InfiniteData<TData>,
-      TData,
-      unknown[],
+      TData, // 1. TQueryFnData
+      AxiosError, // 2. TError
+      InfiniteData<TData>, // 3. TData
+      unknown[], // 4. TQueryKey
       unknown
     >,
     "queryKey" | "queryFn" | "initialPageParam" | "getNextPageParam"
