@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.3.0
+
+### Minor Changes
+
+- [`9896d9c`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/9896d9ca74629506612e6eeaa21e7a4318c7e04b) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - parallel streaming added.
+
 ## 2.2.5
 
 ### Patch Changes
