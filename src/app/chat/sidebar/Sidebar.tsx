@@ -1,8 +1,12 @@
+import * as HoverCard from "@radix-ui/react-hover-card";
 import { useEffect, useState } from "react";
+import { Focusable } from "react-aria-components";
 import { IoGrid } from "react-icons/io5";
-import { VscNewFile, VscRobot } from "react-icons/vsc";
+import { VscNewFile, VscRobot, VscServer } from "react-icons/vsc";
 import { Link, useLocation, useParams } from "react-router-dom";
 import Avatar from "../../../components/Avatar";
+import Tooltip from "../../../components/tooltip";
+import { COMMAND_KEY } from "../../../components/tooltip/TooltipKeyboardShortcut";
 import { useAgent, useAgentActions } from "../../../store/agentStore";
 import { useChatInputActions } from "../../../store/chatInputStore";
 import { cn } from "../../../utilities/cn";
@@ -13,10 +17,6 @@ import {
 } from "./manageRecentlySelectedAgents";
 import { SidebarWrapper } from "./sidebarWrapper";
 import AllThreads from "./threads/AllThreads";
-import * as HoverCard from "@radix-ui/react-hover-card";
-import Tooltip from "../../../components/tooltip";
-import { COMMAND_KEY } from "../../../components/tooltip/TooltipKeyboardShortcut";
-import { Focusable } from "react-aria-components";
 
 const Sidebar = () => {
   const { pathname: path } = useLocation();
@@ -228,6 +228,25 @@ const Sidebar = () => {
 
               <div className="w-full truncate text-left">
                 <p className="truncate text-sm font-medium">Worker Agents</p>
+              </div>
+            </Link>
+
+            <Link
+              to={"/mcp"}
+              className={cn(
+                "-mx-1 flex min-w-0 items-center justify-start gap-2 overflow-hidden rounded-lg px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/5",
+                {
+                  "dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/20 bg-primary text-white":
+                    path.includes("/mcp"),
+                },
+              )}
+            >
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-amber-600 to-amber-800 text-white">
+                <VscServer className="size-4" />
+              </div>
+
+              <div className="w-full truncate text-left">
+                <p className="truncate text-sm font-medium">MCP Servers</p>
               </div>
             </Link>
           </div>

@@ -103,8 +103,6 @@ const ViewWorkerAgents = () => {
 
   return (
     <section className="dark:bg-primary-dark-foreground flex flex-1 flex-col overflow-hidden bg-gray-100">
-      {registeredAgents && registeredAgents.items.length <= 0 && <></>}
-
       <header className="dark:bg-primary-dark sticky top-0 z-[999] flex w-full items-center justify-between border-b border-gray-300 bg-white px-5 py-3 dark:border-white/10">
         <h4 className="text-lg font-medium text-gray-800 dark:text-white">
           Worker agents

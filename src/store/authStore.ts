@@ -3,10 +3,15 @@ import { User } from "../api/user/types";
 import { apiUrl } from "../api/variables";
 import { Dispatch, SetStateAction } from "react";
 
+type MCPAuth = {
+  accessToken?: string;
+};
+
 interface AuthState {
   states: {
     user: User | null;
     accessToken: string | null;
+    MCP: MCPAuth | null;
   };
   actions: {
     logout: () => void;
@@ -15,6 +20,7 @@ interface AuthState {
       value: User | null | ((value: User | null) => User | null),
     ) => void;
     setAccessToken: Dispatch<SetStateAction<string | null>>;
+    setMCP: Dispatch<SetStateAction<MCPAuth | null>>;
   };
 }
 
@@ -32,6 +38,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   states: {
     user: getInitialUser(),
     accessToken: getInitialToken(),
+    MCP: null,
   },
   actions: {
     logout: () => {
@@ -89,6 +96,16 @@ export const useAuthStore = create<AuthState>((set) => ({
           states: {
             ...states,
             accessToken,
+          },
+        };
+      }),
+    setMCP: (value) =>
+      set(({ states }) => {
+        const MCP = typeof value === "function" ? value(states.MCP) : value;
+        return {
+          states: {
+            ...states,
+            MCP,
           },
         };
       }),

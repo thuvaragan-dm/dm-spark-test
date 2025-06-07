@@ -6,6 +6,7 @@ import ChatPage from "./app/chat/ChatPage";
 import Explore from "./app/explore/Explore";
 import AppUpdater from "./components/AppUpdater";
 import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
+import McpConnections from "./app/mcp/McpConnections";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="chat/:agentPath" element={<ChatPage />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/worker-agents" element={<ViewWorkerAgents />} />
+            <Route path="/mcp" element={<McpConnections />} />
           </Route>
         </Route>
       </Routes>

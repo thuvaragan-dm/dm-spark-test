@@ -1,5 +1,3 @@
-"use client";
-
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { forwardRef, useState } from "react";
 import { IoChevronDown, IoChevronUp } from "react-icons/io5";

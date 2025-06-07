@@ -72,30 +72,72 @@ export function useCreateMutation<
   return useMutation<
     TData,
     AxiosError,
-    { params?: TParams; body?: TBody }, // Update mutation function to expect this
+    { params?: TParams; body?: TBody },
     MutationContext<TOptimisticData>
   >({
     mutationFn: async ({ params, body }) => {
-      // Handle dynamic URL parts with variable replacement using params
-      const finalUrl = url.replace(/\${(.*?)}/g, (_, key) => {
-        const paramValue = params?.[key];
-        if (!paramValue) {
-          throw new Error(`Missing parameter for URL: ${key}`);
+      // Step 1: Substitute template variables in the URL.
+      // This handles placeholders like ${id} in the path or query.
+      const filledUrlTemplate = url.replace(/\${(.*?)}/g, (_, key) => {
+        if (params && Object.prototype.hasOwnProperty.call(params, key)) {
+          const value = params[key];
+          if (value === undefined) {
+            // If a placeholder is in the URL template but its value is undefined in params,
+            // it's a critical missing piece for the URL.
+            throw new Error(
+              `Parameter '${key}' for URL template was undefined.`,
+            );
+          }
+          // Convert null to an empty string; other values (like "" or actual values) are stringified.
+          // Empty strings resulting from this will be handled in Step 2 if they are query parameters.
+          return String(value === null ? "" : value);
         }
-        return paramValue;
+        // If params is not provided, or the key is not in params,
+        // then a placeholder in the URL template cannot be filled.
+        throw new Error(
+          `Missing parameter '${key}' for URL template substitution. Ensure it's provided in 'params'.`,
+        );
       });
 
+      // Step 2: Process the URL to remove any query parameters that ended up with empty values.
+      let finalUrl = filledUrlTemplate;
+      const urlParts = filledUrlTemplate.split("?");
+
+      if (urlParts.length > 1) {
+        const basePath = urlParts[0];
+        const queryString = urlParts[1];
+
+        // Proceed only if there was a query string part or if the URL just ended with '?'
+        if (queryString || filledUrlTemplate.endsWith("?")) {
+          const currentSearchParams = new URLSearchParams(queryString);
+          const newSearchParams = new URLSearchParams();
+          for (const [key, value] of currentSearchParams) {
+            if (value !== "") {
+              // Only append parameters that have a non-empty value
+              newSearchParams.append(key, value);
+            }
+          }
+          const newQueryString = newSearchParams.toString();
+          // Reconstruct the URL: if newQueryString is empty, just use basePath, otherwise append '?'.
+          finalUrl = newQueryString
+            ? `${basePath}?${newQueryString}`
+            : basePath;
+        }
+        // If there was no '?' in filledUrlTemplate, finalUrl remains as is (basePath only).
+      }
+
+      // Step 3: Make the API call.
       try {
         const response: AxiosResponse<TData> = await apiClient({
-          url: finalUrl,
+          url: finalUrl, // Use the processed URL
           method,
           data: body,
         });
-
         return response.data;
       } catch (error) {
         if (isAxiosError(error)) {
           const axiosError = error as AxiosError;
+          // Avoid spamming toasts for auth errors, as they are often handled globally (e.g., redirect to login)
           if (
             axiosError.response?.status !== 401 &&
             axiosError.response?.status !== 403
@@ -103,43 +145,38 @@ export function useCreateMutation<
             const errMessage =
               typeof errorMessage === "function"
                 ? errorMessage(axiosError)
-                : errorMessage || "An error occurred";
+                : errorMessage ||
+                  (axiosError.response?.data as any)?.message || // Try to get server message
+                  axiosError.message || // Fallback to Axios error message
+                  "An unexpected error occurred.";
 
             if (errMessage) {
+              // Ensure there's a message to display
               toastService.error(errMessage);
             }
           }
         }
-        throw error;
+        throw error; // Re-throw the error to be caught by react-query's onError
       }
     },
 
     onMutate: async (variables): Promise<MutationContext<TOptimisticData>> => {
       if (invalidateQueryKey && optimisticUpdate) {
-        // Cancel any outgoing refetch
-        // (so they don't overwrite our optimistic update)
         await queryClient.cancelQueries({
           queryKey: invalidateQueryKey,
         });
-
-        // Snapshot the previous value
         const previousData =
           queryClient.getQueryData<TOptimisticData>(invalidateQueryKey);
-
-        // Optimistically update to the new value
-        if (previousData) {
-          queryClient.setQueryData<TOptimisticData>(invalidateQueryKey, (pv) =>
-            optimisticUpdate(pv, variables.body!, variables.params),
-          );
-        }
-
+        // Note: optimisticUpdate receives the original variables.body and variables.params
+        // before any filtering that happens in mutationFn for URL construction.
+        queryClient.setQueryData<TOptimisticData>(invalidateQueryKey, (pv) =>
+          optimisticUpdate(pv, variables.body!, variables.params),
+        );
         return { previousData };
       }
       return undefined;
     },
 
-    // If the mutation fails,
-    // use the context returned from onMutate to roll back
     onError: (err, variables, context) => {
       if (invalidateQueryKey && context?.previousData !== undefined) {
         queryClient.setQueryData<TOptimisticData>(
@@ -147,19 +184,24 @@ export function useCreateMutation<
           context.previousData,
         );
       }
+      // Call user-defined onError if provided
       if (mutationOptions?.onError) {
         mutationOptions.onError(err, variables, context);
       }
     },
 
-    onSettled: async () => {
+    onSettled: async (data, error, variables, context) => {
       if (invalidateQueryKey) {
         await queryClient.invalidateQueries({
           queryKey: invalidateQueryKey,
         });
       }
+      // Call user-defined onSettled if provided
+      if (mutationOptions?.onSettled) {
+        mutationOptions.onSettled(data, error, variables, context);
+      }
     },
-    ...mutationOptions,
+    ...mutationOptions, // Spread other react-query mutation options
   });
 }
 
