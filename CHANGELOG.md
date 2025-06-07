@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.3.2
+
+### Patch Changes
+
+- [`cee95b5`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/cee95b558dacbaac492aaadccfee4dd01fec7a4a) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - configured for prod endpoint.
+
 ## 2.3.1
 
 ### Patch Changes
