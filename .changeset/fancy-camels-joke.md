@@ -2,4 +2,4 @@
 "deepmodel-app": patch
 ---
 
-configured for prod
+added user profile
