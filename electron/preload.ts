@@ -6,14 +6,14 @@ const AGENT_IPC_CHANNELS = {
   CLEAR_AGENTS: "fs-agents:clear", // Clears the content of the agents list
   REMOVE_AGENT: "fs-agents:remove",
   INITIALIZE_AGENTS: "fs-agents:initialize",
-  DELETE_AGENTS_FILE: "fs-agents:delete-file", // <-- ADDED THIS CHANNEL for deleting the file itself
+  DELETE_AGENTS_FILE: "fs-agents:delete-file",
 };
 
-// ALLOWED_INVOKE_CHANNELS will automatically include "fs-agents:delete-file"
 const ALLOWED_INVOKE_CHANNELS = [...Object.values(AGENT_IPC_CHANNELS)];
 
 const ALLOWED_LISTEN_CHANNELS = [
-  "deep-link-token",
+  "deep-link-token", // For existing auth token
+  "deep-link-mcp-tokens", // Channel for MCP params object
   "auth-token-deleted",
   "main-process-message",
   "update-available",
@@ -21,12 +21,12 @@ const ALLOWED_LISTEN_CHANNELS = [
   "update-error",
   "update-download-progress",
   "update-downloaded",
-  "theme-updated", // For theme changes
-  "window-focused", // For window focus state
-  "window-blurred", // For window blur state
+  "theme-updated",
+  "window-focused",
+  "window-blurred",
   "toggle-sidebar",
   "toggle-search-bar",
-  // "recently-agents-file-deleted", // Optional: If you add a notification from main when file is deleted
+  "recently-agents-file-deleted",
 ];
 
 const ALLOWED_SEND_CHANNELS = [
@@ -34,12 +34,12 @@ const ALLOWED_SEND_CHANNELS = [
   "delete-auth-token",
   "download-update",
   "quit-and-install-update",
-  "window-control-minimize", // Window control: Minimize
-  "window-control-maximize-restore", // Window control: Maximize/Restore
-  "window-control-close", // Window control: Close
+  "window-control-minimize",
+  "window-control-maximize-restore",
+  "window-control-close",
 ];
 
-let currentToken: string | null = null;
+let currentToken: string | null = null; // For the original 'authtoken'
 ipcRenderer.on("deep-link-token", (_event: IpcRendererEvent, token: string) => {
   console.log("[Preload] Received 'deep-link-token':", token);
   currentToken = token;
@@ -56,15 +56,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
   ) {
     if (ALLOWED_LISTEN_CHANNELS.includes(channel)) {
       ipcRenderer.on(channel, listener);
-      // Return a function to remove the listener
       return () => ipcRenderer.removeListener(channel, listener);
     }
     console.warn(`[Preload] Disallowed listen on channel '${channel}'`);
-    return () => {}; // Return an empty function for disallowed channels
+    return () => {};
   },
   off(channel: string, listener: (...args: unknown[]) => void) {
     if (ALLOWED_LISTEN_CHANNELS.includes(channel)) {
       ipcRenderer.removeListener(channel, listener);
+    } else {
+      console.warn(`[Preload] Disallowed off for channel '${channel}'`);
     }
   },
   send(channel: string, ...args: unknown[]) {
@@ -78,51 +79,77 @@ contextBridge.exposeInMainWorld("electronAPI", {
     if (ALLOWED_INVOKE_CHANNELS.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
     }
-    console.error(`[Preload] Disallowed invoke on channel '${channel}'.`);
-    return Promise.reject(
-      new Error(`Disallowed invoke on channel '${channel}'.`),
-    );
+    const errorMessage = `[Preload] Disallowed invoke on channel '${channel}'.`;
+    console.error(errorMessage);
+    return Promise.reject(new Error(errorMessage));
   },
+
   osPlatform: process.platform,
+
   getToken: (): string | null => currentToken,
   deleteToken: (): void => {
     ipcRenderer.send("delete-auth-token");
   },
   onTokenReceived: (callback: (token: string) => void): (() => void) => {
+    const channel = "deep-link-token";
     const listener = (_event: IpcRendererEvent, token: string) =>
       callback(token);
-    ipcRenderer.on("deep-link-token", listener);
-    return () => ipcRenderer.removeListener("deep-link-token", listener);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
   },
   onTokenDeleted: (callback: () => void): (() => void) => {
+    const channel = "auth-token-deleted";
     const listener = () => callback();
-    ipcRenderer.on("auth-token-deleted", listener);
-    return () => ipcRenderer.removeListener("auth-token-deleted", listener);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
   },
-  onUpdateAvailable: (callback: (info: any) => void) => {
+
+  // Updated for MCP Params (object)
+  onMCPTokensReceived: (
+    callback: (params: Record<string, string | null>) => void,
+  ): (() => void) => {
+    const channel = "deep-link-mcp-tokens";
+    if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
+      console.warn(
+        `[Preload] Attempted to listen on disallowed channel '${channel}' via onMCPTokensReceived. Ensure it's in ALLOWED_LISTEN_CHANNELS.`,
+      );
+      return () => {};
+    }
+    // Ensure the received argument is treated as the params object
+    const listener = (
+      _event: IpcRendererEvent,
+      params: Record<string, string | null>,
+    ) => callback(params);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
+
+  onUpdateAvailable: (callback: (info: any) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, info: any) => callback(info);
     ipcRenderer.on("update-available", listener);
     return () => ipcRenderer.removeListener("update-available", listener);
   },
-  onUpdateNotAvailable: (callback: (info: any) => void) => {
+  onUpdateNotAvailable: (callback: (info: any) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, info: any) => callback(info);
     ipcRenderer.on("update-not-available", listener);
     return () => ipcRenderer.removeListener("update-not-available", listener);
   },
-  onUpdateError: (callback: (errorMessage: string) => void) => {
+  onUpdateError: (callback: (errorMessage: string) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, errorMessage: string) =>
       callback(errorMessage);
     ipcRenderer.on("update-error", listener);
     return () => ipcRenderer.removeListener("update-error", listener);
   },
-  onUpdateDownloadProgress: (callback: (progressObj: any) => void) => {
+  onUpdateDownloadProgress: (
+    callback: (progressObj: any) => void,
+  ): (() => void) => {
     const listener = (_event: IpcRendererEvent, progressObj: any) =>
       callback(progressObj);
     ipcRenderer.on("update-download-progress", listener);
     return () =>
       ipcRenderer.removeListener("update-download-progress", listener);
   },
-  onUpdateDownloaded: (callback: (info: any) => void) => {
+  onUpdateDownloaded: (callback: (info: any) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, info: any) => callback(info);
     ipcRenderer.on("update-downloaded", listener);
     return () => ipcRenderer.removeListener("update-downloaded", listener);
@@ -130,15 +157,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   downloadUpdate: () => ipcRenderer.send("download-update"),
   quitAndInstallUpdate: () => ipcRenderer.send("quit-and-install-update"),
 
-  minimizeWindow: () => {
-    ipcRenderer.send("window-control-minimize");
-  },
-  maximizeRestoreWindow: () => {
-    ipcRenderer.send("window-control-maximize-restore");
-  },
-  closeWindow: () => {
-    ipcRenderer.send("window-control-close");
-  },
+  minimizeWindow: () => ipcRenderer.send("window-control-minimize"),
+  maximizeRestoreWindow: () =>
+    ipcRenderer.send("window-control-maximize-restore"),
+  closeWindow: () => ipcRenderer.send("window-control-close"),
+
   onThemeUpdated: (callback: (isDarkMode: boolean) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, isDarkMode: boolean) =>
       callback(isDarkMode);
@@ -157,21 +180,25 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   onToggleSidebar: (callback: () => void): (() => void) => {
     const channel = "toggle-sidebar";
-    if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
-      console.warn(
-        `[Preload] Attempted to listen on disallowed channel '${channel}' via onToggleSidebar`,
-      );
-      return () => {};
-    }
     const listener = () => callback();
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
   },
   onToggleSearchBar: (callback: () => void): (() => void) => {
     const channel = "toggle-search-bar";
+    const listener = () => callback();
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
+
+  deleteRecentAgentsFile: (): Promise<any> => {
+    return ipcRenderer.invoke(AGENT_IPC_CHANNELS.DELETE_AGENTS_FILE);
+  },
+  onRecentAgentsFileDeleted: (callback: () => void): (() => void) => {
+    const channel = "recently-agents-file-deleted";
     if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
       console.warn(
-        `[Preload] Attempted to listen on disallowed channel '${channel}' via onToggleSearchBar`,
+        `[Preload] Attempted to listen on disallowed channel '${channel}' via onRecentAgentsFileDeleted.`,
       );
       return () => {};
     }
@@ -179,14 +206,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
   },
-  deleteRecentAgentsFile: (): Promise<any> => {
-    console.log(
-      "[Preload] Requesting deletion of recently selected agents file.",
-    );
-    return ipcRenderer.invoke(AGENT_IPC_CHANNELS.DELETE_AGENTS_FILE);
-  },
 });
 
 console.log(
-  "[Preload] Script loaded and electronAPI exposed. New agent file deletion channel enabled for invoke.",
+  "[Preload] Script loaded. MCP Tokens handler updated for object params.",
 );

@@ -75,13 +75,21 @@ type Picture = {
 
 const RootLayout = () => {
   const { user, accessToken } = useAuth();
-  const { setAccessToken, refetchUser, logout } = useAuthActions();
+  const { setAccessToken, refetchUser, logout, setMCP } = useAuthActions();
   useEffect(() => {
     window.electronAPI.onTokenReceived((token) => {
       setAccessToken(token);
       refetchUser();
     });
   }, [setAccessToken, refetchUser]);
+
+  useEffect(() => {
+    window.electronAPI.onMCPTokensReceived((tokens) => {
+      setMCP({
+        accessToken: tokens.access_token || "",
+      });
+    });
+  }, [setMCP]);
 
   const { canGoBack, canGoForward } = useAppHistory();
   const navigate = useNavigate();

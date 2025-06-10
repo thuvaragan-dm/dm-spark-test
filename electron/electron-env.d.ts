@@ -33,6 +33,9 @@ interface ElectronUpdateInfo {
   // Add other properties from UpdateInfo if needed
 }
 
+// Type for MCP parameters object, consistent with preload and main process
+type McpDeeplinkParams = Record<string, string | null>;
+
 interface Window {
   // Optional ipcRenderer access (use electronAPI instead for type safety)
   ipcRenderer?: {
@@ -49,46 +52,62 @@ interface Window {
   };
   // Strongly typed electronAPI
   electronAPI: {
+    // Generic listener registration
     on: (
       channel: string,
       listener: (
         event: import("electron").IpcRendererEvent,
         ...args: any[]
       ) => void,
-    ) => () => void; // MODIFIED: Always returns a cleanup function
+    ) => () => void; // Returns a cleanup function
     off: (channel: string, listener: (...args: any[]) => void) => void;
     send: (channel: string, ...args: any[]) => void;
     invoke: (channel: string, ...args: any[]) => Promise<any>;
+
     osPlatform: NodeJS.Platform;
+
+    // Auth Token (original)
     getToken: () => string | null;
     deleteToken: () => void;
     onTokenReceived: (callback: (token: string) => void) => () => void;
     onTokenDeleted: (callback: () => void) => () => void;
+
+    // MCP Tokens/Parameters
+    onMCPTokensReceived: (
+      callback: (params: McpDeeplinkParams) => void,
+    ) => () => void; // UPDATED SIGNATURE
+
+    // Auto Updater
     onUpdateAvailable: (
       callback: (info: ElectronUpdateInfo) => void,
-    ) => () => void; // MODIFIED: Always returns a cleanup function
+    ) => () => void;
     onUpdateNotAvailable: (
       callback: (info: ElectronUpdateInfo) => void,
-    ) => () => void; // MODIFIED: Always returns a cleanup function
-    onUpdateError: (callback: (errorMessage: string) => void) => () => void; // MODIFIED: Always returns a cleanup function
+    ) => () => void;
+    onUpdateError: (callback: (errorMessage: string) => void) => () => void;
     onUpdateDownloadProgress: (
       callback: (progressObj: UpdateProgressInfo) => void,
-    ) => () => void; // MODIFIED: Always returns a cleanup function
+    ) => () => void;
     onUpdateDownloaded: (
       callback: (info: ElectronUpdateInfo) => void,
-    ) => () => void; // MODIFIED: Always returns a cleanup function
+    ) => () => void;
     downloadUpdate: () => void;
     quitAndInstallUpdate: () => void;
 
+    // Window Controls
     minimizeWindow: () => void;
     maximizeRestoreWindow: () => void;
     closeWindow: () => void;
+
+    // UI and Theme
     onThemeUpdated: (callback: (isDarkMode: boolean) => void) => () => void;
     onWindowFocused: (callback: () => void) => () => void;
     onWindowBlurred: (callback: () => void) => () => void;
-    // Added for the sidebar toggle functionality
     onToggleSidebar: (callback: () => void) => () => void;
     onToggleSearchBar: (callback: () => void) => () => void;
-    deleteRecentAgentsFile: () => () => void;
+
+    // Recently Selected Agents File Management
+    deleteRecentAgentsFile: () => Promise<any>;
+    onRecentAgentsFileDeleted: (callback: () => void) => () => void;
   };
 }
