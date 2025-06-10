@@ -78,7 +78,7 @@ const Modal = ({
                         variant={"ghost"}
                         wrapperClass="flex items-center justify-center -mt-2"
                         className={
-                          "shrink-0 rounded-full border bg-gray-100 p-0.5 ring-gray-300 hover:bg-gray-200 data-[pressed]:bg-gray-200 md:p-0.5"
+                          "shrink-0 rounded-full border bg-gray-100 p-0.5 ring-gray-300 hover:bg-gray-200 data-[pressed]:bg-gray-200 md:p-0.5 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:data-[pressed]:bg-white/20"
                         }
                       >
                         <IoClose className="size-4" />

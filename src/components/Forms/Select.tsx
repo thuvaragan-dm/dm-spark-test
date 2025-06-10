@@ -26,6 +26,7 @@ const SelectRoot = forwardRef<HTMLButtonElement, SelectProps>(
   (
     {
       className,
+
       selectClass,
       chevronClass,
       placeholder,

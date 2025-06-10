@@ -50,8 +50,8 @@ const ChatArea = () => {
 
   const { selectedAgent } = useAgent();
 
-  const { files } = useChatInput();
-  const { setFiles } = useChatInputActions();
+  const { files, fileData } = useChatInput();
+  const { setFiles, setFileData } = useChatInputActions();
 
   const { mutateAsync: uploadFile } = useUploadDocument({
     invalidateQueryKey: [documentKey[EDocument.FETCH_ALL]],
@@ -67,14 +67,21 @@ const ChatArea = () => {
     files,
     setFiles,
     handleFileUpload: async (file) => {
-      await uploadFile({
+      const storedFile = await uploadFile({
         body: {
           file: file,
           shard_id: selectedAgent?.shard_id || "",
           description: "",
         },
       });
+
+      setFileData((pv) => {
+        const mapToUpdate = new Map(pv);
+        mapToUpdate.set(file.name, storedFile);
+        return mapToUpdate;
+      });
     },
+    multiple: true,
   });
 
   const { mutateAsync: createThread } = useCreateThread({
@@ -111,6 +118,12 @@ const ChatArea = () => {
     async (message: string) => {
       setIsSendMessageLoading(true);
       let threadId = focusedThreadId || "";
+
+      if (fileData) {
+        for (const document of fileData.values()) {
+          message += ` <span className="hidden">document id:${document.id} name:${document.name}</span>`;
+        }
+      }
 
       if (!focusedThreadId) {
         const thread = await createThread({
@@ -203,6 +216,7 @@ const ChatArea = () => {
       createMessageAsync,
       scrollToBottom,
       clearSuggestionsAndVideos,
+      fileData,
     ],
   );
 
@@ -368,7 +382,10 @@ const ChatArea = () => {
                               } `}
                             >
                               {message.sender === EnumSender.USER ? (
-                                <UserMessage message={message.message} />
+                                <UserMessage
+                                  id={message.id}
+                                  message={message.message}
+                                />
                               ) : (
                                 <ChatResponse
                                   message={message}

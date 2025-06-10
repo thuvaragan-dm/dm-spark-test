@@ -87,7 +87,7 @@ const Sidebar = () => {
 
         <div className="mt-3 w-full overflow-hidden border-t border-gray-300 pb-2 dark:border-white/10"></div>
 
-        <div className="scrollbar mt-2 flex max-h-72 w-full flex-col space-y-1 overflow-x-hidden overflow-y-auto px-3">
+        <div className="scrollbar mt-2 flex max-h-80 w-full flex-col space-y-1 overflow-x-hidden overflow-y-auto px-3">
           <p className="mb-3 overflow-hidden text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-600 uppercase dark:text-white/50">
             Available agents
           </p>

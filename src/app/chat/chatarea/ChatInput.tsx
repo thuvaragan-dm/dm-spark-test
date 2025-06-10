@@ -41,7 +41,7 @@ const ChatInput = ({
   const [openAttachment, setOpenAttachment] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { query, files } = useChatInput();
-  const { setQuery, setFiles } = useChatInputActions();
+  const { setQuery, setFiles, reset } = useChatInputActions();
 
   const recalculateHeight = () => {
     if (textAreaRef && textAreaRef.current) {
@@ -56,10 +56,9 @@ const ChatInput = ({
   }, [query]);
 
   const submit = () => {
-    if (query.length > 0) {
+    if (query.length > 0 && !isLoading && !isFileUploadLoading) {
       handleSubmit(query);
-      setQuery("");
-      setFiles([]);
+      reset();
       recalculateHeight();
     }
   };
@@ -248,7 +247,7 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
   const { fileData } = useChatInput();
   const { mutateAsync: deleteFile } = useDeleteDocument({});
   return (
-    <div className="group relative">
+    <div className="group relative min-w-16 shrink-0">
       <AnimatePresence>
         {isLoading && (
           <motion.div
@@ -263,13 +262,18 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
       </AnimatePresence>
 
       {/* delete button */}
-      <div className="absolute top-0 right-0 z-20 m-0.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div
+        className={cn(
+          "absolute top-0 right-0 z-20 m-0.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+          { hidden: isLoading },
+        )}
+      >
         <Button
           onClick={() => {
-            if (fileData) {
+            if (fileData && fileData.get(file.name)) {
               deleteFile({
                 params: {
-                  id: fileData.id,
+                  id: fileData.get(file.name)?.id || "",
                 },
               });
             }
@@ -277,12 +281,13 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
           }}
           variant={"ghost"}
           className={
-            "rounded-full text-gray-600 hover:text-gray-800 dark:text-white/60 dark:hover:text-white"
+            "relative rounded-full text-gray-600 hover:text-gray-800 dark:text-white/60 dark:hover:text-white"
           }
         >
+          <div className="absolute -inset-0.5 z-10 rounded-full bg-black/50"></div>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="size-5"
+            className="relative z-20 size-5"
             viewBox="0 0 24 24"
           >
             <path
@@ -321,7 +326,7 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
         <img
           src={URL.createObjectURL(file)}
           alt={file.name}
-          className="aspect-square size-16 overflow-hidden rounded-xl border object-cover shadow-inner"
+          className="aspect-square size-16 shrink-0 overflow-hidden rounded-xl border object-cover shadow-inner"
         />
       )}
     </div>

@@ -33,6 +33,7 @@ import Spinner from "../../components/Spinner";
 import Tooltip from "../../components/tooltip";
 import { cn } from "../../utilities/cn";
 import InputGroup from "../../components/Forms/InputGroup";
+import { Pagination } from "../../components/Pagination";
 
 type AgentItem = {
   id: string;
@@ -45,7 +46,7 @@ type AgentItem = {
 
 const ViewWorkerAgents = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, _setPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [records_per_page, _setRecords_per_page] = useState(25);
   const [isRegisterWorkerAgentOpen, setIsRegisterWorkerAgentOpen] =
     useState(false);
@@ -62,10 +63,7 @@ const ViewWorkerAgents = () => {
   }, [searchQuery, page, records_per_page]);
 
   const { data: registeredAgents, isPending: isRegisteredAgentsLoading } =
-    useGetWorkerAgents(workerAgentOptions) as {
-      data?: { items: AgentItem[]; meta?: any };
-      isPending: boolean;
-    };
+    useGetWorkerAgents(workerAgentOptions);
 
   const { mutateAsync: createWorkerAgent } = useCreateWorkerAgent({
     invalidateQueryKey: [workerAgentKey[EWorkerAgent.FETCH_ALL]],
@@ -314,7 +312,10 @@ const ViewWorkerAgents = () => {
                     Try adjusting your filters or reset to see all worker agents
                   </p>
                   <Button
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => {
+                      setSearchQuery("");
+                      setPage(1);
+                    }}
                     variant={"ghost"}
                     wrapperClass="w-max"
                     className={
@@ -329,164 +330,186 @@ const ViewWorkerAgents = () => {
             {!isRegisteredAgentsLoading &&
               registeredAgents &&
               registeredAgents.items.length > 0 && (
-                <div
-                  className={cn(
-                    "mt-10 grid w-full grid-cols-1 gap-5 gap-y-8 lg:grid-cols-2 xl:grid-cols-3 xl:gap-y-5",
-                  )}
-                >
-                  {registeredAgents.items.map((agent: AgentItem) => (
+                <>
+                  <div className="flex flex-1 flex-col">
                     <div
-                      key={agent.id}
                       className={cn(
-                        "relative flex w-full flex-col gap-3 rounded-xl border border-gray-300 bg-white p-3 pb-6 dark:border-white/10 dark:bg-transparent",
+                        "mt-10 grid w-full grid-cols-1 gap-5 gap-y-8 lg:grid-cols-2 xl:grid-cols-3 xl:gap-y-5",
                       )}
                     >
-                      <div className="absolute right-2 -bottom-5">
-                        <div className="flex w-full items-center justify-end gap-2">
-                          <Tooltip>
-                            <Button
-                              wrapperClass="flex items-center justify-center"
-                              onClick={() => handleOpenEditModal(agent)}
-                              variant={"ghost"}
-                              className={
-                                "dark:bg-primary-dark-foreground flex items-center justify-center rounded-full border border-gray-300 bg-white p-2 text-gray-800 hover:bg-gray-100 data-[pressed]:bg-gray-100 md:p-2 dark:border-white/10 dark:text-white dark:hover:bg-[#313030] dark:data-[pressed]:bg-[#313030]"
-                              }
-                            >
-                              <VscEdit className="size-4" />
-                            </Button>
-                            <Tooltip.Content placement="bottom" offset={10}>
-                              <p className="text-xs text-gray-800 dark:text-white">
-                                Edit
-                              </p>
-                              <Tooltip.Arrow />
-                            </Tooltip.Content>
-                          </Tooltip>
-                          <Tooltip>
-                            <Button
-                              onClick={() => handleOpenDeleteModal(agent)}
-                              variant={"ghost"}
-                              wrapperClass="flex items-center justify-center"
-                              className={
-                                "dark:bg-primary-dark-foreground flex items-center justify-center rounded-full border border-gray-300 bg-white p-2 text-red-700 hover:bg-red-100 data-[pressed]:bg-red-100 md:p-2 dark:border-white/10 dark:text-red-700 dark:hover:bg-[#2C191A] dark:data-[pressed]:bg-[#2C191A]"
-                              }
-                            >
-                              <VscTrash className="size-4" />
-                            </Button>
-                            <Tooltip.Content placement="bottom" offset={10}>
-                              <p className="text-xs text-gray-800 dark:text-white">
-                                Delete
-                              </p>
-                              <Tooltip.Arrow />
-                            </Tooltip.Content>
-                          </Tooltip>
-                        </div>
-                      </div>
-                      <div
-                        className={cn(
-                          "relative flex items-start justify-start gap-3",
-                        )}
-                      >
-                        <div className="w-full">
-                          <div className="flex w-full items-center justify-between gap-3">
-                            <h4 className="truncate text-lg font-medium text-gray-800 dark:text-white">
-                              {agent.name}
-                            </h4>
-                            <div className="flex items-center justify-end gap-2">
-                              <Tooltip delay={500}>
+                      {registeredAgents.items.map((agent: AgentItem) => (
+                        <div
+                          key={agent.id}
+                          className={cn(
+                            "relative flex w-full flex-col gap-3 rounded-xl border border-gray-300 bg-white p-3 pb-6 dark:border-white/10 dark:bg-transparent",
+                          )}
+                        >
+                          <div className="absolute right-2 -bottom-5">
+                            <div className="flex w-full items-center justify-end gap-2">
+                              <Tooltip>
                                 <Button
                                   wrapperClass="flex items-center justify-center"
+                                  onClick={() => handleOpenEditModal(agent)}
                                   variant={"ghost"}
-                                  className="p-1"
+                                  className={
+                                    "dark:bg-primary-dark-foreground flex items-center justify-center rounded-full border border-gray-300 bg-white p-2 text-gray-800 hover:bg-gray-100 data-[pressed]:bg-gray-100 md:p-2 dark:border-white/10 dark:text-white dark:hover:bg-[#313030] dark:data-[pressed]:bg-[#313030]"
+                                  }
                                 >
-                                  <VscGlobe className="size-5 text-amber-700" />
+                                  <VscEdit className="size-4" />
                                 </Button>
                                 <Tooltip.Content placement="bottom" offset={10}>
-                                  <div className="flex flex-col justify-center p-2">
-                                    <label className="text-[0.6rem] font-medium tracking-widest text-gray-600 uppercase dark:text-white/60">
-                                      Https endpoint
-                                    </label>
-                                    <p className="text-xs break-all text-gray-800 dark:text-white">
-                                      {agent.http_endpoint}
-                                    </p>
-                                  </div>
+                                  <p className="text-xs text-gray-800 dark:text-white">
+                                    Edit
+                                  </p>
                                   <Tooltip.Arrow />
                                 </Tooltip.Content>
                               </Tooltip>
-                              <Tooltip delay={500}>
+                              <Tooltip>
                                 <Button
-                                  wrapperClass="flex items-center justify-center"
+                                  onClick={() => handleOpenDeleteModal(agent)}
                                   variant={"ghost"}
-                                  className="p-1"
+                                  wrapperClass="flex items-center justify-center"
+                                  className={
+                                    "dark:bg-primary-dark-foreground flex items-center justify-center rounded-full border border-gray-300 bg-white p-2 text-red-700 hover:bg-red-100 data-[pressed]:bg-red-100 md:p-2 dark:border-white/10 dark:text-red-700 dark:hover:bg-[#2C191A] dark:data-[pressed]:bg-[#2C191A]"
+                                  }
                                 >
-                                  <VscVerifiedFilled className="size-5 text-green-700" />
+                                  <VscTrash className="size-4" />
                                 </Button>
                                 <Tooltip.Content placement="bottom" offset={10}>
-                                  <div className="flex flex-col justify-center p-2">
-                                    <label className="text-[0.6rem] font-medium tracking-widest text-gray-600 uppercase dark:text-white/60">
-                                      Verification token
-                                    </label>
-                                    <p className="text-xs break-all text-gray-800 dark:text-white">
-                                      {agent.verification_token}
-                                    </p>
-                                  </div>
+                                  <p className="text-xs text-gray-800 dark:text-white">
+                                    Delete
+                                  </p>
                                   <Tooltip.Arrow />
                                 </Tooltip.Content>
                               </Tooltip>
-                              {agent.payload_schema &&
-                                (typeof agent.payload_schema === "object" ||
-                                  (typeof agent.payload_schema === "string" &&
-                                    agent.payload_schema.trim() !== "")) && (
+                            </div>
+                          </div>
+                          <div
+                            className={cn(
+                              "relative flex items-start justify-start gap-3",
+                            )}
+                          >
+                            <div className="w-full">
+                              <div className="flex w-full items-center justify-between gap-3">
+                                <h4 className="truncate text-lg font-medium text-gray-800 dark:text-white">
+                                  {agent.name}
+                                </h4>
+                                <div className="flex items-center justify-end gap-2">
                                   <Tooltip delay={500}>
                                     <Button
-                                      wrapperClass="flex rounded-none items-center justify-center"
+                                      wrapperClass="flex items-center justify-center"
                                       variant={"ghost"}
                                       className="p-1"
                                     >
-                                      <VscFileCode className="size-5 text-pink-700" />
+                                      <VscGlobe className="size-5 text-amber-700" />
                                     </Button>
                                     <Tooltip.Content
                                       placement="bottom"
                                       offset={10}
                                     >
-                                      <div className="w-72 overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E]">
-                                        <label className="block px-2 pt-2 pb-1 text-[0.6rem] font-medium tracking-widest text-gray-600 uppercase dark:text-white/60">
-                                          payload schema
+                                      <div className="flex flex-col justify-center p-2">
+                                        <label className="text-[0.6rem] font-medium tracking-widest text-gray-600 uppercase dark:text-white/60">
+                                          Https endpoint
                                         </label>
-                                        <CodeEditor
-                                          language="json"
-                                          value={
-                                            typeof agent.payload_schema ===
-                                            "string"
-                                              ? agent.payload_schema
-                                              : JSON.stringify(
-                                                  agent.payload_schema,
-                                                  null,
-                                                  2,
-                                                )
-                                          }
-                                          readOnly={true}
-                                          editorOptions={{
-                                            lineNumbers: "off",
-                                            padding: { top: 10 },
-                                            folding: false,
-                                          }}
-                                          className="h-44"
-                                        />
+                                        <p className="text-xs break-all text-gray-800 dark:text-white">
+                                          {agent.http_endpoint}
+                                        </p>
                                       </div>
                                       <Tooltip.Arrow />
                                     </Tooltip.Content>
                                   </Tooltip>
-                                )}
+                                  <Tooltip delay={500}>
+                                    <Button
+                                      wrapperClass="flex items-center justify-center"
+                                      variant={"ghost"}
+                                      className="p-1"
+                                    >
+                                      <VscVerifiedFilled className="size-5 text-green-700" />
+                                    </Button>
+                                    <Tooltip.Content
+                                      placement="bottom"
+                                      offset={10}
+                                    >
+                                      <div className="flex flex-col justify-center p-2">
+                                        <label className="text-[0.6rem] font-medium tracking-widest text-gray-600 uppercase dark:text-white/60">
+                                          Verification token
+                                        </label>
+                                        <p className="text-xs break-all text-gray-800 dark:text-white">
+                                          {agent.verification_token}
+                                        </p>
+                                      </div>
+                                      <Tooltip.Arrow />
+                                    </Tooltip.Content>
+                                  </Tooltip>
+                                  {agent.payload_schema &&
+                                    (typeof agent.payload_schema === "object" ||
+                                      (typeof agent.payload_schema ===
+                                        "string" &&
+                                        agent.payload_schema.trim() !==
+                                          "")) && (
+                                      <Tooltip delay={500}>
+                                        <Button
+                                          wrapperClass="flex rounded-none items-center justify-center"
+                                          variant={"ghost"}
+                                          className="p-1"
+                                        >
+                                          <VscFileCode className="size-5 text-pink-700" />
+                                        </Button>
+                                        <Tooltip.Content
+                                          placement="bottom"
+                                          offset={10}
+                                        >
+                                          <div className="w-72 overflow-hidden rounded-xl border border-white/10 bg-[#1E1E1E]">
+                                            <label className="block px-2 pt-2 pb-1 text-[0.6rem] font-medium tracking-widest text-gray-600 uppercase dark:text-white/60">
+                                              payload schema
+                                            </label>
+                                            <CodeEditor
+                                              language="json"
+                                              value={
+                                                typeof agent.payload_schema ===
+                                                "string"
+                                                  ? agent.payload_schema
+                                                  : JSON.stringify(
+                                                      agent.payload_schema,
+                                                      null,
+                                                      2,
+                                                    )
+                                              }
+                                              readOnly={true}
+                                              editorOptions={{
+                                                lineNumbers: "off",
+                                                padding: { top: 10 },
+                                                folding: false,
+                                              }}
+                                              className="h-44"
+                                            />
+                                          </div>
+                                          <Tooltip.Arrow />
+                                        </Tooltip.Content>
+                                      </Tooltip>
+                                    )}
+                                </div>
+                              </div>
+                              <p className="mt-1 line-clamp-3 text-xs text-gray-600 dark:text-white/60">
+                                {agent.description}
+                              </p>
                             </div>
                           </div>
-                          <p className="mt-1 line-clamp-3 text-xs text-gray-600 dark:text-white/60">
-                            {agent.description}
-                          </p>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+
+                  <div className="mt-5 flex w-full items-center justify-end px-5">
+                    <Pagination
+                      currentPage={page}
+                      numberOfPages={Math.ceil(
+                        registeredAgents.total / records_per_page,
+                      )}
+                      setCurrentPage={setPage}
+                    />
+                  </div>
+                </>
               )}
           </div>
 

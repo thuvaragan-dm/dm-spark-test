@@ -49,6 +49,7 @@ import { EMCP, mcpKey } from "../../api/mcp/config";
 import { AxiosError } from "axios";
 import { useDeleteMCPConnection } from "../../api/mcp/useDeleteMCPConnection";
 import { useToggleMCPConnectionStatus } from "../../api/mcp/useToggleMCPConnectionStatus";
+import { Pagination } from "../../components/Pagination";
 
 // Helper to generate readable labels from field names
 const generateLabel = (fieldName: string): string => {
@@ -74,7 +75,7 @@ const Mcpconnect = () => {
   const [rootFormMethod, setRootFormMethod] =
     useState<UseFormReturn<any> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, _setPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [records_per_page, _setRecords_per_page] = useState(25);
 
   const availableMCPConnectionsOptions =
@@ -146,7 +147,7 @@ const Mcpconnect = () => {
         for (const [key, valueInResponse] of Object.entries(
           currentCredentialsDesc,
         )) {
-          const isRequired = valueInResponse !== null; // null means optional
+          const isRequired = valueInResponse !== null;
           const label = generateLabel(key);
 
           fields.push({
@@ -163,12 +164,34 @@ const Mcpconnect = () => {
           });
 
           if (isRequired) {
-            schemaShape[key] = z
+            let schema = z
               .string({ required_error: `${label} is required.` })
               .trim()
               .min(1, `${label} is required.`);
+
+            if (key.toLowerCase().includes("email")) {
+              // .email() is valid here because `schema` is still a ZodString
+              schema = schema.email({ message: "Invalid email address." });
+            }
+            schemaShape[key] = schema;
           } else {
-            schemaShape[key] = z.string().optional();
+            // For optional fields
+            let finalSchema: ZodTypeAny;
+            const stringSchema = z.string(); // Start with a specific ZodString
+
+            if (key.toLowerCase().includes("email")) {
+              // Apply .email() to the ZodString, then create the union.
+              // The result is assigned to the generic `finalSchema` variable.
+              finalSchema = stringSchema
+                .email({ message: "Invalid email address." })
+                .or(z.literal(""));
+            } else {
+              // If not an email, the final schema is just the ZodString.
+              finalSchema = stringSchema;
+            }
+
+            // Apply .optional() to the final, correctly-typed schema.
+            schemaShape[key] = finalSchema.optional();
           }
         }
         setDynamicFormFields(fields);
@@ -178,7 +201,6 @@ const Mcpconnect = () => {
         setDynamicValidationSchema(z.object({}));
       }
     } else {
-      // Clear fields if method is OAUTH2 or no selection, or if credentials are not in the expected format
       setDynamicFormFields([]);
       setDynamicValidationSchema(z.object({}));
     }
@@ -231,6 +253,7 @@ const Mcpconnect = () => {
         setMCP(null);
         setOAuthFlowTriggered(false);
         setIsConnectionsModalOpen(false);
+        setActiveConnectionsTab(1);
       } catch (error) {
         const err = error as AxiosError;
 
@@ -277,6 +300,11 @@ const Mcpconnect = () => {
               },
               body: safeData.data,
             });
+
+            setMCP(null);
+            setOAuthFlowTriggered(false);
+            setIsConnectionsModalOpen(false);
+            setActiveConnectionsTab(1);
           } catch (error) {
             const err = error as AxiosError;
 
@@ -284,6 +312,8 @@ const Mcpconnect = () => {
               rootFormMethod.setError("name", {
                 message: "The name you entered already exists.",
               });
+
+              rootFormMethod.setFocus("name");
             }
           }
         }
@@ -336,6 +366,8 @@ const Mcpconnect = () => {
     } else {
       refetchAvailableMCPConnections();
     }
+    setSearchQuery("");
+    setPage(1);
   }, [
     activeConnectionsTab,
     refetchAvailableMCPConnections,
@@ -382,255 +414,396 @@ const Mcpconnect = () => {
             </div>
           </div>
 
-          {!isAvailableConnectionsLoading && (
-            <div className="flex flex-1 flex-col">
-              <div className="w-full px-5">
-                <Tabs
-                  className="w-min rounded-lg border border-gray-300 bg-transparent p-1 dark:border-white/10 dark:bg-white/5"
-                  tabs={[
-                    { id: 1, Label: "Your Connections" },
-                    { id: 2, Label: "Other Connections" },
-                  ]}
-                  bubbleBorderRadius="4px"
-                  buttonClass="data-[active=true]:text-primary dark:data-[active=true]:text-white data-[active=false]:hover:text-primary/80 dark:data-[active=false]:hover:text-white text-primary/80 dark:text-white/60 hover:text-primary/80 dark:hover:text-white"
-                  bubbleClass="bg-secondary dark:bg-white/20"
-                  activeTab={activeConnectionsTab}
-                  setActiveTab={setActiveConnectionsTab}
-                />
-              </div>
+          <div className="flex flex-1 flex-col">
+            <div className="w-full px-5">
+              <Tabs
+                className="w-min rounded-lg bg-transparent"
+                tabs={[
+                  { id: 1, Label: "Your Connections" },
+                  { id: 2, Label: "Other Connections" },
+                ]}
+                bubbleBorderRadius="8px"
+                buttonClass="data-[active=true]:text-primary dark:data-[active=true]:text-white data-[active=false]:hover:text-primary/80 dark:data-[active=false]:hover:text-white text-primary/80 dark:text-white/60 hover:text-primary/80 dark:hover:text-white"
+                bubbleClass="bg-secondary dark:bg-white/8"
+                activeTab={activeConnectionsTab}
+                setActiveTab={setActiveConnectionsTab}
+              />
+            </div>
 
-              <SlidingContainer active={activeConnectionsTab} className="pb-5">
-                {activeConnectionsTab === 1 && (
-                  <>
-                    {isConnectedMCPConnectionsLoading && (
-                      <div className="flex flex-1 flex-col items-center justify-center p-5">
-                        <Spinner className="size-5 dark:text-white" />
-                      </div>
-                    )}
+            <SlidingContainer
+              active={activeConnectionsTab}
+              className="flex flex-1 flex-col pb-5"
+            >
+              {activeConnectionsTab === 1 && (
+                <>
+                  {isConnectedMCPConnectionsLoading && (
+                    <div className="flex flex-1 flex-col items-center justify-center p-5">
+                      <Spinner className="size-5 dark:text-white" />
+                    </div>
+                  )}
 
-                    {!isConnectedMCPConnectionsLoading &&
-                      connectedMCPConnections && (
-                        <div
-                          className={cn(
-                            "mt-10 grid w-full grid-cols-1 gap-5 gap-y-8 px-5 lg:grid-cols-2 xl:grid-cols-3 xl:gap-y-5",
-                          )}
-                        >
-                          {connectedMCPConnections.items.map((connection) => (
-                            <div className="flex flex-col overflow-hidden rounded-lg border border-gray-300 dark:border-white/10">
-                              <div className="flex items-start justify-start gap-3 p-3">
-                                <div className="dark:ring-offset-primary-dark-foreground flex aspect-square items-center justify-center rounded-md border border-gray-300 bg-white p-1 shadow-lg ring ring-gray-300 ring-offset-1 ring-offset-gray-100 dark:border-white dark:ring-white/20">
-                                  <MCPConnectionIcon
-                                    icon={
-                                      connection.name as AvailableMCPProviders
-                                    }
-                                  />
-                                </div>
-
-                                <div className="w-full">
-                                  <h3 className="w-full truncate text-xl font-medium text-gray-800 dark:text-white">
-                                    {connection.name}
-                                  </h3>
-
-                                  <p className="text-xs text-gray-600 dark:text-white/60">
-                                    Below are the list of all connected
-                                    accounts.
-                                  </p>
-
-                                  <div className="mt-8 flex w-full flex-col space-y-8">
-                                    {connection.connections.map((mcp) => (
-                                      <div
-                                        key={mcp.id}
-                                        className="relative w-full flex-1 rounded-md border border-gray-300 bg-white p-2 dark:border-white/5 dark:bg-white/2"
-                                      >
-                                        <div className="flex items-start justify-between gap-3">
-                                          <div className="w-max shrink-0 rounded-sm bg-amber-100 px-1 py-2 text-[0.6rem] leading-0 tracking-wider text-amber-600 uppercase dark:bg-amber-600/10">
-                                            {mcp.auth_method}
-                                          </div>
-
-                                          {/* controls */}
-                                          <div className="absolute -top-5 right-2 flex items-center justify-end gap-1 rounded-md border border-gray-300 bg-white pl-1.5 dark:border-white/10 dark:bg-[#1E1E1E]">
-                                            <Tooltip delay={700}>
-                                              <Button
-                                                onClick={() => {
-                                                  setSelectedMCPConnectionForManupulation(
-                                                    mcp,
-                                                  );
-                                                  setIsEditConnectionModalOpen(
-                                                    true,
-                                                  );
-                                                }}
-                                                wrapperClass="flex items-center justify-center"
-                                                variant={"ghost"}
-                                                className="rounded-sm p-0.5 hover:bg-sky-100 md:p-0.5 dark:hover:bg-sky-600/10"
-                                              >
-                                                <MdEditNote className="size-5 text-sky-700" />
-                                              </Button>
-                                              <Tooltip.Content
-                                                placement="bottom"
-                                                offset={10}
-                                              >
-                                                <p className="text-xs text-gray-800 dark:text-white">
-                                                  Edit connection
-                                                </p>
-                                                <Tooltip.Arrow />
-                                              </Tooltip.Content>
-                                            </Tooltip>
-
-                                            <Tooltip delay={700}>
-                                              <Button
-                                                onClick={() => {
-                                                  setSelectedMCPConnectionForManupulation(
-                                                    mcp,
-                                                  );
-                                                  setSelectedMCPGroupForManuplation(
-                                                    connection,
-                                                  );
-                                                  setIsDeleteConnectionModalOpen(
-                                                    true,
-                                                  );
-                                                }}
-                                                wrapperClass="flex items-center justify-center"
-                                                variant={"ghost"}
-                                                className="rounded-sm p-1 hover:bg-red-100 md:p-1 dark:hover:bg-red-600/10"
-                                              >
-                                                <VscDebugDisconnect className="size-4 text-red-700" />
-                                              </Button>
-                                              <Tooltip.Content
-                                                placement="bottom"
-                                                offset={10}
-                                              >
-                                                <p className="text-xs text-gray-800 dark:text-white">
-                                                  Disconnect
-                                                </p>
-                                                <Tooltip.Arrow />
-                                              </Tooltip.Content>
-                                            </Tooltip>
-
-                                            <Form
-                                              validationSchema={z.object({
-                                                isActive: z.boolean(),
-                                              })}
-                                            >
-                                              <Field>
-                                                <Switch
-                                                  onChange={(value) => {
-                                                    toggleMCPStatus({
-                                                      params: {
-                                                        id: mcp.id,
-                                                        name: connection.name,
-                                                      },
-                                                      body: {
-                                                        enable: value,
-                                                      },
-                                                    });
-                                                  }}
-                                                  isSelected={mcp.is_active}
-                                                  className={
-                                                    "origin-bottom scale-[70%]"
-                                                  }
-                                                  switchClass="group-data-[selected]:bg-green-600"
-                                                />
-                                              </Field>
-                                            </Form>
-                                          </div>
-                                          {/* controls */}
+                  {!isConnectedMCPConnectionsLoading &&
+                    connectedMCPConnections && (
+                      <>
+                        {connectedMCPConnections.items.length > 0 && (
+                          <>
+                            <div className="flex flex-1 flex-col">
+                              <div
+                                className={cn(
+                                  "mt-10 grid w-full grid-cols-1 gap-5 gap-y-8 px-5 lg:grid-cols-2 xl:grid-cols-3 xl:gap-y-5",
+                                )}
+                              >
+                                {connectedMCPConnections.items.map(
+                                  (connection) => (
+                                    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-300 dark:border-white/10">
+                                      <div className="flex items-start justify-start gap-3 p-3">
+                                        <div className="dark:ring-offset-primary-dark-foreground flex aspect-square items-center justify-center rounded-md border border-gray-300 bg-white p-1 shadow-lg ring ring-gray-300 ring-offset-1 ring-offset-gray-100 dark:border-white dark:ring-white/20">
+                                          <MCPConnectionIcon
+                                            icon={
+                                              connection.name as AvailableMCPProviders
+                                            }
+                                          />
                                         </div>
 
-                                        <h5 className="mt-2 text-xs font-medium text-gray-800 dark:text-white">
-                                          {mcp.name}
-                                        </h5>
+                                        <div className="w-full">
+                                          <h3 className="w-full truncate text-xl font-medium text-gray-800 dark:text-white">
+                                            {connection.name}
+                                          </h3>
 
-                                        {mcp.description && (
-                                          <p className="mt-1 text-[0.65rem] text-gray-600 dark:text-white/50">
-                                            {mcp.description}
+                                          <p className="text-xs text-gray-600 dark:text-white/60">
+                                            Below are the list of all connected
+                                            accounts.
                                           </p>
-                                        )}
 
-                                        <div className="mt-3">
-                                          <p className="text-[0.6rem] tracking-wider text-gray-600 uppercase dark:text-white/60">
-                                            workspace id
-                                          </p>
-                                          <span className="rounded-sm border border-sky-300 bg-sky-100 p-0.5 text-[0.6rem] text-sky-600 dark:border-sky-300/10 dark:bg-sky-700/10">
-                                            {mcp.workspace_id}
-                                          </span>
+                                          <div className="mt-8 flex w-full flex-col space-y-8">
+                                            {connection.connections.map(
+                                              (mcp) => (
+                                                <div
+                                                  key={mcp.id}
+                                                  className="relative w-full flex-1 rounded-md border border-gray-300 bg-white p-2 dark:border-white/5 dark:bg-white/2"
+                                                >
+                                                  <div className="flex items-start justify-between gap-3">
+                                                    <div className="w-max shrink-0 rounded-sm bg-amber-100 px-1 py-2 text-[0.6rem] leading-0 tracking-wider text-amber-600 uppercase dark:bg-amber-600/10">
+                                                      {mcp.auth_method}
+                                                    </div>
+
+                                                    {/* controls */}
+                                                    <div className="absolute -top-5 right-2 flex items-center justify-end gap-1 rounded-md border border-gray-300 bg-white pl-1.5 dark:border-white/10 dark:bg-[#1E1E1E]">
+                                                      <Tooltip delay={700}>
+                                                        <Button
+                                                          onClick={() => {
+                                                            setSelectedMCPConnectionForManupulation(
+                                                              mcp,
+                                                            );
+                                                            setIsEditConnectionModalOpen(
+                                                              true,
+                                                            );
+                                                          }}
+                                                          wrapperClass="flex items-center justify-center"
+                                                          variant={"ghost"}
+                                                          className="rounded-sm p-0.5 hover:bg-sky-100 md:p-0.5 dark:hover:bg-sky-600/10"
+                                                        >
+                                                          <MdEditNote className="size-5 text-sky-700" />
+                                                        </Button>
+                                                        <Tooltip.Content
+                                                          placement="bottom"
+                                                          offset={10}
+                                                        >
+                                                          <p className="text-xs text-gray-800 dark:text-white">
+                                                            Edit connection
+                                                          </p>
+                                                          <Tooltip.Arrow />
+                                                        </Tooltip.Content>
+                                                      </Tooltip>
+
+                                                      <Tooltip delay={700}>
+                                                        <Button
+                                                          onClick={() => {
+                                                            setSelectedMCPConnectionForManupulation(
+                                                              mcp,
+                                                            );
+                                                            setSelectedMCPGroupForManuplation(
+                                                              connection,
+                                                            );
+                                                            setIsDeleteConnectionModalOpen(
+                                                              true,
+                                                            );
+                                                          }}
+                                                          wrapperClass="flex items-center justify-center"
+                                                          variant={"ghost"}
+                                                          className="rounded-sm p-1 hover:bg-red-100 md:p-1 dark:hover:bg-red-600/10"
+                                                        >
+                                                          <VscDebugDisconnect className="size-4 text-red-700" />
+                                                        </Button>
+                                                        <Tooltip.Content
+                                                          placement="bottom"
+                                                          offset={10}
+                                                        >
+                                                          <p className="text-xs text-gray-800 dark:text-white">
+                                                            Disconnect
+                                                          </p>
+                                                          <Tooltip.Arrow />
+                                                        </Tooltip.Content>
+                                                      </Tooltip>
+
+                                                      <Form
+                                                        validationSchema={z.object(
+                                                          {
+                                                            isActive:
+                                                              z.boolean(),
+                                                          },
+                                                        )}
+                                                      >
+                                                        <Field>
+                                                          <Switch
+                                                            onChange={(
+                                                              value,
+                                                            ) => {
+                                                              toggleMCPStatus({
+                                                                params: {
+                                                                  id: mcp.id,
+                                                                  name: connection.name,
+                                                                },
+                                                                body: {
+                                                                  enable: value,
+                                                                },
+                                                              });
+                                                            }}
+                                                            isSelected={
+                                                              mcp.is_active
+                                                            }
+                                                            className={
+                                                              "origin-bottom scale-[70%]"
+                                                            }
+                                                            switchClass="group-data-[selected]:bg-green-600"
+                                                          />
+                                                        </Field>
+                                                      </Form>
+                                                    </div>
+                                                    {/* controls */}
+                                                  </div>
+
+                                                  <h5 className="mt-2 text-xs font-medium text-gray-800 dark:text-white">
+                                                    {mcp.name}
+                                                  </h5>
+
+                                                  {mcp.description && (
+                                                    <p className="mt-1 text-[0.65rem] text-gray-600 dark:text-white/50">
+                                                      {mcp.description}
+                                                    </p>
+                                                  )}
+
+                                                  <div className="mt-3">
+                                                    <p className="text-[0.6rem] tracking-wider text-gray-600 uppercase dark:text-white/60">
+                                                      workspace id
+                                                    </p>
+                                                    <span className="rounded-sm border border-sky-300 bg-sky-100 p-0.5 text-[0.6rem] text-sky-600 dark:border-sky-300/10 dark:bg-sky-700/10">
+                                                      {mcp.workspace_id}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              ),
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
-                                </div>
+                                    </div>
+                                  ),
+                                )}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                  </>
-                )}
 
-                {activeConnectionsTab === 2 && (
-                  <>
-                    {isAvailableConnectionsLoading && (
-                      <div className="flex flex-1 flex-col items-center justify-center p-5">
-                        <Spinner className="size-5 dark:text-white" />
-                      </div>
-                    )}
-                    <div
-                      className={cn(
-                        "mt-10 grid w-full grid-cols-1 gap-5 gap-y-8 px-5 lg:grid-cols-2 xl:grid-cols-3 xl:gap-y-5",
-                      )}
-                    >
-                      {availableMCPConnections &&
-                        availableMCPConnections.items.map((connection) => (
-                          <div
-                            key={connection.service_provider}
-                            className="flex flex-col overflow-hidden rounded-lg border border-gray-300 dark:border-white/10"
-                          >
-                            <div className="flex items-start justify-start gap-3 p-3">
-                              <div className="dark:ring-offset-primary-dark-foreground flex aspect-square items-center justify-center rounded-md border border-gray-300 bg-white p-1 shadow-lg ring ring-gray-300 ring-offset-1 ring-offset-gray-100 dark:border-white dark:ring-white/20">
-                                <MCPConnectionIcon
-                                  icon={
-                                    connection.name
-                                      .toLowerCase()
-                                      .split(" ")
-                                      .join("_") as AvailableMCPProviders
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <div className="flex w-full items-center justify-start gap-3 truncate">
-                                  <h3 className="w-full truncate text-xl font-medium text-gray-800 dark:text-white">
-                                    {connection.name}
-                                  </h3>
-                                </div>
-                                <p className="mt-1 text-[0.65rem] text-gray-600 dark:text-white/50">
-                                  {/* Using a placeholder description, ideally this would come from API or be more specific */}
-                                  Connect to your {connection.name} account.
+                            <div className="mt-5 flex w-full items-center justify-end px-5">
+                              <Pagination
+                                currentPage={page}
+                                numberOfPages={Math.ceil(
+                                  connectedMCPConnections.total /
+                                    records_per_page,
+                                )}
+                                setCurrentPage={setPage}
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {connectedMCPConnections.items.length <= 0 && (
+                          <div className="flex w-full flex-1 flex-col items-center justify-center p-3 @lg:p-5">
+                            <div className="bg-secondary dark:bg-primary-700/20 text-primary flex w-min items-center justify-center rounded-full p-5 dark:text-white">
+                              <VscServer className="size-10" />
+                            </div>
+                            <p className="mt-2 text-lg font-semibold text-gray-800 dark:text-white">
+                              No connected MCPs found
+                            </p>
+
+                            {searchQuery.length > 0 && (
+                              <>
+                                <p className="text-center text-sm text-balance text-gray-600 dark:text-white/60">
+                                  Try adjusting your filters or reset to see all
+                                  connected mcps
                                 </p>
+                                <Button
+                                  onClick={() => {
+                                    setSearchQuery("");
+                                    setPage(1);
+                                  }}
+                                  variant={"ghost"}
+                                  wrapperClass="w-max"
+                                  className={
+                                    "text-primary dark:text-secondary ring-primary px-1 text-xs hover:underline md:px-1"
+                                  }
+                                >
+                                  Reset filters
+                                </Button>
+                              </>
+                            )}
+
+                            {searchQuery.length <= 0 && (
+                              <>
+                                <p className="text-center text-sm text-balance text-gray-600 dark:text-white/60">
+                                  You have not yet connected to a server, click
+                                  the button below to create a connection
+                                </p>
+                                <Button
+                                  onClick={() => setActiveConnectionsTab(2)}
+                                  variant={"ghost"}
+                                  wrapperClass="w-max"
+                                  className={
+                                    "text-primary dark:text-secondary ring-primary px-1 text-xs hover:underline md:px-1"
+                                  }
+                                >
+                                  Create Connection
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                </>
+              )}
+
+              {activeConnectionsTab === 2 && (
+                <>
+                  {isAvailableConnectionsLoading && (
+                    <div className="flex flex-1 flex-col items-center justify-center p-5">
+                      <Spinner className="size-5 dark:text-white" />
+                    </div>
+                  )}
+
+                  {!isAvailableConnectionsLoading &&
+                    availableMCPConnections && (
+                      <>
+                        {availableMCPConnections.items.length > 0 && (
+                          <>
+                            <div className="flex flex-1 flex-col">
+                              <div
+                                className={cn(
+                                  "mt-10 grid w-full grid-cols-1 gap-5 gap-y-8 px-5 lg:grid-cols-2 xl:grid-cols-3 xl:gap-y-5",
+                                )}
+                              >
+                                {availableMCPConnections.items.map(
+                                  (connection) => (
+                                    <div
+                                      key={connection.service_provider}
+                                      className="flex flex-col overflow-hidden rounded-lg border border-gray-300 dark:border-white/10"
+                                    >
+                                      <div className="flex items-start justify-start gap-3 p-3">
+                                        <div className="dark:ring-offset-primary-dark-foreground flex aspect-square items-center justify-center rounded-md border border-gray-300 bg-white p-1 shadow-lg ring ring-gray-300 ring-offset-1 ring-offset-gray-100 dark:border-white dark:ring-white/20">
+                                          <MCPConnectionIcon
+                                            icon={
+                                              connection.name
+                                                .toLowerCase()
+                                                .split(" ")
+                                                .join(
+                                                  "_",
+                                                ) as AvailableMCPProviders
+                                            }
+                                          />
+                                        </div>
+                                        <div>
+                                          <div className="flex w-full items-center justify-start gap-3 truncate">
+                                            <h3 className="w-full truncate text-xl font-medium text-gray-800 dark:text-white">
+                                              {connection.name}
+                                            </h3>
+                                          </div>
+                                          <p className="mt-1 text-[0.65rem] text-gray-600 dark:text-white/50">
+                                            {/* Using a placeholder description, ideally this would come from API or be more specific */}
+                                            Connect to your {connection.name}{" "}
+                                            account.
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center justify-end border-t border-gray-300 bg-gray-200/60 p-3 dark:border-white/10 dark:bg-white/5">
+                                        <Button
+                                          onClick={() => {
+                                            setSelectedMCPConnection(
+                                              connection,
+                                            );
+                                            setIsConnectionsModalOpen(true);
+                                          }}
+                                          variant={"ghost"}
+                                          wrapperClass="flex items-center justify-center"
+                                          className={
+                                            "dark:bg-primary-dark-foreground dark:hover:bg-primary-dark-foreground/80 flex items-center justify-center gap-2 rounded-md border border-gray-300 p-2 hover:bg-white md:p-2 dark:border-white/10 dark:text-white"
+                                          }
+                                        >
+                                          <VscDebugDisconnect className="size-5" />
+                                          <p>Connect</p>
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ),
+                                )}
                               </div>
                             </div>
-                            <div className="flex items-center justify-end border-t border-gray-300 bg-gray-200/60 p-3 dark:border-white/10 dark:bg-white/5">
-                              <Button
-                                onClick={() => {
-                                  setSelectedMCPConnection(connection);
-                                  setIsConnectionsModalOpen(true);
-                                }}
-                                variant={"ghost"}
-                                wrapperClass="flex items-center justify-center"
-                                className={
-                                  "dark:bg-primary-dark-foreground dark:hover:bg-primary-dark-foreground/80 flex items-center justify-center gap-2 rounded-md border border-gray-300 p-2 hover:bg-white md:p-2 dark:border-white/10 dark:text-white"
-                                }
-                              >
-                                <VscDebugDisconnect className="size-5" />
-                                <p>Connect</p>
-                              </Button>
+
+                            <div className="mt-5 flex w-full items-center justify-end px-5">
+                              <Pagination
+                                currentPage={page}
+                                numberOfPages={Math.ceil(
+                                  availableMCPConnections.total /
+                                    records_per_page,
+                                )}
+                                setCurrentPage={setPage}
+                              />
                             </div>
+                          </>
+                        )}
+
+                        {availableMCPConnections.items.length <= 0 && (
+                          <div className="flex w-full flex-1 flex-col items-center justify-center p-3 @lg:p-5">
+                            <div className="bg-secondary dark:bg-primary-700/20 text-primary flex w-min items-center justify-center rounded-full p-5 dark:text-white">
+                              <VscServer className="size-10" />
+                            </div>
+                            <p className="mt-2 text-lg font-semibold text-gray-800 dark:text-white">
+                              No available MCPs found
+                            </p>
+
+                            <p className="text-center text-sm text-balance text-gray-600 dark:text-white/60">
+                              Try adjusting your filters or reset to see all
+                              available mcps
+                            </p>
+                            <Button
+                              onClick={() => {
+                                setSearchQuery("");
+                                setPage(1);
+                              }}
+                              variant={"ghost"}
+                              wrapperClass="w-max"
+                              className={
+                                "text-primary dark:text-secondary ring-primary px-1 text-xs hover:underline md:px-1"
+                              }
+                            >
+                              Reset filters
+                            </Button>
                           </div>
-                        ))}
-                    </div>
-                  </>
-                )}
-              </SlidingContainer>
-            </div>
-          )}
+                        )}
+                      </>
+                    )}
+                </>
+              )}
+            </SlidingContainer>
+          </div>
         </div>
       </section>
 

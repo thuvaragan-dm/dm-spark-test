@@ -24,6 +24,7 @@ export interface Agent {
 }
 
 export type AgentParams = {
+  search?: string;
   page?: number;
   records_per_page?: number;
 };

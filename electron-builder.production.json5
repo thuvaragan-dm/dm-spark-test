@@ -2,7 +2,7 @@
   $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   appId: "com.deepmodel.app",
   productName: "DeepModel",
-  copyright: "Copyright © 2024 Thuvaragan",
+  copyright: "Copyright © 2024 Deepmodel.ai",
   asar: true,
   directories: {
     output: "release/${version}",

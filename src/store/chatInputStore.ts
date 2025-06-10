@@ -1,23 +1,18 @@
 import { Dispatch, SetStateAction } from "react";
 import { create } from "zustand";
-import { Suggestion, Video } from "../api/messages/types";
 import { Document } from "../api/document/types";
 
 interface ChatInputState {
   states: {
     query: string;
     files: File[];
-    fileData: Document | null; //TODO extend this to include multiple files
-    suggestions: Suggestion[];
-    videos: Video[];
+    fileData: Map<string, Document> | null;
   };
 
   actions: {
     setQuery: Dispatch<SetStateAction<string>>;
     setFiles: Dispatch<SetStateAction<File[]>>;
-    setFileData: Dispatch<SetStateAction<Document | null>>;
-    setSuggestions: Dispatch<SetStateAction<Suggestion[]>>;
-    setVideos: Dispatch<SetStateAction<Video[]>>;
+    setFileData: Dispatch<SetStateAction<Map<string, Document> | null>>;
     reset: () => void;
   };
 }
@@ -56,31 +51,12 @@ const useChatInputStore = create<ChatInputState>()((set) => ({
         },
       })),
 
-    setSuggestions: (value) =>
-      set(({ states }) => ({
-        states: {
-          ...states,
-          suggestions:
-            typeof value === "function" ? value(states.suggestions) : value,
-        },
-      })),
-
-    setVideos: (value) =>
-      set(({ states }) => ({
-        states: {
-          ...states,
-          videos: typeof value === "function" ? value(states.videos) : value,
-        },
-      })),
-
     reset: () =>
       set(() => ({
         states: {
           fileData: null,
           files: [],
           query: "",
-          suggestions: [],
-          videos: [],
         },
       })),
   },

@@ -58,4 +58,37 @@ export const userSchema = z.object({
   metadata_fields: z.record(z.unknown()),
 });
 
+export const ChangePasswordSchema = z
+  .object({
+    current_password: z
+      .string({ required_error: "Password is required." })
+      .min(8, "Password must be at least 8 characters long.")
+      .regex(
+        /.*[!@#$%^&*()_+{}[\]:;"'<>,.?~`].*/,
+        "Password must contain at least one special character.",
+      ),
+
+    new_password: z
+      .string({ required_error: "New password is required." })
+      .min(8, "New password must be at least 8 characters long.")
+      .regex(
+        /.*[!@#$%^&*()_+{}[\]:;"'<>,.?~`].*/,
+        "New password must contain at least one special character.",
+      ),
+
+    confirm_password: z
+      .string({ required_error: "Confirm password is required." })
+      .min(8, "Confirm password must be at least 8 characters long.")
+      .regex(
+        /.*[!@#$%^&*()_+{}[\]:;"'<>,.?~`].*/,
+        "Confirm password must contain at least one special character.",
+      ),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords must match.",
+    path: ["confirm_password"],
+  });
+
 export const UpdateUserSchema = userSchema.partial().omit({ id: true });
+
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
