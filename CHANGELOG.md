@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.3.3
+
+### Patch Changes
+
+- [`73a162f`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/73a162ff66ee7c4c586f6474d869952b9122d043) Thanks [@Dhuvii](https://github.com/Dhuvii)! - fixed minor bugs and added explore agents
+
 ## 2.3.2
 
 ### Patch Changes
