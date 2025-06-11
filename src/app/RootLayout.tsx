@@ -557,7 +557,7 @@ const SettingsModal = ({
   });
 
   useEffect(() => {
-    if (user && !picture?.url) {
+    if (user && !user?.avatar_url) {
       setPicture({
         url:
           (user.is_avatar_enabled
@@ -565,7 +565,7 @@ const SettingsModal = ({
             : user.original_profile_picture_url) || "",
       });
     }
-  }, [user, setPicture, picture]);
+  }, [user, setPicture]);
 
   return (
     <Modal

@@ -700,6 +700,7 @@ ipcMain.on("open-external-url", (_event, urlLink: string) => {
 
 ipcMain.on("delete-auth-token", async () => {
   await deleteTokenFromFile();
+  await deleteRecentlySelectedAgentsFile();
   currentAuthToken = null;
   currentMcpParams = null; // Also clear MCP params on logout/token deletion
   if (win?.webContents && !win.webContents.isDestroyed()) {
