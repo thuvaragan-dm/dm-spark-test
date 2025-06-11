@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.3.9
+
+### Patch Changes
+
+- [`ebe5f29`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/ebe5f29a6a699e1760ee7de8ed4064fdcbfcddea) Thanks [@Dhuvii](https://github.com/Dhuvii)! - nwe mcp redirects added.
+
 ## 2.3.8
 
 ### Patch Changes
