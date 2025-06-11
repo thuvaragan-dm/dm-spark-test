@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.3.7
+
+### Patch Changes
+
+- [`159ce02`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/159ce0214836d6a07e73c4e1219af3f304663b25) Thanks [@Dhuvii](https://github.com/Dhuvii)! - refresh_token added to mcp
+
 ## 2.3.6
 
 ### Patch Changes
