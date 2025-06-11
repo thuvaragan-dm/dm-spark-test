@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.3.5
+
+### Patch Changes
+
+- [`ea8489e`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/ea8489ed196b913f078f4957f21266f0c621e978) Thanks [@Dhuvii](https://github.com/Dhuvii)! - infinite use-effect bug fixed
+
 ## 2.3.4
 
 ### Patch Changes
