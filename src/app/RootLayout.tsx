@@ -76,19 +76,45 @@ type Picture = {
 const RootLayout = () => {
   const { user, accessToken } = useAuth();
   const { setAccessToken, refetchUser, logout, setMCP } = useAuthActions();
+
   useEffect(() => {
-    window.electronAPI.onTokenReceived((token) => {
+    const handleTokenReceived = (token: string) => {
       setAccessToken(token);
       refetchUser();
-    });
+    };
+
+    const unsubscribe = window.electronAPI.onTokenReceived(handleTokenReceived);
+
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
   }, [setAccessToken, refetchUser]);
 
   useEffect(() => {
-    window.electronAPI.onMCPTokensReceived((tokens) => {
+    const handleTokensReceived = (
+      tokens: Record<string, string | null> | null,
+    ) => {
+      if (!tokens) return;
+
+      const expiresInValue = parseInt(tokens.expires_in || "", 10);
+
       setMCP({
-        accessToken: tokens.access_token || "",
+        access_token: tokens.access_token || "",
+        expires_in: !isNaN(expiresInValue) ? expiresInValue : "",
+        refresh_token: tokens.refresh_token || "",
       });
-    });
+    };
+
+    const unsubscribe =
+      window.electronAPI.onMCPTokensReceived(handleTokensReceived);
+
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
   }, [setMCP]);
 
   const { canGoBack, canGoForward } = useAppHistory();
@@ -557,7 +583,7 @@ const SettingsModal = ({
   });
 
   useEffect(() => {
-    if (user && !user?.avatar_url) {
+    if (user && user?.avatar_url) {
       setPicture({
         url:
           (user.is_avatar_enabled

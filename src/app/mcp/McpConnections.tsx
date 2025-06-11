@@ -238,6 +238,19 @@ const Mcpconnect = () => {
   useEffect(() => {
     const handleCreateConnection = async () => {
       try {
+        const bodyObj: Record<string, string | number> = {};
+
+        if (MCP) {
+          Object.entries(MCP).forEach(([key, val]) => {
+            if (
+              val &&
+              ((typeof val === "string" && val.length > 0) ||
+                typeof val === "number")
+            ) {
+              bodyObj[key] = val;
+            }
+          });
+        }
         await createMCPConnection({
           params: {
             name: rootFormMethod?.watch("name"),
@@ -245,9 +258,7 @@ const Mcpconnect = () => {
             auth_method: selectedConnectionMethod || "OAUTH2",
             service_provider: selectedMCPConnection?.service_provider || "",
           },
-          body: {
-            access_token: MCP?.accessToken,
-          },
+          body: bodyObj,
         });
 
         setMCP(null);
@@ -265,7 +276,7 @@ const Mcpconnect = () => {
       }
     };
 
-    if (MCP && MCP.accessToken && oAuthFlowTriggered) {
+    if (MCP && MCP.access_token && oAuthFlowTriggered) {
       if (selectedConnectionMethod) {
         handleCreateConnection();
       }
@@ -838,19 +849,19 @@ const Mcpconnect = () => {
               className="absolute inset-0 z-[99] flex flex-col items-center justify-center bg-black/80 p-5 backdrop-blur-sm"
             >
               <div className="bg-primary/50 dark:bg-primary/30 dark:text-primary w-min rounded-full p-5 text-white">
-                {MCP && MCP.accessToken ? (
+                {MCP && MCP.access_token ? (
                   <Spinner className="size-8 text-white" />
                 ) : (
                   <VscLock className="size-8" />
                 )}
               </div>
               <h3 className="mt-3 text-lg font-medium text-white">
-                {MCP && MCP.accessToken
+                {MCP && MCP.access_token
                   ? "Almost There!"
                   : "Complete Authentication in Browser window"}
               </h3>
               <p className="mt-1 text-center text-xs text-balance text-white/60">
-                {MCP && MCP.accessToken ? (
+                {MCP && MCP.access_token ? (
                   "We're just confirming your authentication with the provider and getting things ready for you. Hang tight!"
                 ) : (
                   <span>
@@ -861,7 +872,7 @@ const Mcpconnect = () => {
                   </span>
                 )}
               </p>
-              {!(MCP && MCP.accessToken) && (
+              {!(MCP && MCP.access_token) && (
                 <div className="mt-5 flex items-center justify-start gap-1 text-xs text-white">
                   <p>Didn't see a new tab?</p>
                   <Button

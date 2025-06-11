@@ -4,7 +4,9 @@ import { apiUrl } from "../api/variables";
 import { Dispatch, SetStateAction } from "react";
 
 type MCPAuth = {
-  accessToken?: string;
+  access_token: string;
+  expires_in?: string | number;
+  refresh_token?: string;
 };
 
 interface AuthState {
