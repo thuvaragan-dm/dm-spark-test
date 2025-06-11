@@ -13,6 +13,7 @@ import {
 import { z, ZodObject, ZodTypeAny } from "zod";
 import { CreateMCPConnectionSchema } from "../../api/mcp/MCPSchema";
 import {
+  AuthMethod,
   AvailableMCPConnection,
   AvailableMCPConnectionParams,
   ConnectedMCPConnectionItem,
@@ -50,6 +51,7 @@ import { AxiosError } from "axios";
 import { useDeleteMCPConnection } from "../../api/mcp/useDeleteMCPConnection";
 import { useToggleMCPConnectionStatus } from "../../api/mcp/useToggleMCPConnectionStatus";
 import { Pagination } from "../../components/Pagination";
+import { apiUrl } from "../../api/variables";
 
 // Helper to generate readable labels from field names
 const generateLabel = (fieldName: string): string => {
@@ -104,9 +106,8 @@ const Mcpconnect = () => {
   const [selectedMCPConnection, setSelectedMCPConnection] =
     useState<AvailableMCPConnection | null>(null);
 
-  const [selectedConnectionMethod, setSelectedConnectionMethod] = useState<
-    AvailableMCPConnection["auth_method"][number] | null
-  >(null);
+  const [selectedConnectionMethod, setSelectedConnectionMethod] =
+    useState<AuthMethod | null>(null);
 
   const [dynamicFormFields, setDynamicFormFields] = useState<
     FormFieldDefinition[]
@@ -130,23 +131,50 @@ const Mcpconnect = () => {
       selectedConnectionMethod &&
       selectedConnectionMethod !== "OAUTH2"
     ) {
-      const authMethodIndex = selectedMCPConnection.auth_method.indexOf(
-        selectedConnectionMethod,
-      );
+      // Helper to map an AuthMethod to its corresponding CredentialConfig key
+      const getConfigKey = (
+        method: AuthMethod,
+      ):
+        | "OAuth2Config"
+        | "APITokenConfig"
+        | "BasicAuthConfig"
+        | "CustomConfig"
+        | null => {
+        switch (method) {
+          case "OAUTH2":
+            return "OAuth2Config";
+          case "API_TOKEN":
+            return "APITokenConfig";
+          case "BASIC_AUTH":
+            return "BasicAuthConfig";
+          case "CUSTOM":
+            return "CustomConfig";
+          default:
+            return null;
+        }
+      };
 
-      if (
-        authMethodIndex !== -1 &&
-        selectedMCPConnection.credentials &&
-        selectedMCPConnection.credentials[authMethodIndex]
-      ) {
-        const currentCredentialsDesc =
-          selectedMCPConnection.credentials[authMethodIndex];
+      const configKey = getConfigKey(selectedConnectionMethod);
+      if (!configKey) {
+        setDynamicFormFields([]);
+        setDynamicValidationSchema(z.object({}));
+        return;
+      }
+
+      // Find the credential configuration that contains the matching key
+      const credentialConfig = selectedMCPConnection.credentials.find(
+        (cred) => configKey in cred,
+      ) as { [K in typeof configKey]?: any }; // Type assertion for easier access
+
+      if (credentialConfig && credentialConfig[configKey]) {
+        const currentCredentialsDesc = credentialConfig[configKey];
         const fields: FormFieldDefinition[] = [];
         const schemaShape: { [key: string]: ZodTypeAny } = {};
 
         for (const [key, valueInResponse] of Object.entries(
           currentCredentialsDesc,
         )) {
+          // The presence of a non-null value in the template indicates a required field
           const isRequired = valueInResponse !== null;
           const label = generateLabel(key);
 
@@ -170,27 +198,21 @@ const Mcpconnect = () => {
               .min(1, `${label} is required.`);
 
             if (key.toLowerCase().includes("email")) {
-              // .email() is valid here because `schema` is still a ZodString
               schema = schema.email({ message: "Invalid email address." });
             }
             schemaShape[key] = schema;
           } else {
             // For optional fields
             let finalSchema: ZodTypeAny;
-            const stringSchema = z.string(); // Start with a specific ZodString
+            const stringSchema = z.string();
 
             if (key.toLowerCase().includes("email")) {
-              // Apply .email() to the ZodString, then create the union.
-              // The result is assigned to the generic `finalSchema` variable.
               finalSchema = stringSchema
                 .email({ message: "Invalid email address." })
                 .or(z.literal(""));
             } else {
-              // If not an email, the final schema is just the ZodString.
               finalSchema = stringSchema;
             }
-
-            // Apply .optional() to the final, correctly-typed schema.
             schemaShape[key] = finalSchema.optional();
           }
         }
@@ -214,7 +236,7 @@ const Mcpconnect = () => {
       const isValid = await trigger("name");
 
       if (isValid) {
-        const githubMCPUrl = `https://dm-api-dot-dm-development-001.uc.r.appspot.com/${selectedMCPConnection?.name.toLowerCase().split(" ").join("-")}-mcp-login`; // This might need to be dynamic based on selectedMCPConnection
+        const githubMCPUrl = `${apiUrl}/${selectedMCPConnection?.name.toLowerCase().split(" ").join("-")}-mcp-login`; // This might need to be dynamic based on selectedMCPConnection
         if (window.electronAPI && window.electronAPI.send) {
           window.electronAPI.send("open-external-url", githubMCPUrl);
         } else {
@@ -722,7 +744,7 @@ const Mcpconnect = () => {
                                         <div className="dark:ring-offset-primary-dark-foreground flex aspect-square items-center justify-center rounded-md border border-gray-300 bg-white p-1 shadow-lg ring ring-gray-300 ring-offset-1 ring-offset-gray-100 dark:border-white dark:ring-white/20">
                                           <MCPConnectionIcon
                                             icon={
-                                              connection.name
+                                              connection.service_provider
                                                 .toLowerCase()
                                                 .split(" ")
                                                 .join(

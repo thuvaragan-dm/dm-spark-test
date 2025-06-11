@@ -101,7 +101,7 @@ const MCPConnectionIcon = ({ icon, className }: IMCPConnectionIcon) => {
     );
   }
 
-  if (icon.includes("google_calendar")) {
+  if (icon.includes("googlecalendar") || icon.includes("google_calendar")) {
     return (
       <svg
         className={cn("size-8", className)}

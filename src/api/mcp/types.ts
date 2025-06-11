@@ -9,25 +9,58 @@ export type AuthMethod = "OAUTH2" | "API_TOKEN" | "BASIC_AUTH" | "CUSTOM";
 // Interface for OAuth2 credentials
 export interface OAuth2Credentials {
   access_token: string;
-  refresh_token: string | null;
+  refresh_token?: string | null;
+  expires_in?: number | null;
 }
 
 // Interface for API Token credentials
 export interface ApiTokenCredentials {
   api_token: string;
-  service_base_url: string | null;
-  service_email: string | null;
+  service_base_url?: string | null;
+  service_email?: string | null;
 }
 
-// A union type for the different credential structures
-export type Credential = OAuth2Credentials | ApiTokenCredentials;
+// Interface for Basic Auth credentials
+export interface BasicAuthCredentials {
+  username?: string;
+  password?: string;
+}
 
-// Interface for the main service provider configuration object
+// Interface for Custom Auth credentials
+export interface CustomCredentials {
+  [key: string]: any;
+}
+
+// Configuration types that match the provided data structure
+export interface OAuth2Config {
+  OAuth2Config: OAuth2Credentials;
+}
+
+export interface APITokenConfig {
+  APITokenConfig: ApiTokenCredentials;
+}
+
+export interface BasicAuthConfig {
+  BasicAuthConfig: BasicAuthCredentials;
+}
+
+export interface CustomConfig {
+  CustomConfig: CustomCredentials;
+}
+
+// A union type for the different credential configuration objects
+export type CredentialConfig =
+  | OAuth2Config
+  | APITokenConfig
+  | BasicAuthConfig
+  | CustomConfig;
+
+// Updated interface for the main service provider configuration object
 export interface AvailableMCPConnection {
   name: string;
-  service_provider: string; // e.g., "GitHubMCP", "JiraMCP", "SlackMCP"
+  service_provider: string;
   auth_method: AuthMethod[];
-  credentials: Credential[];
+  credentials: CredentialConfig[];
 }
 
 export type CreateMCPConnectionInput = z.infer<
