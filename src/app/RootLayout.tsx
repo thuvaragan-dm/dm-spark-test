@@ -138,7 +138,7 @@ const RootLayout = () => {
   }, [setIsSidebarExpanded]);
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const { isLoading, isOpen, query } = useCombobox();
   const { setIsOpen, setQuery } = useComboboxActions();
 
@@ -161,24 +161,27 @@ const RootLayout = () => {
   interface ComboboxResult {
     id: string;
     name: string;
+    onClick?: () => void;
   }
 
   const defaultSearchOptions: ComboboxResult[] = useMemo(
     () => [
       {
         id: "1",
-        name: "toggle: sidebar",
+        name: "Sidebar: Toggle sidebar",
+        onClick: () => {
+          setIsSidebarExpanded((pv) => !pv);
+        },
       },
       {
         id: "2",
-        name: "toggle: searchbar",
-      },
-      {
-        id: "3",
-        name: "settings: user preferences",
+        name: "Settings: Open user preferences",
+        onClick: () => {
+          setIsSettingsModalOpen((pv) => !pv);
+        },
       },
     ],
-    [],
+    [setIsSidebarExpanded, setIsSettingsModalOpen],
   );
 
   const filteredSearchOptions = useMemo(() => {
@@ -200,10 +203,9 @@ const RootLayout = () => {
     return filteredResults;
   }, [query, defaultSearchOptions]);
 
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-
   return (
-    <main className="from-primary-darker to-primary-darker-2 @container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
+    //from-primary-darker to-primary-darker-2
+    <main className="@container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
       <div className="app-region-drag pointer-events-none absolute inset-x-0 z-20 h-10"></div>
       <nav className="absolute inset-x-0 top-0 z-10 flex h-10 flex-col items-center justify-center bg-transparent">
         {accessToken && user && (
@@ -495,6 +497,7 @@ const RootLayout = () => {
                   isLoading={isLoading}
                   onSelect={(option) => {
                     console.log({ option });
+                    option?.onClick?.();
                     setIsOpen(false);
                   }}
                   Option={({ optionValue }) => (
