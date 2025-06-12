@@ -22,6 +22,7 @@
   mac: {
     icon: "assets/build/icon.icns",
     target: ["dmg", "zip"],
+    arch: ["x64", "arm64"],
     artifactName: "${productName}-Mac.${ext}",
     category: "public.app-category.developer-tools",
     darkModeSupport: true,
