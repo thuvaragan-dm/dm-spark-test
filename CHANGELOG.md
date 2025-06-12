@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 3.0.0
+
+### Major Changes
+
+- [`bc8f55d`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/bc8f55d65367a85819687a4ed1629538205b6bbd) Thanks [@Dhuvii](https://github.com/Dhuvii)! - support for x64 added.
+
 ## 2.4.1
 
 ### Patch Changes
