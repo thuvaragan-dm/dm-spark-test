@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 2.4.0
+
+### Minor Changes
+
+- [`2e8ed37`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/2e8ed373fc0d097fc57b0af53d28ce58b8607067) Thanks [@Dhuvii](https://github.com/Dhuvii)! - configurations changed.
+
 ## 2.3.10
 
 ### Patch Changes
