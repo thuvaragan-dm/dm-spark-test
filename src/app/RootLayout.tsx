@@ -204,8 +204,7 @@ const RootLayout = () => {
   }, [query, defaultSearchOptions]);
 
   return (
-    //from-primary-darker to-primary-darker-2
-    <main className="@container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
+    <main className="from-primary-darker to-primary-darker-2 @container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
       <div className="app-region-drag pointer-events-none absolute inset-x-0 z-20 h-10"></div>
       <nav className="absolute inset-x-0 top-0 z-10 flex h-10 flex-col items-center justify-center bg-transparent">
         {accessToken && user && (

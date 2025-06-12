@@ -22,7 +22,7 @@
   mac: {
     icon: "assets/build/icon.icns",
     target: ["dmg", "zip"],
-    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
+    artifactName: "${productName}-Mac.${ext}",
     category: "public.app-category.developer-tools",
     darkModeSupport: true,
     // "identity": "Developer ID Application: Your Name (YOUR_TEAM_ID)",
@@ -36,7 +36,7 @@
       { target: "nsis", arch: ["x64"] },
       { target: "zip", arch: ["x64"] },
     ],
-    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
+    artifactName: "${productName}-Windows.${ext}",
     // "certificateFile": "path/to/your/code_signing_cert.pfx",
     // "certificatePassword": "YOUR_CERT_PASSWORD"
     // "verifyUpdateCodeSignature": true,
@@ -54,7 +54,7 @@
     icon: "assets/build/icons",
     target: ["AppImage", "deb"],
     category: "Utility",
-    artifactName: "${productName}-Linux-${version}.${ext}",
+    artifactName: "${productName}-Linux.${ext}",
     maintainer: "Thuvaragan <thuvaragan@deepmodel.ai>",
     description: "DeepModel Desktop Application",
   },
