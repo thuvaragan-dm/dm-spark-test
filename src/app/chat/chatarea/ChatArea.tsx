@@ -392,10 +392,7 @@ const ChatArea = () => {
                                   isLast={
                                     messages.pages.flat(1).length - 1 === idx
                                   }
-                                  isStreaming={
-                                    status === "streaming" ||
-                                    status === "loading"
-                                  }
+                                  isStreaming={status === "streaming"}
                                 />
                               )}
                             </div>

@@ -27,24 +27,11 @@ const MemoizedMarkdownBlock = memo(
 MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock";
 
 export const MemoizedMarkdown = memo(
-  ({
-    content,
-    id,
-    showDot,
-  }: {
-    content: string;
-    id: string;
-    showDot: boolean;
-  }) => {
+  ({ content, id }: { content: string; id: string; showDot: boolean }) => {
     const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]);
 
     return blocks.map((block, index) => (
-      <div
-        data-status={showDot ? "running" : "idle"}
-        className="aui-md text-gray-800 dark:text-white"
-      >
-        <MemoizedMarkdownBlock content={block} key={`${id}-block_${index}`} />
-      </div>
+      <MemoizedMarkdownBlock content={block} key={`${id}-block_${index}`} />
     ));
   },
 );

@@ -38,10 +38,10 @@
   win: {
     icon: "assets/build/icon.ico",
     target: [
-      { target: "nsis", arch: ["x64"] },
-      { target: "zip", arch: ["x64"] },
+      { target: "nsis", arch: ["x64", "arm64"] },
+      { target: "zip", arch: ["x64", "arm64"] },
     ],
-    artifactName: "${productName}-Windows.${ext}",
+    artifactName: "${productName}-Windows-${arch}.${ext}",
     // "certificateFile": "path/to/your/code_signing_cert.pfx",
     // "certificatePassword": "YOUR_CERT_PASSWORD"
     // "verifyUpdateCodeSignature": true,
@@ -59,7 +59,7 @@
     icon: "assets/build/icons",
     target: ["AppImage", "deb"],
     category: "Utility",
-    artifactName: "${productName}-Linux.${ext}",
+    artifactName: "${productName}-Linux-${arch}.${ext}",
     maintainer: "Thuvaragan <thuvaragan@deepmodel.ai>",
     description: "DeepModel Desktop Application",
   },

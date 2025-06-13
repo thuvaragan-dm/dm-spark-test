@@ -26,11 +26,16 @@ const ChatResponse = ({
   return (
     <div className="group mr-auto flex h-full w-full items-start justify-start gap-2 pb-5">
       <div className="flex w-full flex-1 flex-col">
-        <MemoizedMarkdown
-          id={message.thread_id}
-          content={message.message}
-          showDot={isStreaming && isLast}
-        />
+        <div
+          data-status={isStreaming && isLast ? "running" : "idle"}
+          className="aui-md text-gray-800 dark:text-white"
+        >
+          <MemoizedMarkdown
+            id={message.thread_id}
+            content={message.message}
+            showDot={isStreaming && isLast}
+          />
+        </div>
         {message.message.length > 0 && (
           <div
             className={cn(
