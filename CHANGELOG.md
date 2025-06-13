@@ -4,6 +4,14 @@
 
 ### Major Changes
 
+- [`eb89624`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/eb8962429d2c79ef526dd2c8ed9359eb43315640) Thanks [@Dhuvii](https://github.com/Dhuvii)! - support for universal build mac
+
+- [`3e882c1`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/3e882c1f7b124799c94643bcafe50247b7103c9c) Thanks [@Dhuvii](https://github.com/Dhuvii)! - added mac universal
+
+## 3.0.0
+
+### Major Changes
+
 - [`84f5ef3`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/84f5ef31d7ac4170d258caaf5599932c4fa369ed) Thanks [@Dhuvii](https://github.com/Dhuvii)! - x64 architecture added.
 
 ## 3.0.0
