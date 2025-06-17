@@ -13,6 +13,7 @@ import {
 } from "../api/messages/types"; // Adjust path as needed
 import queryClient from "../api/queryClient"; // Adjust path as needed
 import { EMessage, messageKey } from "../api/messages/config"; // Adjust path as needed
+import { useAppConfigStore } from "./configurationStore"; // Import the configuration store
 
 /**
  * Defines the shape of a completed stream event, which is queued for persistence.
@@ -30,8 +31,8 @@ interface StreamManagerState {
   handlers: Map<string, MessageHandler>;
   messages: Map<string, { botId: string; message: string }>;
   statuses: Map<string, StreamStatus>;
-  suggestions: Map<string, Suggestion[]>; // Changed to Suggestion[]
-  videos: Map<string, Video[]>; // Changed to Video[]
+  suggestions: Map<string, Suggestion[]>;
+  videos: Map<string, Video[]>;
   completedStreams: CompletedStream[];
 
   getHandler: (threadId: string) => MessageHandler | undefined;
@@ -46,11 +47,11 @@ interface StreamManagerState {
   ) => { botId: string; message: string } | undefined;
   updateStatus: (threadId: string, status: StreamStatus) => void;
   getStatus: (threadId: string) => StreamStatus | undefined;
-  updateSuggestions: (threadId: string, suggestions: Suggestion[]) => void; // Changed to Suggestion[]
-  getSuggestions: (threadId: string) => Suggestion[] | undefined; // Changed to Suggestion[]
-  updateVideos: (threadId: string, videos: Video[]) => void; // Changed to Video[]
-  getVideos: (threadId: string) => Video[] | undefined; // Changed to Video[]
-  clearSuggestionsAndVideos: (threadId: string) => void; // Added function
+  updateSuggestions: (threadId: string, suggestions: Suggestion[]) => void;
+  getSuggestions: (threadId: string) => Suggestion[] | undefined;
+  updateVideos: (threadId: string, videos: Video[]) => void;
+  getVideos: (threadId: string) => Video[] | undefined;
+  clearSuggestionsAndVideos: (threadId: string) => void;
   removeHandler: (threadId: string) => void;
   processCompletedStreams: (completionIdsToRemove: string[]) => void;
 }
@@ -72,8 +73,22 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
   getOrCreateHandler: (threadId, agentId, accessToken) => {
     let handler = get().handlers.get(threadId);
     if (!handler) {
-      // Create a new handler if one doesn't exist for the thread
-      handler = new MessageHandler(threadId, agentId, accessToken);
+      // 1. Get the apiUrl from the configuration store.
+      const { apiUrl } = useAppConfigStore.getState().states;
+
+      // 2. Add a safety check to ensure the apiUrl is available.
+      if (!apiUrl) {
+        console.error(
+          "[StreamManager] Cannot create handler: apiUrl is not yet available.",
+        );
+        // Throwing an error is appropriate here, as the handler cannot function without a URL.
+        // The calling component should catch this and display an error message.
+        throw new Error("Cannot initiate chat: API URL is not configured.");
+      }
+
+      // 3. Pass the apiUrl to the MessageHandler constructor.
+      //    (Note: This assumes the MessageHandler's constructor is updated to accept apiUrl).
+      handler = new MessageHandler(threadId, agentId, accessToken, apiUrl);
 
       // --- Event Listener for incoming message chunks ---
       handler.on("messageChunk", (id, message) => {
@@ -89,17 +104,15 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
 
       // --- Event Listener for suggestions ---
       handler.on("suggestions", (_id, suggestions: Suggestion[]) => {
-        // Changed to Suggestion[]
         get().updateSuggestions(threadId, suggestions);
       });
 
       // --- Event Listener for videos ---
       handler.on("suggestedVideos", (_id, videos: Video[]) => {
-        // Changed to suggestedVideos and Video[]
         get().updateVideos(threadId, videos);
       });
 
-      // --- Event Listener for status changes (e.g., 'loading', 'streaming', 'idle') ---
+      // --- Event Listener for status changes ---
       handler.on("status", (status) => {
         get().updateStatus(threadId, status);
       });
@@ -170,7 +183,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     return get().statuses.get(threadId);
   },
 
-  // --- Actions and Getters for Suggestions ---
   updateSuggestions: (threadId, suggestions) => {
     set((state) => {
       const newSuggestions = new Map(state.suggestions);
@@ -183,7 +195,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     return get().suggestions.get(threadId);
   },
 
-  // --- Actions and Getters for Videos ---
   updateVideos: (threadId, videos) => {
     set((state) => {
       const newVideos = new Map(state.videos);
@@ -196,9 +207,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     return get().videos.get(threadId);
   },
 
-  /**
-   * Clears suggestions and videos for a given thread.
-   */
   clearSuggestionsAndVideos: (threadId) => {
     set((state) => {
       const newSuggestions = new Map(state.suggestions);
@@ -214,10 +222,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     });
   },
 
-  /**
-   * Action to remove streams from the queue after they have been processed
-   * by the GlobalStreamCompletionHandler.
-   */
   processCompletedStreams: (completionIdsToRemove) => {
     set((state) => ({
       completedStreams: state.completedStreams.filter(
@@ -226,16 +230,13 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     }));
   },
 
-  /**
-   * Stops any active stream and cleans up all state associated with a threadId.
-   */
   removeHandler: (threadId) => {
     set((state) => {
       const newHandlers = new Map(state.handlers);
       const handler = newHandlers.get(threadId);
 
       if (handler) {
-        handler.stopStreaming(); // Ensure background processes are stopped
+        handler.stopStreaming();
         newHandlers.delete(threadId);
 
         const newMessages = new Map(state.messages);
@@ -244,14 +245,11 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
         const newStatuses = new Map(state.statuses);
         newStatuses.delete(threadId);
 
-        const newSuggestions = new Map(state.suggestions); // Cleanup suggestions
+        const newSuggestions = new Map(state.suggestions);
         newSuggestions.delete(threadId);
 
-        const newVideos = new Map(state.videos); // Cleanup videos
+        const newVideos = new Map(state.videos);
         newVideos.delete(threadId);
-
-        // Note: We don't clean up 'completedStreams' here, as another thread might be
-        // processing it. The 'processCompletedStreams' action is responsible for that.
 
         return {
           handlers: newHandlers,
@@ -261,7 +259,7 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
           videos: newVideos,
         };
       }
-      return state; // Return original state if no handler was found
+      return state;
     });
   },
 }));
@@ -269,10 +267,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
 /**
  * A helper function to immutably update a specific message within the
  * deeply nested React Query cache structure for infinite queries.
- * @param prevData The previous cache data.
- * @param messageId The ID of the message to update.
- * @param updateFn A function that receives and modifies a draft of the message.
- * @returns The updated cache data.
  */
 const updateMessageInCache = (
   prevData: InfiniteData<Message[]> | undefined,
@@ -281,15 +275,13 @@ const updateMessageInCache = (
 ): InfiniteData<Message[]> | undefined => {
   if (!prevData) return undefined;
 
-  // Use map to create new arrays for pages and messages to ensure immutability
   const newData = {
     ...prevData,
     pages: prevData.pages.map((page) =>
       page.map((msg) => {
         if (msg.id === messageId) {
-          // Create a new message object to avoid direct mutation
           const newMsg = { ...msg };
-          updateFn(newMsg); // Apply the update
+          updateFn(newMsg);
           return newMsg;
         }
         return msg;

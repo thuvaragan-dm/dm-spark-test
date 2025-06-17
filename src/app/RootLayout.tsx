@@ -1,4 +1,6 @@
 import { ComboboxOption } from "@headlessui/react";
+import { AxiosError } from "axios";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ComponentProps,
   Dispatch,
@@ -21,45 +23,45 @@ import {
   IoPersonCircleOutline,
 } from "react-icons/io5";
 import {
+  VscClose,
   VscLayoutSidebarLeft,
   VscLayoutSidebarLeftOff,
   VscSearch,
 } from "react-icons/vsc";
 import { Outlet, useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { EUser, userKey } from "../api/user/config";
+import { User } from "../api/user/types";
+import { useChangePassword } from "../api/user/useChangePassword";
+import { useGenerateAvatar } from "../api/user/useGenerateAvatar";
+import { useGetUser } from "../api/user/useGetUser";
+import { ChangePasswordSchema } from "../api/user/UserSchema";
+import { useUpdateUser } from "../api/user/useUpdateUser";
 import Avatar from "../components/Avatar";
+import BlurWrapper from "../components/BlurWrapper";
 import { Button, ButtonWithLoader } from "../components/Button";
 import Combobox from "../components/Combobox";
 import Dropdown from "../components/dropdown";
+import ErrorMessage from "../components/Forms/ErrorMessage";
+import Field from "../components/Forms/Field";
+import Form from "../components/Forms/Form";
+import Input from "../components/Forms/Input";
+import InputGroup from "../components/Forms/InputGroup";
+import Label from "../components/Forms/Label";
+import Switch from "../components/Forms/Switch";
+import Modal from "../components/modal";
+import SlidingContainer from "../components/SlidingContainer";
+import Spinner from "../components/Spinner";
 import Tooltip from "../components/tooltip";
 import { COMMAND_KEY } from "../components/tooltip/TooltipKeyboardShortcut";
 import { useAppHistory } from "../hooks/useAppHistory";
+import useFileUpload from "../hooks/useFileUpload";
 import { useAuth, useAuthActions } from "../store/authStore";
 import { useCombobox, useComboboxActions } from "../store/comboboxStore";
+import { useAppConfig, useAppConfigActions } from "../store/configurationStore";
 import { useSidebar, useSidebarActions } from "../store/sidebarStore";
 import { cn } from "../utilities/cn";
 import Login from "./Login";
-import Modal from "../components/modal";
-import Spinner from "../components/Spinner";
-import { useGetUser } from "../api/user/useGetUser";
-import { useGenerateAvatar } from "../api/user/useGenerateAvatar";
-import { EUser, userKey } from "../api/user/config";
-import useFileUpload from "../hooks/useFileUpload";
-import SlidingContainer from "../components/SlidingContainer";
-import { AnimatePresence, motion } from "motion/react";
-import BlurWrapper from "../components/BlurWrapper";
-import Form from "../components/Forms/Form";
-import Field from "../components/Forms/Field";
-import Switch from "../components/Forms/Switch";
-import { z } from "zod";
-import { useUpdateUser } from "../api/user/useUpdateUser";
-import { User } from "../api/user/types";
-import Input from "../components/Forms/Input";
-import Label from "../components/Forms/Label";
-import ErrorMessage from "../components/Forms/ErrorMessage";
-import { useChangePassword } from "../api/user/useChangePassword";
-import { ChangePasswordSchema } from "../api/user/UserSchema";
-import InputGroup from "../components/Forms/InputGroup";
-import { AxiosError } from "axios";
 
 enum ActiveTab {
   PROFILE = 1,
@@ -74,8 +76,41 @@ type Picture = {
 };
 
 const RootLayout = () => {
+  const { config, showAnnouncement } = useAppConfig();
+  const { setShowAnnouncement } = useAppConfigActions();
   const { user, accessToken } = useAuth();
   const { setAccessToken, refetchUser, logout, setMCP } = useAuthActions();
+
+  useEffect(() => {
+    // 1. Check for a token that might already be stored on disk.
+    const initialToken = window.electronAPI.getToken();
+    if (initialToken && !accessToken) {
+      console.log("[RootLayout] Setting initial token from storage.");
+      setAccessToken(initialToken);
+    }
+
+    // 2. If we have a token but no user data, fetch the user.
+    // This handles both the initial load and cases where the user state might be cleared.
+    if (accessToken && !user) {
+      console.log("[RootLayout] Token found, fetching user...");
+      refetchUser();
+    }
+  }, [accessToken, user, setAccessToken, refetchUser]);
+
+  useEffect(() => {
+    const handleTokenReceived = (token: string) => {
+      setAccessToken(token);
+      refetchUser();
+    };
+
+    const unsubscribe = window.electronAPI.onTokenReceived(handleTokenReceived);
+
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, [setAccessToken, refetchUser]);
 
   useEffect(() => {
     const handleTokenReceived = (token: string) => {
@@ -202,6 +237,11 @@ const RootLayout = () => {
 
     return filteredResults;
   }, [query, defaultSearchOptions]);
+
+  const anouncement = useMemo(
+    () => config?.global?.global_announcement || config?.version?.announcement,
+    [config],
+  );
 
   return (
     <main className="from-primary-darker to-primary-darker-2 @container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
@@ -357,6 +397,61 @@ const RootLayout = () => {
       {accessToken && user && (
         <>
           <section className="mt-10 flex w-full flex-1 flex-col overflow-hidden">
+            <AnimatePresence mode="popLayout">
+              {anouncement && showAnnouncement && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="w-full p-1.5 pt-0"
+                >
+                  <div className="bg-primary-600/20 dark:bg-primary-600/20 flex w-full items-center justify-between gap-10 rounded-xl p-3">
+                    <div>
+                      <h3 className="text-sm font-medium text-white">
+                        {anouncement.title}
+                      </h3>
+
+                      <p className="text-xs text-white/60">
+                        {anouncement.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3">
+                      {anouncement && anouncement.cta && (
+                        <Button
+                          onClick={() => {
+                            if (window.electronAPI && window.electronAPI.send) {
+                              window.electronAPI.send(
+                                "open-external-url",
+                                anouncement.cta.link,
+                              );
+                            }
+                          }}
+                          variant={"ghost"}
+                          className={
+                            "text-primary rounded-lg bg-white p-3 py-1.5 hover:bg-white/90 data-[pressed]:bg-white/90 md:p-3 md:py-1.5 dark:bg-white dark:hover:bg-white/90 dark:data-[pressed]:bg-white/90"
+                          }
+                        >
+                          {anouncement.cta.name}
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => {
+                          setShowAnnouncement(false);
+                        }}
+                        variant={"ghost"}
+                        className={
+                          "rounded-lg bg-transparent p-1.5 text-white hover:bg-white/5 data-[pressed]:bg-white/90 md:p-1.5 dark:bg-transparent dark:hover:bg-white/5 dark:data-[pressed]:bg-white/5"
+                        }
+                      >
+                        <VscClose className="size-5" />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="mb-1.5 flex h-full w-full items-start justify-start overflow-hidden">
               {/* side panel */}
               <div className="flex h-full w-20 flex-col items-center justify-between overflow-hidden pb-4">

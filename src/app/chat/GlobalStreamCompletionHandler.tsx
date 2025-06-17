@@ -1,8 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { EMessage, messageKey } from "../../api/messages/config";
 import { useCreateMessage } from "../../api/messages/useCreateMessage";
 import queryClient from "../../api/queryClient";
 import { useStreamManager } from "../../store/streamStore";
+import { EThread, THREAD_LIMIT, threadKey } from "../../api/thread/config";
+import { useAgent } from "../../store/agentStore";
+import { ThreadParams } from "../../api/thread/types";
+import { useRerendererActions } from "../../store/rerendererStore";
 
 /**
  * A headless component that listens for concluded streams globally
@@ -10,6 +14,14 @@ import { useStreamManager } from "../../store/streamStore";
  * It should be placed once in a top-level layout component.
  */
 export const GlobalStreamCompletionHandler = () => {
+  const { selectedAgent } = useAgent();
+  const { setRerenderThreadList } = useRerendererActions();
+  const agentOptions = useMemo<ThreadParams>(() => {
+    return {
+      limit: THREAD_LIMIT,
+      copilot_id: selectedAgent ? selectedAgent.id : undefined,
+    };
+  }, [selectedAgent]);
   // 1. Subscribe to the list of completed streams and the action to clear them.
   const { completedStreams, processCompletedStreams } = useStreamManager();
 
@@ -52,6 +64,10 @@ export const GlobalStreamCompletionHandler = () => {
             queryClient.invalidateQueries({
               queryKey: [messageKey[EMessage.FETCH_ALL] + stream.threadId],
             });
+            queryClient.invalidateQueries({
+              queryKey: [threadKey[EThread.ALL], agentOptions],
+            });
+            setRerenderThreadList((prev) => prev + 1);
           },
           onError: (error) => {
             console.error(
@@ -69,7 +85,13 @@ export const GlobalStreamCompletionHandler = () => {
     if (processedIds.length > 0) {
       processCompletedStreams(processedIds);
     }
-  }, [completedStreams, createMessage, processCompletedStreams]);
+  }, [
+    completedStreams,
+    createMessage,
+    processCompletedStreams,
+    agentOptions,
+    setRerenderThreadList,
+  ]);
 
   // This component renders nothing in the DOM.
   return null;

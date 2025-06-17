@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { User } from "../api/user/types";
-import { apiUrl } from "../api/variables";
-import { Dispatch, SetStateAction } from "react";
+import { useAppConfigStore } from "./configurationStore"; // Import the configuration store
 
 type MCPAuth = {
   access_token: string;
@@ -21,44 +20,48 @@ interface AuthState {
     setUser: (
       value: User | null | ((value: User | null) => User | null),
     ) => void;
-    setAccessToken: Dispatch<SetStateAction<string | null>>;
-    setMCP: Dispatch<SetStateAction<MCPAuth | null>>;
+    setAccessToken: (token: string | null) => void;
+    setMCP: (mcp: MCPAuth | null) => void;
   };
 }
 
-const getInitialUser = (): User | null => {
-  if (typeof window === "undefined") return null;
-  return null;
-};
-
-const getInitialToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return window.electronAPI.getToken();
-};
-
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   states: {
-    user: getInitialUser(),
-    accessToken: getInitialToken(),
+    user: null,
+    accessToken: null, // Initial state is null, will be populated by listeners/initial check
     MCP: null,
   },
   actions: {
     logout: () => {
-      set(({ states }) => ({
+      // This is called by the onTokenDeleted listener or manually from the UI
+      set({
         states: {
-          ...states,
-          accessToken: null,
           user: null,
+          accessToken: null,
+          MCP: null,
         },
-      }));
-      window.electronAPI.deleteRecentAgentsFile();
-      window.electronAPI.deleteToken();
+      });
     },
     refetchUser: async () => {
-      try {
-        const token = window.electronAPI.getToken();
-        if (!token) return null;
+      // Get the latest state from both stores
+      const token = get().states.accessToken;
+      const { apiUrl } = useAppConfigStore.getState().states;
 
+      if (!token) {
+        console.log("[AuthStore] refetchUser skipped: No access token.");
+        set((state) => ({ states: { ...state.states, user: null } }));
+        return null;
+      }
+
+      if (!apiUrl) {
+        console.error(
+          "[AuthStore] refetchUser failed: apiUrl is not yet available from configurationStore.",
+        );
+        return null;
+      }
+
+      try {
+        console.log(`[AuthStore] Refetching user from ${apiUrl}...`);
         const userResponse = await fetch(`${apiUrl}/users/me`, {
           headers: {
             "Content-Type": "application/json",
@@ -66,51 +69,44 @@ export const useAuthStore = create<AuthState>((set) => ({
           },
         });
 
+        if (!userResponse.ok) {
+          throw new Error(`Failed to fetch user: ${userResponse.statusText}`);
+        }
+
         const user: User = await userResponse.json();
-
-        set(({ states }) => ({
-          states: {
-            ...states,
-            user,
-          },
-        }));
-
+        set((state) => ({ states: { ...state.states, user } }));
+        console.log("[AuthStore] User refetched successfully.");
         return user;
-      } catch {
+      } catch (error) {
+        console.error("[AuthStore] Failed to refetch user:", error);
+        get().actions.logout();
+        if (window.electronAPI?.deleteToken) {
+          window.electronAPI.deleteToken();
+        }
         return null;
       }
     },
     setUser: (value) =>
-      set(({ states }) => {
-        const user = typeof value === "function" ? value(states.user) : value;
-        return {
-          states: {
-            ...states,
-            user,
-          },
-        };
-      }),
-    setAccessToken: (value) =>
-      set(({ states }) => {
-        const accessToken =
-          typeof value === "function" ? value(states.accessToken) : value;
-        return {
-          states: {
-            ...states,
-            accessToken,
-          },
-        };
-      }),
-    setMCP: (value) =>
-      set(({ states }) => {
-        const MCP = typeof value === "function" ? value(states.MCP) : value;
-        return {
-          states: {
-            ...states,
-            MCP,
-          },
-        };
-      }),
+      set(({ states }) => ({
+        states: {
+          ...states,
+          user: typeof value === "function" ? value(states.user) : value,
+        },
+      })),
+    setAccessToken: (token) =>
+      set(({ states }) => ({
+        states: {
+          ...states,
+          accessToken: token,
+        },
+      })),
+    setMCP: (mcp) =>
+      set(({ states }) => ({
+        states: {
+          ...states,
+          MCP: mcp,
+        },
+      })),
   },
 }));
 
@@ -119,11 +115,19 @@ export const useAuth = () => useAuthStore((state) => state.states);
 export const useAuthActions = () => {
   const actions = useAuthStore((state) => state.actions);
 
+  const extendedLogout = () => {
+    actions.logout();
+    if (window.electronAPI?.deleteRecentAgentsFile) {
+      window.electronAPI.deleteRecentAgentsFile();
+    }
+    if (window.electronAPI?.deleteToken) {
+      window.electronAPI.deleteToken();
+    }
+    console.log("[AuthStore] Logout process complete.");
+  };
+
   return {
     ...actions,
-    logout: () => {
-      actions.logout();
-      //todo: perform redirect
-    },
+    logout: extendedLogout,
   };
 };

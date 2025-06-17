@@ -23,6 +23,12 @@ export function useMDXComponents(
         {...props}
       />
     ),
+    h3: ({ node: _node, ...props }) => (
+      <h3
+        className="mt-6 mb-3 text-xl font-bold text-gray-800 dark:text-white"
+        {...props}
+      />
+    ),
     p: ({ node: _node, ...props }) => (
       <p
         className="my-4 text-base leading-7 text-gray-800 dark:text-white"
@@ -70,6 +76,12 @@ export function useMDXComponents(
         {...props}
       />
     ),
+    li: ({ node: _node, ...props }) => (
+      <li
+        className="my-4 text-sm leading-7 text-gray-800 dark:text-white"
+        {...props}
+      />
+    ),
     blockquote: ({ node: _node, ...props }) => (
       <blockquote
         className="my-4 border-l-4 border-gray-300 bg-gray-50 py-1 pl-4 text-gray-600 italic dark:border-white/10 dark:text-white/60"
@@ -81,6 +93,13 @@ export function useMDXComponents(
         {...props}
         alt={props.alt || "chat image"} // Provide a default alt if not present
         className="my-4 max-w-full rounded-md shadow-sm"
+      />
+    ),
+    a: ({ node: _node, ...props }) => (
+      <a
+        target="_blank"
+        className="text-primary dark:text-secondary text-sm font-medium underline"
+        {...props}
       />
     ),
     table: ({ node: _node, ...props }) => (
@@ -105,6 +124,12 @@ export function useMDXComponents(
     ),
     div: ({ node: _node, isHeader: _isHeader, ...props }) => (
       <div className="my-5 text-gray-800 dark:text-white" {...props} />
+    ),
+    hr: ({ node: _node, isHeader: _isHeader, ...props }) => (
+      <hr
+        className="my-3 border-t border-gray-300 dark:border-white/10"
+        {...props}
+      />
     ),
     // Spread any additional components passed in, allowing overrides
     ...(components || {}),

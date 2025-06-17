@@ -1,4 +1,5 @@
 import { ipcRenderer, contextBridge, IpcRendererEvent } from "electron";
+import { AppConfiguration } from "./types";
 
 const AGENT_IPC_CHANNELS = {
   GET_AGENTS: "fs-agents:get",
@@ -9,7 +10,13 @@ const AGENT_IPC_CHANNELS = {
   DELETE_AGENTS_FILE: "fs-agents:delete-file",
 };
 
-const ALLOWED_INVOKE_CHANNELS = [...Object.values(AGENT_IPC_CHANNELS)];
+// ADDED "get-app-version" to the list of invokable channels
+const ALLOWED_INVOKE_CHANNELS = [
+  ...Object.values(AGENT_IPC_CHANNELS),
+  "get-app-version",
+  "get-app-configuration",
+  "changelog:should-show",
+];
 
 const ALLOWED_LISTEN_CHANNELS = [
   "deep-link-token", // For existing auth token
@@ -86,6 +93,18 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   osPlatform: process.platform,
 
+  shouldShowChangelog: (): Promise<boolean> => {
+    return ipcRenderer.invoke("changelog:should-show");
+  },
+
+  getAppConfiguration: (): Promise<AppConfiguration | null> => {
+    return ipcRenderer.invoke("get-app-configuration");
+  },
+
+  getAppVersion: (): Promise<string> => {
+    return ipcRenderer.invoke("get-app-version");
+  },
+
   getToken: (): string | null => currentToken,
   deleteToken: (): void => {
     ipcRenderer.send("delete-auth-token");
@@ -115,7 +134,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
       );
       return () => {};
     }
-    // Ensure the received argument is treated as the params object
     const listener = (
       _event: IpcRendererEvent,
       params: Record<string, string | null>,
@@ -207,7 +225,3 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return () => ipcRenderer.removeListener(channel, listener);
   },
 });
-
-console.log(
-  "[Preload] Script loaded. MCP Tokens handler updated for object params.",
-);

@@ -252,7 +252,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <div className="mt-2 w-full overflow-hidden border-t border-gray-300 pb-2 dark:border-white/10"></div>
+        <div className="bg-primary-dark mt-2 w-full overflow-hidden border-t border-gray-300 pb-2 dark:border-white/10"></div>
 
         <div className="scrollbar w-full flex-1 overflow-x-hidden overflow-y-auto px-5 pr-3">
           <AllThreads />

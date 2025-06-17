@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../components/Button";
+import { useAppConfig } from "../store/configurationStore";
 
 const Login = () => {
+  const { config } = useAppConfig();
   return (
     <div className="flex w-full flex-1 flex-col overflow-hidden">
       <div className="grid w-full flex-1 grid-cols-6 overflow-hidden @6xl:grid-cols-7">
@@ -38,8 +40,8 @@ const Login = () => {
           <div className="mt-10 w-full max-w-xs">
             <Button
               onClick={() => {
-                const signInUrl =
-                  "https://copilot.deepmodel.ai/desktop-app-login";
+                const signInUrl = config?.version.login_url;
+
                 if (window.electronAPI && window.electronAPI.send) {
                   // Send a message to the main process to open the URL
                   window.electronAPI.send("open-external-url", signInUrl);
@@ -64,7 +66,7 @@ const Login = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   const privacyUrl =
-                    "https://copilot.deepmodel.ai/privacy-policy";
+                    config?.global.resource_links.privacy_policy;
                   window.electronAPI.send("open-external-url", privacyUrl);
                 }}
                 className="text-primary cursor-pointer px-0.5 underline dark:text-white"

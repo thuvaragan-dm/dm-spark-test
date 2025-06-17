@@ -38,7 +38,7 @@ export const createApiClient = (
   baseURL: string,
   getAccessToken: () => string | null,
   logout: () => void,
-  options: ApiClientOptions = { responseType: "json" }
+  options: ApiClientOptions = { responseType: "json" },
 ): AxiosInstance => {
   const api = axios.create({
     baseURL,
@@ -56,7 +56,7 @@ export const createApiClient = (
       }
       return config;
     },
-    (error) => Promise.reject(error)
+    (error) => Promise.reject(error),
   );
 
   api.interceptors.response.use(
@@ -65,23 +65,10 @@ export const createApiClient = (
       if (error.response?.status === 401) {
         logout();
 
-        const path = window.location.pathname;
-        const query = window.location.search;
-
-        const fullPath = path + query;
-
-        if (fullPath.length > 3) {
-          window.location.href = `/login?redirect_to=${encodeURIComponent(
-            fullPath
-          )}`;
-        } else {
-          window.location.href = `/login`;
-        }
-
         toastService.error("Your session has expired. Please log in again.");
       } else if (error.response?.status === 403) {
         toastService.error(
-          "You do not have permission to perform this action."
+          "You do not have permission to perform this action.",
         );
       } else if (error.response?.status === 400) {
         const message = error.response?.data as { detail: string };
@@ -92,7 +79,7 @@ export const createApiClient = (
         toastService.error("Something went wrong.");
       }
       return Promise.reject(error);
-    }
+    },
   );
 
   return api;

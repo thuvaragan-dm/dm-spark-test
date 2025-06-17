@@ -1,4 +1,3 @@
-// In your main process file (e.g., main.ts)
 import {
   app,
   BrowserWindow,
@@ -7,13 +6,14 @@ import {
   dialog,
   nativeTheme,
   Menu,
-  // MenuItem, // MenuItem is not directly used if building from template
   MenuItemConstructorOptions, // Import this type for the template
 } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, URL } from "node:url"; // Added URL for parsing
 import { autoUpdater, UpdateInfo } from "electron-updater";
+import { AppConfiguration, GlobalAppConfig, VersionAppConfig } from "./types";
+import { apiUrl } from "../src/api/variables";
 
 // Determine the correct __dirname for ESM context.
 // This should point to the 'dist-electron' folder after build.
@@ -49,6 +49,7 @@ let currentMcpParams: Record<string, string | null> | null = null;
 
 const TOKEN_FILE_NAME = "authToken.txt";
 const RECENTLY_SELECTED_AGENTS_FILE_NAME = "recentlySelectedAgents.json";
+const CHANGELOG_SEEN_FILE_NAME = "changelogSeenVersions.json";
 
 // --- Configure electron-updater ---
 autoUpdater.logger = console; // Log updater events to the console
@@ -60,8 +61,39 @@ function getTokenFilePath(): string {
   return path.join(app.getPath("userData"), TOKEN_FILE_NAME);
 }
 
+function getChangelogSeenFilePath(): string {
+  return path.join(app.getPath("userData"), CHANGELOG_SEEN_FILE_NAME);
+}
+
 function getRecentlySelectedAgentsFilePath(): string {
   return path.join(app.getPath("userData"), RECENTLY_SELECTED_AGENTS_FILE_NAME);
+}
+
+async function loadChangelogSeenVersions(): Promise<string[]> {
+  try {
+    const filePath = getChangelogSeenFilePath();
+    const data = await fs.readFile(filePath, "utf8");
+    return JSON.parse(data);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      console.log(
+        "[Main] Changelog seen versions file not found. Returning empty array.",
+      );
+      return [];
+    }
+    console.error("[Main] Failed to load changelog seen versions:", error);
+    return []; // Return empty on other errors to avoid blocking app
+  }
+}
+
+async function saveChangelogSeenVersions(versions: string[]): Promise<void> {
+  try {
+    const filePath = getChangelogSeenFilePath();
+    await fs.writeFile(filePath, JSON.stringify(versions, null, 2), "utf8");
+    console.log("[Main] Changelog seen versions saved to file:", filePath);
+  } catch (error) {
+    console.error("[Main] Failed to save changelog seen versions:", error);
+  }
 }
 
 // --- File Operations for Auth Token and Agents ---
@@ -80,6 +112,7 @@ async function loadTokenFromFile(): Promise<string | null> {
     const filePath = getTokenFilePath();
     const token = await fs.readFile(filePath, "utf8");
     console.log("[Main] Auth token loaded from file.");
+    sendAuthTokenToRenderer(token);
     return token;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -475,6 +508,37 @@ async function createWindow() {
   });
 }
 
+// --- Function to fetch the configuration ---
+async function fetchAppConfiguration(): Promise<AppConfiguration | null> {
+  const version = app.getVersion();
+  console.log(`[Main] Fetching configuration for app version: ${version}`);
+
+  try {
+    const url = `${apiUrl}/deepmodel-app-config`;
+    const globalConfigData = await fetch(`${url}/global`);
+    const versionConfigData = await fetch(`${url}/v${version}`);
+    const globalConfigResponse =
+      (await globalConfigData.json()) as GlobalAppConfig;
+    const versionConfigResponse =
+      (await versionConfigData.json()) as VersionAppConfig;
+
+    console.log("[Main] Configuration fetched successfully.");
+    return {
+      global: globalConfigResponse,
+      version: versionConfigResponse,
+    };
+  } catch (error) {
+    console.error("[Main] CRITICAL: Failed to fetch app configuration.", error);
+    // If the config is critical for the app to run, show an error and quit.
+    dialog.showErrorBox(
+      "Configuration Error",
+      "Could not load critical application configuration. The application will now close.",
+    );
+    app.quit();
+    return null;
+  }
+}
+
 // --- App Lifecycle Events ---
 app.whenReady().then(async () => {
   currentAuthToken = await loadTokenFromFile();
@@ -485,7 +549,6 @@ app.whenReady().then(async () => {
 
   await createWindow();
 
-  // --- Application Menu Setup ---
   const menuTemplateElements: MenuItemConstructorOptions[] = [];
 
   if (process.platform === "darwin") {
@@ -690,6 +753,33 @@ app.whenReady().then(async () => {
 app.on("open-url", async (event, urlLink: string) => {
   event.preventDefault();
   await onDeepLinkReceived(urlLink);
+});
+
+ipcMain.handle("get-app-configuration", async () => {
+  return await fetchAppConfiguration();
+});
+
+ipcMain.handle("get-app-version", () => {
+  return app.getVersion();
+});
+
+ipcMain.handle("changelog:should-show", async () => {
+  const currentVersion = app.getVersion();
+  const seenVersions = await loadChangelogSeenVersions();
+
+  if (seenVersions.includes(currentVersion)) {
+    console.log(
+      `[Main] Changelog for version ${currentVersion} has already been seen.`,
+    );
+    return false;
+  } else {
+    console.log(
+      `[Main] Changelog for version ${currentVersion} has not been seen. Marking as seen.`,
+    );
+    seenVersions.push(currentVersion);
+    await saveChangelogSeenVersions(seenVersions);
+    return true;
+  }
 });
 
 ipcMain.on("open-external-url", (_event, urlLink: string) => {

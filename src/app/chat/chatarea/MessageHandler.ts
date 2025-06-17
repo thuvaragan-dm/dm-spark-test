@@ -1,5 +1,4 @@
 import { Source, Suggestion, Video } from "../../../api/messages/types";
-import { apiUrl } from "../../../api/variables";
 
 export interface StreamDataAccumulator {
   message: string;
@@ -46,7 +45,12 @@ export class MessageHandler {
     [K in keyof MessageHandlerEventMap]?: Array<(...args: unknown[]) => void>;
   } = {};
 
-  constructor(threadId: string, agentId: string, accessToken: string) {
+  constructor(
+    threadId: string,
+    agentId: string,
+    accessToken: string,
+    apiUrl: string,
+  ) {
     // Added accessToken to constructor signature
     this.threadId = threadId;
     this.agentId = agentId;

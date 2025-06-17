@@ -68,6 +68,8 @@ interface Window {
 
     // Auth Token (original)
     getToken: () => string | null;
+    getAppConfiguration: () => Promise<AppConfiguration | null>;
+    getAppVersion: () => Promise<string>;
     deleteToken: () => void;
     onTokenReceived: (callback: (token: string) => void) => () => void;
     onTokenDeleted: (callback: () => void) => () => void;
@@ -76,6 +78,9 @@ interface Window {
     onMCPTokensReceived: (
       callback: (params: McpDeeplinkParams) => void,
     ) => () => void; // UPDATED SIGNATURE
+
+    // Changelog
+    shouldShowChangelog: () => Promise<boolean>;
 
     // Auto Updater
     onUpdateAvailable: (
