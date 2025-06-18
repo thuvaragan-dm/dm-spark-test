@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 3.1.2
+
+### Patch Changes
+
+- [`3fd86ac`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/3fd86acbb9bde85b460ef53eb8b9ca73d175544e) Thanks [@Dhuvii](https://github.com/Dhuvii)! - ui refreshed phase 1
+
 ## 3.1.1
 
 ### Patch Changes
