@@ -43,3 +43,16 @@
 .scrollbar::-webkit-scrollbar-corner {
   background-color: transparent;
 }
+
+.hide-scrollbar {
+  /* For Firefox */
+  scrollbar-width: none;
+
+  /* For Internet Explorer and Edge */
+  -ms-overflow-style: none;
+}
+
+/* For WebKit browsers (Chrome, Safari, etc.) */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

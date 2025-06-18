@@ -72,7 +72,7 @@ const MainPage: React.FC = () => {
       console.log(`MainPage: Redirecting to /chat/${targetAgentPath}`);
       // No need to setIsLoading(false) here, as the component will unmount upon navigation.
       // The spinner will show until navigation occurs.
-      navigate(`/chat/${targetAgentPath}`, { replace: true });
+      navigate(`/home/chat/${targetAgentPath}`, { replace: true });
     } else {
       // All data has been processed, but no agent path was found for redirection.
       // Stop loading and allow fallback UI to render.

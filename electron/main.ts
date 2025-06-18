@@ -419,6 +419,7 @@ async function createWindow() {
     height: 800,
     minWidth: 950,
     minHeight: 650,
+    backgroundColor: "#0B071E",
     // vibrancy: "fullscreen-ui", // on MacOS
     // backgroundMaterial: "acrylic",
     icon: path.join(process.env.VITE_PUBLIC!, "electron-vite.svg"),

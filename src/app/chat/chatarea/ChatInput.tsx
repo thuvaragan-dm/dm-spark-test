@@ -1,14 +1,31 @@
-"use client";
-
-import { AnimatePresence, motion } from "motion/react";
-import { ComponentProps, Fragment, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ComponentProps,
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   IoArrowUpOutline,
   IoCloudUpload,
   IoDocument,
   IoLogoMarkdown,
+  IoPersonCircleOutline,
+  IoPricetagOutline,
   IoStop,
+  IoTerminalOutline,
 } from "react-icons/io5";
+import * as Popover from "@radix-ui/react-popover";
+import {
+  Combobox as Cb,
+  ComboboxOption,
+  ComboboxOptions,
+} from "@headlessui/react";
+import useMeasure from "react-use-measure";
+
 import { useDeleteDocument } from "../../../api/document/useDeleteDocument";
 import { Button } from "../../../components/Button";
 import Dropdown from "../../../components/dropdown";
@@ -19,6 +36,11 @@ import {
 } from "../../../store/chatInputStore";
 import capitalizeFirstLetter from "../../../utilities/capitalizeFirstLetter";
 import { cn } from "../../../utilities/cn";
+import {
+  CaretCoordinates,
+  getCaretCoordinates,
+} from "../../../utilities/getCaretCoordinates";
+import { DUMMY_MENTIONABLES, Mentionable } from "./fixtures/mentionables";
 
 interface IChatInput extends ComponentProps<"textarea"> {
   handleSubmit: (query: string) => void;
@@ -38,30 +60,135 @@ const ChatInput = ({
 }: IChatInput) => {
   const { selectedAgent } = useAgent();
 
+  const [ref, { height }] = useMeasure();
   const [openAttachment, setOpenAttachment] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { query, files } = useChatInput();
   const { setQuery, setFiles, reset } = useChatInputActions();
 
-  const recalculateHeight = () => {
-    if (textAreaRef && textAreaRef.current) {
-      const textAreaEl = textAreaRef.current;
-      textAreaEl.style.height = `auto`;
-      textAreaEl.style.height = `${textAreaEl.scrollHeight}px`;
-    }
-  };
+  // State for mention/command popover
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [caretPosition, setCaretPosition] = useState<CaretCoordinates | null>(
+    null,
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTrigger, setActiveTrigger] = useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
 
-  useEffect(() => {
-    recalculateHeight();
-  }, [query]);
+  const optionsContainerRef = useRef<HTMLDivElement>(null);
+
+  // --- NEW: REF TO PRIORITIZE KEYBOARD NAVIGATION ---
+  const keyboardNavigatedRef = useRef(false);
 
   const submit = () => {
     if (query.length > 0 && !isLoading && !isFileUploadLoading) {
       handleSubmit(query);
       reset();
-      recalculateHeight();
     }
   };
+
+  const filteredMentionables = useMemo(() => {
+    if (!activeTrigger) return [];
+    return DUMMY_MENTIONABLES.filter(
+      (item) =>
+        item.trigger === activeTrigger &&
+        item.name.toLowerCase().startsWith(searchTerm.toLowerCase()),
+    );
+  }, [activeTrigger, searchTerm]);
+
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchTerm, activeTrigger]);
+
+  useEffect(() => {
+    if (
+      isPopoverOpen &&
+      filteredMentionables.length > 0 &&
+      optionsContainerRef.current
+    ) {
+      const optionElements =
+        optionsContainerRef.current.querySelectorAll('[role="option"]');
+      const highlightedOption = optionElements[highlightedIndex] as
+        | HTMLElement
+        | undefined;
+
+      if (highlightedOption) {
+        highlightedOption.scrollIntoView({
+          block: "nearest",
+          inline: "start",
+        });
+      }
+    }
+  }, [highlightedIndex, isPopoverOpen, filteredMentionables]);
+
+  const handleMentionTrigger = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const { value, selectionStart } = e.currentTarget;
+      const textUpToCaret = value.substring(0, selectionStart);
+
+      const mentionRegex = /(^|\s)([@/#])(\w*)$/;
+      const match = textUpToCaret.match(mentionRegex);
+
+      if (match) {
+        const trigger = match[2];
+        const currentSearchTerm = match[3];
+
+        setActiveTrigger(trigger);
+        setSearchTerm(currentSearchTerm);
+
+        const coords = getCaretCoordinates(
+          e.target,
+          selectionStart - currentSearchTerm.length,
+        );
+        setCaretPosition(coords);
+        setIsPopoverOpen(true);
+      } else {
+        setIsPopoverOpen(false);
+        setActiveTrigger(null);
+      }
+    },
+    [],
+  );
+
+  const handleSelectMentionable = useCallback(
+    (mentionable: Mentionable | null) => {
+      if (!mentionable || !textAreaRef.current) return;
+
+      const { value, selectionStart } = textAreaRef.current;
+      const startIndex = value.lastIndexOf(
+        mentionable.trigger + searchTerm,
+        selectionStart,
+      );
+
+      if (startIndex !== -1) {
+        const prefix = value.substring(0, startIndex);
+        const suffix = value.substring(selectionStart);
+
+        const newValue = `${prefix}${mentionable.trigger}${mentionable.name} ${suffix}`;
+        setQuery(newValue);
+
+        setTimeout(() => {
+          if (textAreaRef.current) {
+            textAreaRef.current.focus();
+            const newCaretPosition = (
+              prefix +
+              mentionable.trigger +
+              mentionable.name +
+              " "
+            ).length;
+            textAreaRef.current.setSelectionRange(
+              newCaretPosition,
+              newCaretPosition,
+            );
+          }
+        }, 0);
+      }
+
+      setIsPopoverOpen(false);
+      setActiveTrigger(null);
+    },
+    [searchTerm, setQuery],
+  );
 
   return (
     <div
@@ -83,25 +210,22 @@ const ChatInput = ({
           >
             {files.map((file) => (
               <Fragment key={file.name}>
-                <AnimatePresence>
-                  <motion.div
-                    variants={{
-                      open: { opacity: 1 },
-                      close: { opacity: 0 },
+                <motion.div
+                  variants={{
+                    open: { opacity: 1 },
+                    close: { opacity: 0 },
+                  }}
+                >
+                  <File
+                    isLoading={isFileUploadLoading}
+                    key={file.name}
+                    file={file}
+                    onDelete={(name) => {
+                      setFiles &&
+                        setFiles((pv) => pv.filter((f) => f.name !== name));
                     }}
-                    className=""
-                  >
-                    <File
-                      isLoading={isFileUploadLoading}
-                      key={file.name}
-                      file={file}
-                      onDelete={(name) => {
-                        setFiles &&
-                          setFiles((pv) => pv.filter((f) => f.name !== name));
-                      }}
-                    />
-                  </motion.div>
-                </AnimatePresence>
+                  />
+                </motion.div>
               </Fragment>
             ))}
           </motion.div>
@@ -129,7 +253,6 @@ const ChatInput = ({
                 />
               </svg>
             </Dropdown.Button>
-
             <Dropdown.Menu
               align="start"
               className="dark:from-primary-dark-foreground dark:to-primary-dark rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-xl ring-[1px] ring-gray-300 dark:ring-white/10"
@@ -147,32 +270,152 @@ const ChatInput = ({
           </Dropdown>
         </div>
 
-        <textarea
-          ref={textAreaRef}
-          className="scrollbar h-11 max-h-[25dvh] w-full resize-none overflow-y-auto py-3 pr-2 text-sm text-gray-800 [word-wrap:break-word] focus:outline-none dark:text-white"
-          placeholder={placeholder}
-          rows={1}
-          value={query}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
+        <Popover.Root open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <Popover.Anchor
+            style={{
+              position: "absolute",
+              top: (caretPosition?.top ?? 0) - 24,
+              left: caretPosition?.left ?? 0,
+            }}
+          />
+          <textarea
+            ref={textAreaRef}
+            className="scrollbar field-sizing-content max-h-[25dvh] w-full resize-none overflow-y-auto py-3 pr-2 text-sm text-gray-800 [word-wrap:break-word] focus:outline-none dark:text-white"
+            placeholder={placeholder}
+            rows={1}
+            value={query}
+            onKeyDown={(e) => {
+              if (isPopoverOpen && filteredMentionables.length > 0) {
+                // --- MODIFIED: SET FLAG TO INDICATE KEYBOARD IS IN CONTROL ---
+                keyboardNavigatedRef.current = true;
 
-            if (e.key === "Enter" && e.shiftKey) {
-              e.preventDefault();
-              setQuery(textAreaRef?.current?.value + "\n");
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setHighlightedIndex(
+                    (prev) => (prev + 1) % filteredMentionables.length,
+                  );
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setHighlightedIndex(
+                    (prev) =>
+                      (prev - 1 + filteredMentionables.length) %
+                      filteredMentionables.length,
+                  );
+                } else if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSelectMentionable(
+                    filteredMentionables[highlightedIndex],
+                  );
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  setIsPopoverOpen(false);
+                }
+                return;
+              }
+              if (
+                e.key === "Enter" &&
+                !e.metaKey &&
+                !e.ctrlKey &&
+                !e.shiftKey
+              ) {
+                e.preventDefault();
+                submit();
+              }
+              if (e.key === "Enter" && e.shiftKey) {
+                e.preventDefault();
+                setQuery(textAreaRef?.current?.value + "\n");
+              }
+            }}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              handleMentionTrigger(e);
+            }}
+          />
 
-              setTimeout(() => {
-                recalculateHeight();
-              }, 1);
-            }
-          }}
-          onChange={(e) => {
-            recalculateHeight();
-            setQuery(e.target.value);
-          }}
-        ></textarea>
+          {isPopoverOpen && filteredMentionables.length > 0 && (
+            <Popover.Content
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              className="dark:bg-primary-dark-foreground w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-xl dark:border-white/10"
+              side="top"
+              align="start"
+              sideOffset={-20}
+            >
+              <Cb as="div" value={null} onChange={handleSelectMentionable}>
+                <ComboboxOptions
+                  ref={optionsContainerRef}
+                  static
+                  className="hide-scrollbar max-h-64 space-y-1 overflow-y-auto focus:outline-none"
+                  // --- NEW: RE-ENABLE MOUSE CONTROL ON MOUSE MOVE ---
+                  onMouseMove={() => {
+                    keyboardNavigatedRef.current = false;
+                  }}
+                >
+                  <motion.div
+                    animate={{ height }}
+                    transition={{ type: "spring", damping: 18 }}
+                  >
+                    <div ref={ref} className="w-full">
+                      <AnimatePresence mode="popLayout">
+                        {filteredMentionables.map((item, index) => (
+                          <ComboboxOption
+                            key={item.id}
+                            value={item}
+                            onMouseEnter={() => {
+                              // --- MODIFIED: ONLY ALLOW MOUSE TO HIGHLIGHT IF KEYBOARD IS NOT IN CONTROL ---
+                              if (keyboardNavigatedRef.current) {
+                                return;
+                              }
+                              setHighlightedIndex(index);
+                            }}
+                            className={cn(
+                              "group cursor-pointer rounded-md p-2",
+                              {
+                                "bg-gray-100 dark:bg-white/10":
+                                  highlightedIndex === index,
+                              },
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={cn(
+                                  "text-gray-500 dark:text-white/60",
+                                  {
+                                    "text-primary dark:text-white":
+                                      highlightedIndex === index,
+                                  },
+                                )}
+                              >
+                                {item.trigger === "@" && (
+                                  <IoPersonCircleOutline className="size-5" />
+                                )}
+                                {item.trigger === "/" && (
+                                  <IoTerminalOutline className="size-5" />
+                                )}
+                                {item.trigger === "#" && (
+                                  <IoPricetagOutline className="size-5" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-800 dark:text-white/90">
+                                  {item.name}
+                                </p>
+                                {item.description && (
+                                  <p className="text-xs text-gray-500 dark:text-white/50">
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </ComboboxOption>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                </ComboboxOptions>
+              </Cb>
+            </Popover.Content>
+          )}
+        </Popover.Root>
 
         <div className="mb-px flex h-full items-end justify-center gap-1 p-1">
           <AnimatePresence initial={false} mode="popLayout">
@@ -181,7 +424,6 @@ const ChatInput = ({
                 initial={{ opacity: 0, filter: "blur(5px)" }}
                 animate={{ opacity: 1, filter: "blur(0px)" }}
                 exit={{ opacity: 0, filter: "blur(5px)" }}
-                className=""
               >
                 <Button
                   onClick={() => submit()}
@@ -202,14 +444,12 @@ const ChatInput = ({
               </motion.div>
             )}
           </AnimatePresence>
-
           <AnimatePresence initial={false} mode="popLayout">
             {isLoading && (
               <motion.div
                 initial={{ opacity: 0, filter: "blur(5px)" }}
                 animate={{ opacity: 1, filter: "blur(0px)" }}
                 exit={{ opacity: 0, filter: "blur(5px)" }}
-                className=""
               >
                 <Button
                   onClick={() => stopStreaming()}
@@ -235,8 +475,6 @@ const ChatInput = ({
   );
 };
 
-export default ChatInput;
-
 interface IFile extends ComponentProps<"div"> {
   file: File;
   onDelete?: (name: string) => void;
@@ -260,8 +498,6 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* delete button */}
       <div
         className={cn(
           "absolute top-0 right-0 z-20 m-0.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
@@ -271,18 +507,12 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
         <Button
           onClick={() => {
             if (fileData && fileData.get(file.name)) {
-              deleteFile({
-                params: {
-                  id: fileData.get(file.name)?.id || "",
-                },
-              });
+              deleteFile({ params: { id: fileData.get(file.name)?.id || "" } });
             }
             onDelete && onDelete(file.name);
           }}
           variant={"ghost"}
-          className={
-            "relative rounded-full text-gray-600 hover:text-gray-800 dark:text-white/60 dark:hover:text-white"
-          }
+          className="relative rounded-full text-gray-600 hover:text-gray-800 dark:text-white/60 dark:hover:text-white"
         >
           <div className="absolute -inset-0.5 z-10 rounded-full bg-black/50"></div>
           <svg
@@ -299,8 +529,6 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
           </svg>
         </Button>
       </div>
-      {/* delete button */}
-
       {!file.type.includes("image") ? (
         <div className="relative flex h-16 max-w-sm min-w-56 items-center justify-start gap-2 rounded-xl border border-gray-300 p-1 dark:border-white/10">
           <div className="bg-primary flex aspect-square h-full items-center justify-center rounded-lg p-1 text-white">
@@ -312,7 +540,6 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
             )}
             {file.type.includes("image") && <IoDocument className="size-9" />}
           </div>
-
           <div className="truncate">
             <p className="truncate text-xs font-semibold text-gray-800 dark:text-white">
               {capitalizeFirstLetter(file.name)}
@@ -332,3 +559,5 @@ const File = ({ file, onDelete, isLoading = false }: IFile) => {
     </div>
   );
 };
+
+export default ChatInput;

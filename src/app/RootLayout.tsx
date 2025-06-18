@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { Focusable } from "react-aria-components";
+import { HiOutlineServerStack, HiServerStack } from "react-icons/hi2";
 import {
   IoArrowBack,
   IoArrowForward,
@@ -23,12 +24,22 @@ import {
   IoPersonCircleOutline,
 } from "react-icons/io5";
 import {
+  RiGraduationCapFill,
+  RiGraduationCapLine,
+  RiHome7Fill,
+  RiHome7Line,
+  RiPencilRulerFill,
+  RiPencilRulerLine,
+  RiRobot3Fill,
+  RiRobot3Line,
+} from "react-icons/ri";
+import {
   VscClose,
   VscLayoutSidebarLeft,
   VscLayoutSidebarLeftOff,
   VscSearch,
 } from "react-icons/vsc";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { EUser, userKey } from "../api/user/config";
 import { User } from "../api/user/types";
@@ -62,6 +73,7 @@ import { useAppConfig, useAppConfigActions } from "../store/configurationStore";
 import { useSidebar, useSidebarActions } from "../store/sidebarStore";
 import { cn } from "../utilities/cn";
 import Login from "./Login";
+import UserLoading from "./UserLoading";
 
 enum ActiveTab {
   PROFILE = 1,
@@ -76,6 +88,7 @@ type Picture = {
 };
 
 const RootLayout = () => {
+  const { pathname: path } = useLocation();
   const { config, showAnnouncement } = useAppConfig();
   const { setShowAnnouncement } = useAppConfigActions();
   const { user, accessToken } = useAuth();
@@ -266,7 +279,7 @@ const RootLayout = () => {
                     disabled={!canGoBack}
                     onClick={() => navigate(-1)}
                   >
-                    <IoArrowBack className="size-5" />
+                    <IoArrowBack className="size-6" />
                   </Button>
 
                   <Tooltip.Content placement="bottom" offset={10}>
@@ -288,7 +301,7 @@ const RootLayout = () => {
                     disabled={!canGoForward}
                     onClick={() => navigate(+1)}
                   >
-                    <IoArrowForward className="size-5" />
+                    <IoArrowForward className="size-6" />
                   </Button>
 
                   <Tooltip.Content placement="bottom" offset={10}>
@@ -311,13 +324,13 @@ const RootLayout = () => {
                       }
                     >
                       <VscSearch className="size-4" />
-                      <p>Deepmodel Search...</p>
+                      <p>Spark Search...</p>
                     </button>
                   </Focusable>
 
                   <Tooltip.Content placement="bottom" offset={10}>
                     <Tooltip.Shorcut
-                      title="Search Deepmodel"
+                      title="Search Spark"
                       shortcuts={[COMMAND_KEY, "k"]}
                     />
                     <Tooltip.Arrow />
@@ -337,9 +350,9 @@ const RootLayout = () => {
                     onClick={() => setIsSidebarExpanded((pv) => !pv)}
                   >
                     {isSidebarExpanded ? (
-                      <VscLayoutSidebarLeft className="size-5" />
+                      <VscLayoutSidebarLeft className="size-6" />
                     ) : (
-                      <VscLayoutSidebarLeftOff className="size-5" />
+                      <VscLayoutSidebarLeftOff className="size-6" />
                     )}
                   </Button>
 
@@ -365,33 +378,7 @@ const RootLayout = () => {
 
       {!accessToken && !user && <Login />}
 
-      {accessToken && !user && (
-        <div className="flex h-full w-full flex-1 flex-col items-center justify-center">
-          <div className="bg-primary relative w-min rounded-full p-2 text-white dark:bg-black/10 dark:text-white/50">
-            <div className="absolute -inset-1 animate-spin rounded-full bg-gradient-to-b from-[#EDEEF1] from-20% to-transparent dark:from-[#1C1C1C]"></div>
-            <svg
-              className="size-8"
-              fill="none"
-              viewBox="0 0 227 228"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 124.669c0 56.279 45.623 91.36 101.902 91.36 56.278 0 101.901-45.623 101.901-101.901S176.448 12.227 113.902 12.227c-43.572 0-88.001-5.742-88.001 40.532 0 46.275-4.275 75.51 54.268 24.122 63.249-55.518 109.631 37.247 73.79 73.088-35.841 35.841-78.007 0-78.007 0"
-                stroke="currentColor"
-                strokeWidth={22.033}
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-
-          <h2 className="mt-2 text-center text-base font-medium tracking-wide text-gray-800 dark:text-white">
-            Getting Your Workspace Ready
-          </h2>
-          <p className="text-center text-xs text-gray-500 dark:text-white/50">
-            We're currently loading your profile and settings.
-          </p>
-        </div>
-      )}
+      {accessToken && !user && <UserLoading />}
 
       {/* Main content */}
       {accessToken && user && (
@@ -444,7 +431,7 @@ const RootLayout = () => {
                           "rounded-lg bg-transparent p-1.5 text-white hover:bg-white/5 data-[pressed]:bg-white/90 md:p-1.5 dark:bg-transparent dark:hover:bg-white/5 dark:data-[pressed]:bg-white/5"
                         }
                       >
-                        <VscClose className="size-5" />
+                        <VscClose className="size-6" />
                       </Button>
                     </div>
                   </div>
@@ -457,9 +444,9 @@ const RootLayout = () => {
               <div className="flex h-full w-20 flex-col items-center justify-between overflow-hidden pb-4">
                 <div className="flex flex-1 flex-col items-center justify-start gap-3">
                   {/* logo */}
-                  <div className="bg-primary w-min rounded-xl p-2 text-white">
+                  <div className="bg-primary mb-2 w-min rounded-xl p-2 text-white">
                     <svg
-                      className="size-8"
+                      className="size-7"
                       fill="none"
                       viewBox="0 0 227 228"
                       xmlns="http://www.w3.org/2000/svg"
@@ -473,6 +460,134 @@ const RootLayout = () => {
                     </svg>
                   </div>
                   {/* logo */}
+
+                  {/* navigation links */}
+
+                  <Link
+                    to={"/"}
+                    className={
+                      "group flex flex-col items-center justify-center gap-1"
+                    }
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center rounded-xl p-2.5 text-white group-hover:bg-white/15",
+                        { "bg-white/15": path.includes("/home") },
+                      )}
+                    >
+                      <div className="transition-all duration-300 group-hover:scale-110">
+                        {path.includes("/home") ? (
+                          <RiHome7Fill className="size-6" />
+                        ) : (
+                          <RiHome7Line className="size-6" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="w-12 text-center text-[0.65rem] font-medium text-white">
+                      Home
+                    </span>
+                  </Link>
+
+                  <Link
+                    to={"/worker-agents"}
+                    className={
+                      "group flex flex-col items-center justify-center gap-1"
+                    }
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center rounded-xl p-2.5 text-white group-hover:bg-white/15",
+                        { "bg-white/15": path.includes("/worker-agents") },
+                      )}
+                    >
+                      <div className="transition-all duration-300 group-hover:scale-110">
+                        {path.includes("/worker-agents") ? (
+                          <RiRobot3Fill className="size-6" />
+                        ) : (
+                          <RiRobot3Line className="size-6" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="w-12 text-center text-[0.65rem] font-medium text-white">
+                      Worker Agents
+                    </span>
+                  </Link>
+
+                  <Link
+                    to={"/mcp"}
+                    className={
+                      "group flex flex-col items-center justify-center gap-1"
+                    }
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center rounded-xl p-2.5 text-white group-hover:bg-white/15",
+                        { "bg-white/15": path.includes("/mcp") },
+                      )}
+                    >
+                      <div className="transition-all duration-300 group-hover:scale-110">
+                        {path.includes("/mcp") ? (
+                          <HiServerStack className="size-6" />
+                        ) : (
+                          <HiOutlineServerStack className="size-6" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="w-12 text-center text-[0.65rem] font-medium text-white">
+                      MCP Servers
+                    </span>
+                  </Link>
+
+                  <Link
+                    to={"/blueprints"}
+                    className={
+                      "group flex flex-col items-center justify-center gap-1"
+                    }
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center rounded-xl p-2.5 text-white group-hover:bg-white/15",
+                        { "bg-white/15": path.includes("/blueprints") },
+                      )}
+                    >
+                      <div className="transition-all duration-300 group-hover:scale-110">
+                        {path.includes("/blueprints") ? (
+                          <RiPencilRulerFill className="size-6" />
+                        ) : (
+                          <RiPencilRulerLine className="size-6" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="w-12 text-center text-[0.65rem] font-medium text-white">
+                      Blueprints
+                    </span>
+                  </Link>
+
+                  <Link
+                    to={"/academy"}
+                    className={
+                      "group flex flex-col items-center justify-center gap-1"
+                    }
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center rounded-xl p-2.5 text-white group-hover:bg-white/15",
+                        { "bg-white/15": path.includes("/academy") },
+                      )}
+                    >
+                      <div className="transition-all duration-300 group-hover:scale-110">
+                        {path.includes("/academy") ? (
+                          <RiGraduationCapFill className="size-6" />
+                        ) : (
+                          <RiGraduationCapLine className="size-6" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="w-12 text-center text-[0.65rem] font-medium text-white">
+                      Academy
+                    </span>
+                  </Link>
+                  {/* navigation links */}
                 </div>
 
                 {/* user details */}
@@ -571,7 +686,7 @@ const RootLayout = () => {
                           logout();
                         }}
                       >
-                        Sign out of Deepmodel
+                        Sign out of Spark
                       </Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
@@ -585,7 +700,7 @@ const RootLayout = () => {
                 <Combobox<ComboboxResult>
                   isOpen={isOpen}
                   setIsOpen={setIsOpen}
-                  placeholder="Deepmodel Search"
+                  placeholder="Spark Search"
                   query={query}
                   setQuery={setQuery}
                   isLoading={isLoading}
@@ -718,7 +833,7 @@ const SettingsModal = ({
                 },
               )}
             >
-              <IoPerson className="size-5" />
+              <IoPerson className="size-6" />
               <p className="text-sm font-medium">Profile</p>
             </Button>
 
@@ -735,7 +850,7 @@ const SettingsModal = ({
                 },
               )}
             >
-              <IoLockClosed className="size-5" />
+              <IoLockClosed className="size-6" />
               <p className="text-sm font-medium">Security</p>
             </Button>
           </div>

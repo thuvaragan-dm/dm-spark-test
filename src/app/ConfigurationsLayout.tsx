@@ -5,6 +5,11 @@ import {
   useAppConfig,
 } from "../store/configurationStore";
 import isVersionSupported from "../utilities/isVersionSupported";
+import Blocked from "./Blocked";
+import ConfigError from "./ConfigError";
+import Initializing from "./Initializing";
+import MaintenanceMode from "./MaintenanceMode";
+import NotSupported from "./NotSupported";
 
 const ConfigurationsLayout = () => {
   const { config, appVersion } = useAppConfig();
@@ -29,30 +34,11 @@ const ConfigurationsLayout = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex h-dvh flex-col items-center-safe justify-center-safe">
-        Initializing...
-      </div>
-    );
+    return <Initializing />;
   }
 
-  if (error) {
-    return (
-      <div className="flex h-dvh flex-col items-center-safe justify-center-safe">
-        <h2>Critical Error</h2>
-        <p>{error}</p>
-      </div>
-    );
-  }
-
-  // After initialization, if config is still null, it's a critical error.
-  if (!config) {
-    return (
-      <div className="flex h-dvh flex-col items-center-safe justify-center-safe">
-        <h2>Critical Error</h2>
-        <p>Configuration data is missing. The application cannot continue.</p>
-      </div>
-    );
+  if (!config || error) {
+    return <ConfigError />;
   }
 
   const { global: globalConfigs } = config;
@@ -69,27 +55,19 @@ const ConfigurationsLayout = () => {
   const maintenanceMode = globalConfigs?.maintenance_mode;
 
   if (isBlocked) {
-    return (
-      <div className="p-4 text-center">
-        This version of the application has been blocked.
-      </div>
-    );
+    return <Blocked />;
   }
 
   if (!isSupported) {
-    return (
-      <div className="p-4 text-center">
-        This version of the application is no longer supported. Please update.
-      </div>
-    );
+    return <NotSupported />;
   }
 
   if (maintenanceMode) {
     return (
-      <div className="flex h-dvh flex-col items-center-safe justify-center-safe p-4 text-center">
-        <h2>{maintenanceMode.title}</h2>
-        <p>{maintenanceMode.message}</p>
-      </div>
+      <MaintenanceMode
+        title={maintenanceMode.title}
+        message={maintenanceMode.message}
+      />
     );
   }
 

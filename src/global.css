@@ -74,6 +74,7 @@
   --animate-rocket: subtleRocketMovement 2s ease-in-out infinite alternate;
 
   --animate-gradient: gradient 8s linear infinite;
+  --animate-ellipsis: draw-ellipsis 1.5s infinite;
 }
 
 .app-region-drag {
@@ -86,6 +87,21 @@
 @keyframes gradient {
   to {
     background-position: var(--bg-size, 300%) 0;
+  }
+}
+
+@keyframes draw-ellipsis {
+  0% {
+    content: ".";
+  }
+  33% {
+    content: "..";
+  }
+  66% {
+    content: "...";
+  }
+  100% {
+    content: "."; /* Or just end at "..." and let it loop */
   }
 }
 

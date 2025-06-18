@@ -1,14 +1,16 @@
 import { Route, Routes } from "react-router-dom";
+import Academy from "./app/academy/Academy";
 import AgentLayout from "./app/AgentLayout";
-import MainPage from "./app/MainPage";
-import RootLayout from "./app/RootLayout";
+import BluePrints from "./app/blueprints/BluePrints";
 import ChatPage from "./app/chat/ChatPage";
-import Explore from "./app/explore/Explore";
-import AppUpdater from "./components/AppUpdater";
-import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
-import McpConnections from "./app/mcp/McpConnections";
 import ConfigurationsLayout from "./app/ConfigurationsLayout";
+import Explore from "./app/explore/Explore";
+import MainPage from "./app/MainPage";
+import McpConnections from "./app/mcp/McpConnections";
+import RootLayout from "./app/RootLayout";
+import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
 import AppChangelog from "./components/AppChangelog";
+import AppUpdater from "./components/AppUpdater";
 
 function App() {
   return (
@@ -20,13 +22,17 @@ function App() {
       <Routes>
         <Route path="/" element={<ConfigurationsLayout />}>
           <Route path="/" element={<RootLayout />}>
-            <Route element={<AgentLayout />}>
-              <Route path="/" index element={<MainPage />} />
-              <Route path="chat/:agentPath" element={<ChatPage />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/worker-agents" element={<ViewWorkerAgents />} />
-              <Route path="/mcp" element={<McpConnections />} />
+            <Route path="/" element={<AgentLayout />}>
+              <Route path="/" element={<MainPage />} />
+              <Route path="/home">
+                <Route path="chat/:agentPath" element={<ChatPage />} />
+                <Route path="explore" element={<Explore />} />
+              </Route>
             </Route>
+            <Route path="/worker-agents" element={<ViewWorkerAgents />} />
+            <Route path="/mcp" element={<McpConnections />} />
+            <Route path="/blueprints" element={<BluePrints />} />
+            <Route path="/academy" element={<Academy />} />
           </Route>
         </Route>
       </Routes>

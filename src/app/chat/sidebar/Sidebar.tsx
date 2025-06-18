@@ -2,7 +2,7 @@ import * as HoverCard from "@radix-ui/react-hover-card";
 import { useEffect, useState } from "react";
 import { Focusable } from "react-aria-components";
 import { IoGrid } from "react-icons/io5";
-import { VscNewFile, VscRobot, VscServer } from "react-icons/vsc";
+import { VscNewFile } from "react-icons/vsc";
 import { Link, useLocation, useParams } from "react-router-dom";
 import Avatar from "../../../components/Avatar";
 import Tooltip from "../../../components/tooltip";
@@ -53,8 +53,11 @@ const Sidebar = () => {
         >
           <div className="">
             <h3 className="font-gilroy text-xl text-gray-800 dark:text-white">
-              Deepmodel
+              Spark
             </h3>
+            <p className="text-[0.5rem] text-gray-500 dark:text-white/50">
+              Powered By Deepmodel
+            </p>
           </div>
           <div className="flex items-center justify-end gap-1">
             {/* new chat button */}
@@ -99,7 +102,7 @@ const Sidebar = () => {
                 <HoverCard.Root key={agent.id}>
                   <HoverCard.Trigger asChild>
                     <Link
-                      to={`/chat/${agent.path}`}
+                      to={`/home/chat/${agent.path}`}
                       onClick={() => {
                         reset();
                         const selectedAgent = agents.find(
@@ -193,7 +196,7 @@ const Sidebar = () => {
               ))}
 
             <Link
-              to={"/explore"}
+              to={"/home/explore"}
               className={cn(
                 "-mx-1 flex min-w-0 items-center justify-start gap-2 overflow-hidden rounded-lg px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/5",
                 {
@@ -212,47 +215,10 @@ const Sidebar = () => {
                 </p>
               </div>
             </Link>
-            <Link
-              to={"/worker-agents"}
-              className={cn(
-                "-mx-1 flex min-w-0 items-center justify-start gap-2 overflow-hidden rounded-lg px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/5",
-                {
-                  "dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/20 bg-primary text-white":
-                    path.includes("/worker-agents"),
-                },
-              )}
-            >
-              <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-600 to-blue-800 text-white">
-                <VscRobot className="size-4" />
-              </div>
-
-              <div className="w-full truncate text-left">
-                <p className="truncate text-sm font-medium">Worker Agents</p>
-              </div>
-            </Link>
-
-            <Link
-              to={"/mcp"}
-              className={cn(
-                "-mx-1 flex min-w-0 items-center justify-start gap-2 overflow-hidden rounded-lg px-1.5 py-1.5 text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/5",
-                {
-                  "dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/20 bg-primary text-white":
-                    path.includes("/mcp"),
-                },
-              )}
-            >
-              <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-amber-600 to-amber-800 text-white">
-                <VscServer className="size-4" />
-              </div>
-
-              <div className="w-full truncate text-left">
-                <p className="truncate text-sm font-medium">MCP Servers</p>
-              </div>
-            </Link>
           </div>
         </div>
 
-        <div className="bg-primary-dark mt-2 w-full overflow-hidden border-t border-gray-300 pb-2 dark:border-white/10"></div>
+        <div className="dark:bg-primary-dark mt-2 w-full overflow-hidden border-t border-gray-300 bg-white pb-2 dark:border-white/10"></div>
 
         <div className="scrollbar w-full flex-1 overflow-x-hidden overflow-y-auto px-5 pr-3">
           <AllThreads />
