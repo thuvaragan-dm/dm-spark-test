@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { ComponentProps } from "react";
 import { VscComment, VscTasklist } from "react-icons/vsc";
-import { useAgent } from "../../../../store/agentStore";
 import { useRerenderer } from "../../../../store/rerendererStore";
 import ThreadButton from "./ThreadButton";
 import { BinnedThreads } from "./binThreads";
@@ -11,7 +10,6 @@ interface IThreadsContainer extends ComponentProps<"div"> {
 }
 
 const ThreadsContainer = ({ threads }: IThreadsContainer) => {
-  const { agents } = useAgent();
   const { rerenderThreadList } = useRerenderer();
   const { today, yesterday, lastWeek, last30Days, months } = threads;
 
@@ -45,7 +43,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       }
                       key={thread.id}
                       name={thread.title}
-                      to={`/home/chat/${agents.find((agent) => agent.id === thread.copilot_id)?.path ?? agents[0]?.path}?thread=${thread.id}`}
+                      to={`/home/chat?thread=${thread.id}`}
                     />
                   </motion.div>
                 </AnimatePresence>
@@ -83,7 +81,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       }
                       key={thread.id}
                       name={thread.title}
-                      to={`/home/chat/${agents.find((agent) => agent.id === thread.copilot_id)?.path ?? agents[0]?.path}?thread=${thread.id}`}
+                      to={`/home/chat?thread=${thread.id}`}
                     />
                   </motion.div>
                 </AnimatePresence>
@@ -121,7 +119,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       }
                       key={thread.id}
                       name={thread.title}
-                      to={`/home/chat/${agents.find((agent) => agent.id === thread.copilot_id)?.path ?? agents[0]?.path}?thread=${thread.id}`}
+                      to={`/home/chat?thread=${thread.id}`}
                     />
                   </motion.div>
                 </AnimatePresence>
@@ -159,7 +157,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                       }
                       key={thread.id}
                       name={thread.title}
-                      to={`/home/chat/${agents.find((agent) => agent.id === thread.copilot_id)?.path ?? agents[0]?.path}?thread=${thread.id}`}
+                      to={`/home/chat?thread=${thread.id}`}
                     />
                   </motion.div>
                 </AnimatePresence>
@@ -198,7 +196,7 @@ const ThreadsContainer = ({ threads }: IThreadsContainer) => {
                         }
                         key={thread.id}
                         name={thread.title}
-                        to={`/home/chat/${agents.find((agent) => agent.id === thread.copilot_id)?.path ?? agents[0]?.path}?thread=${thread.id}`}
+                        to={`/home/chat?thread=${thread.id}`}
                       />
                     </motion.div>
                   </AnimatePresence>

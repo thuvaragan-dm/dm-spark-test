@@ -97,6 +97,9 @@ const RootLayout = () => {
   useEffect(() => {
     // 1. Check for a token that might already be stored on disk.
     const initialToken = window.electronAPI.getToken();
+
+    console.log({ initialToken });
+
     if (initialToken && !accessToken) {
       console.log("[RootLayout] Setting initial token from storage.");
       setAccessToken(initialToken);
@@ -509,7 +512,7 @@ const RootLayout = () => {
                       </div>
                     </div>
                     <span className="w-12 text-center text-[0.65rem] font-medium text-white">
-                      Worker Agents
+                      Agents
                     </span>
                   </Link>
 
@@ -534,7 +537,7 @@ const RootLayout = () => {
                       </div>
                     </div>
                     <span className="w-12 text-center text-[0.65rem] font-medium text-white">
-                      MCP Servers
+                      MCP
                     </span>
                   </Link>
 

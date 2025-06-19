@@ -13,7 +13,6 @@ import { Button, ButtonVariants } from "../../../../components/Button";
 import Dropdown from "../../../../components/dropdown";
 import Modal from "../../../../components/modal";
 import Spinner from "../../../../components/Spinner";
-import { useAgent } from "../../../../store/agentStore";
 import { useChatInputActions } from "../../../../store/chatInputStore";
 import { useRerendererActions } from "../../../../store/rerendererStore";
 import { useStreamManager } from "../../../../store/streamStore";
@@ -40,7 +39,6 @@ const ThreadButton = ({
 }: IThreadButton) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { selectedAgent } = useAgent();
 
   const { reset } = useChatInputActions();
 
@@ -245,7 +243,7 @@ const ThreadButton = ({
               const currentThread = searchParams.get("thread");
               onDelete && onDelete(id);
               if (currentThread && currentThread === id) {
-                navigate(`/chat/${selectedAgent?.path}`);
+                navigate(`/home/chat`);
               }
               await handleDeleteThread({ params: { id } });
               setIsDeleteOpen(false);

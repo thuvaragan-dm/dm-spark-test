@@ -1,6 +1,13 @@
 import { InfiniteData } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { IoReader } from "react-icons/io5";
 import { useSearchParams } from "react-router-dom";
 import { useStickToBottom } from "use-stick-to-bottom";
@@ -36,6 +43,8 @@ import UserMessage from "./UserMessage";
 const ChatArea = () => {
   const [searchParams] = useSearchParams();
   const appendToUrl = useAppendToSearchQuery();
+  const prevScrollHeightRef = useRef<number | null>(null);
+
   const { scrollRef, contentRef, scrollToBottom } = useStickToBottom({
     initial: "smooth",
   });
@@ -247,16 +256,32 @@ const ChatArea = () => {
         return;
       }
 
-      // 2. The e.preventDefault() has been removed.
-      const { scrollTop } = e.currentTarget;
+      const { scrollTop, scrollHeight } = e.currentTarget;
 
       if (scrollTop === 0 && hasNextPage && !isFetchingNextPage) {
         console.log("User scrolled to top, fetching older messages...");
+        prevScrollHeightRef.current = scrollHeight;
         fetchNextPage();
       }
     },
     [hasNextPage, isFetchingNextPage, fetchNextPage],
   );
+
+  useLayoutEffect(() => {
+    const scrollContainer = scrollRef.current;
+
+    // Check if we have a stored scroll height. This means we've just fetched new messages.
+    if (scrollContainer && prevScrollHeightRef.current !== null) {
+      const newScrollHeight = scrollContainer.scrollHeight;
+
+      // Adjust the scroll position to maintain the user's view
+      scrollContainer.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+
+      // Reset the ref to null so this logic doesn't run on every re-render
+      prevScrollHeightRef.current = null;
+    }
+    // This effect should run when 'messages' are updated, as that's what changes the scrollHeight.
+  }, [messages, scrollRef]);
 
   useEffect(() => {
     // When the thread ID changes, we want to scroll to the bottom of the new thread.

@@ -47,10 +47,12 @@ const ALLOWED_SEND_CHANNELS = [
 ];
 
 let currentToken: string | null = null; // For the original 'authtoken'
+
 ipcRenderer.on("deep-link-token", (_event: IpcRendererEvent, token: string) => {
   console.log("[Preload] Received 'deep-link-token':", token);
   currentToken = token;
 });
+
 ipcRenderer.on("auth-token-deleted", () => {
   console.log("[Preload] Received 'auth-token-deleted'.");
   currentToken = null;
@@ -106,9 +108,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
 
   getToken: (): string | null => currentToken,
+
   deleteToken: (): void => {
+    currentToken = null;
     ipcRenderer.send("delete-auth-token");
   },
+
   onTokenReceived: (callback: (token: string) => void): (() => void) => {
     const channel = "deep-link-token";
     const listener = (_event: IpcRendererEvent, token: string) =>

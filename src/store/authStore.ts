@@ -114,15 +114,12 @@ export const useAuth = () => useAuthStore((state) => state.states);
 
 export const useAuthActions = () => {
   const actions = useAuthStore((state) => state.actions);
-
   const extendedLogout = () => {
-    actions.logout();
-    if (window.electronAPI?.deleteRecentAgentsFile) {
-      window.electronAPI.deleteRecentAgentsFile();
-    }
     if (window.electronAPI?.deleteToken) {
       window.electronAPI.deleteToken();
     }
+
+    actions.logout();
     console.log("[AuthStore] Logout process complete.");
   };
 

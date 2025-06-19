@@ -1,16 +1,15 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Academy from "./app/academy/Academy";
-import AgentLayout from "./app/AgentLayout";
 import BluePrints from "./app/blueprints/BluePrints";
+import ChatLayout from "./app/chat/ChatLayout";
 import ChatPage from "./app/chat/ChatPage";
 import ConfigurationsLayout from "./app/ConfigurationsLayout";
-import Explore from "./app/explore/Explore";
-import MainPage from "./app/MainPage";
 import McpConnections from "./app/mcp/McpConnections";
 import RootLayout from "./app/RootLayout";
 import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
 import AppChangelog from "./components/AppChangelog";
 import AppUpdater from "./components/AppUpdater";
+import Course from "./app/academy/Course";
 
 function App() {
   return (
@@ -22,17 +21,18 @@ function App() {
       <Routes>
         <Route path="/" element={<ConfigurationsLayout />}>
           <Route path="/" element={<RootLayout />}>
-            <Route path="/" element={<AgentLayout />}>
-              <Route path="/" element={<MainPage />} />
-              <Route path="/home">
-                <Route path="chat/:agentPath" element={<ChatPage />} />
-                <Route path="explore" element={<Explore />} />
-              </Route>
+            <Route path="/" element={<Navigate replace to="/home/chat" />} />
+            <Route path="/home" element={<ChatLayout />}>
+              <Route path="chat" element={<ChatPage />} />
             </Route>
             <Route path="/worker-agents" element={<ViewWorkerAgents />} />
             <Route path="/mcp" element={<McpConnections />} />
             <Route path="/blueprints" element={<BluePrints />} />
-            <Route path="/academy" element={<Academy />} />
+
+            <Route path="/academy">
+              <Route index element={<Academy />} />
+              <Route path="course/:name" element={<Course />} />
+            </Route>
           </Route>
         </Route>
       </Routes>

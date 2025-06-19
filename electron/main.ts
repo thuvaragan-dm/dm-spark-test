@@ -6,7 +6,8 @@ import {
   dialog,
   nativeTheme,
   Menu,
-  MenuItemConstructorOptions, // Import this type for the template
+  MenuItemConstructorOptions,
+  session,
 } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -438,6 +439,20 @@ async function createWindow() {
             height: 35,
           },
         }),
+  });
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    // Check if the response headers contain 'x-frame-options'
+    if (
+      (details && details?.responseHeaders?.["x-frame-options"]) ||
+      details?.responseHeaders?.["X-Frame-Options"]
+    ) {
+      // Delete the header to allow embedding
+      delete details.responseHeaders["x-frame-options"];
+      delete details.responseHeaders["X-Frame-Options"];
+    }
+
+    callback({ cancel: false, responseHeaders: details.responseHeaders });
   });
 
   if (process.platform !== "darwin") {

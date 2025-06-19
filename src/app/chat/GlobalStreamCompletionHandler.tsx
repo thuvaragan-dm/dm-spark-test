@@ -16,6 +16,7 @@ import { useRerendererActions } from "../../store/rerendererStore";
 export const GlobalStreamCompletionHandler = () => {
   const { selectedAgent } = useAgent();
   const { setRerenderThreadList } = useRerendererActions();
+
   const agentOptions = useMemo<ThreadParams>(() => {
     return {
       limit: THREAD_LIMIT,
