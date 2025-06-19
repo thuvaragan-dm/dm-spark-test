@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { User } from "../api/user/types";
 import { useAppConfigStore } from "./configurationStore"; // Import the configuration store
+import { useNavigate } from "react-router-dom";
 
 type MCPAuth = {
   access_token: string;
@@ -113,16 +114,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 export const useAuth = () => useAuthStore((state) => state.states);
 
 export const useAuthActions = () => {
+  const navigate = useNavigate();
   const actions = useAuthStore((state) => state.actions);
 
   const extendedLogout = () => {
-    actions.logout();
     if (window.electronAPI?.deleteRecentAgentsFile) {
       window.electronAPI.deleteRecentAgentsFile();
     }
     if (window.electronAPI?.deleteToken) {
       window.electronAPI.deleteToken();
     }
+
+    actions.logout();
+
+    navigate("/");
     console.log("[AuthStore] Logout process complete.");
   };
 
