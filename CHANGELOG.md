@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 4.0.0
+
+### Major Changes
+
+- [`a729629`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/a729629298d903b736896706c30b431329586b1a) Thanks [@Dhuvii](https://github.com/Dhuvii)! - Spark initialized.
+
 ## 3.1.2
 
 ### Patch Changes
