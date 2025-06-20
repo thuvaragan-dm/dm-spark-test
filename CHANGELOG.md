@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 4.0.2
+
+### Patch Changes
+
+- [`55e17b1`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/55e17b128483b8be125d53c7fb0fdc040aad24c6) Thanks [@Dhuvii](https://github.com/Dhuvii)! - fixed hardcoded agent issue
+
 ## 4.0.1
 
 ### Patch Changes
