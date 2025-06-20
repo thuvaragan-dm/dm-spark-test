@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useGetAgents } from "../../api/agent/useGetAgents";
 import Spinner from "../../components/Spinner";
-import { useAgentActions } from "../../store/agentStore";
+import { useAgent, useAgentActions } from "../../store/agentStore";
 import ChatArea from "./chatarea/ChatArea";
 import { GlobalStreamCompletionHandler } from "./GlobalStreamCompletionHandler";
 
@@ -10,6 +10,7 @@ const ChatPage = () => {
     search: "Spark",
   });
 
+  const { selectedAgent } = useAgent();
   const { setSelectedAgent } = useAgentActions();
 
   useEffect(() => {
@@ -26,7 +27,7 @@ const ChatPage = () => {
         </div>
       )}
 
-      {!isAgentsLoading && (
+      {!isAgentsLoading && selectedAgent && (
         <>
           <GlobalStreamCompletionHandler />
           <ChatArea />
