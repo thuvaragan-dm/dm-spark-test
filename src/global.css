@@ -47,8 +47,9 @@
   --color-secondary-950: oklch(29.7% 0.102 298.8);
 
   --color-primary: oklch(0.38 0.1961 285.2);
-  --color-primary-darker-2: oklch(0.1916 0.0807 288.95);
-  --color-primary-darker: oklch(0.1194 0.0382 296.42);
+
+  --color-sidepanel-end: oklch(0.1916 0.0807 288.95);
+  --color-sidepanel-start`: oklch(0.1194 0.0382 296.42);
 
   --color-primary-dark: oklch(0.18 0.0032 196.87);
   --color-primary-dark-foreground: oklch(0.2178 0 0);

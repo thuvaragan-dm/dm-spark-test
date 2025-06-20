@@ -61,6 +61,7 @@ export interface AvailableMCPConnection {
   service_provider: string;
   auth_method: AuthMethod[];
   credentials: CredentialConfig[];
+  category: string;
 }
 
 export type CreateMCPConnectionInput = z.infer<

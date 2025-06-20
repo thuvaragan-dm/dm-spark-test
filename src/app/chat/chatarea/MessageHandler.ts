@@ -31,7 +31,6 @@ export type MessageHandlerEventMap = {
 
 export class MessageHandler {
   public readonly threadId: string;
-  private readonly agentId: string;
   private readonly accessToken: string;
   private readonly baseApiUrl: string;
   private eventSource: EventSource | null = null;
@@ -45,15 +44,9 @@ export class MessageHandler {
     [K in keyof MessageHandlerEventMap]?: Array<(...args: unknown[]) => void>;
   } = {};
 
-  constructor(
-    threadId: string,
-    agentId: string,
-    accessToken: string,
-    apiUrl: string,
-  ) {
+  constructor(threadId: string, accessToken: string, apiUrl: string) {
     // Added accessToken to constructor signature
     this.threadId = threadId;
-    this.agentId = agentId;
     this.accessToken = accessToken; // Use passed accessToken
     this.baseApiUrl = apiUrl; // Assuming apiUrl is globally available or correctly imported
 
@@ -195,6 +188,8 @@ export class MessageHandler {
 
     const query = encodeURIComponent(userQuery);
     const token = this.accessToken || "";
+    const threadId = this.threadId || "";
+
     if (!token) {
       console.error(
         "MessageHandler: Access token is missing. Cannot start stream.",
@@ -203,7 +198,7 @@ export class MessageHandler {
       this.currentBotMessageIdForStream = null;
       return;
     }
-    const streamUrl = `${this.baseApiUrl}/copilots/${this.agentId}/ask?query=${query}&access_token=${token}`;
+    const streamUrl = `${this.baseApiUrl}/handlers/ask?query=${query}&access_token=${token}&thread_id=${threadId}`;
 
     try {
       this.eventSource = new EventSource(streamUrl);

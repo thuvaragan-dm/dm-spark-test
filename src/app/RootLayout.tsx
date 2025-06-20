@@ -48,6 +48,7 @@ import { useGenerateAvatar } from "../api/user/useGenerateAvatar";
 import { useGetUser } from "../api/user/useGetUser";
 import { ChangePasswordSchema } from "../api/user/UserSchema";
 import { useUpdateUser } from "../api/user/useUpdateUser";
+import icon from "../assets/icon.png";
 import Avatar from "../components/Avatar";
 import BlurWrapper from "../components/BlurWrapper";
 import { Button, ButtonWithLoader } from "../components/Button";
@@ -260,7 +261,7 @@ const RootLayout = () => {
   );
 
   return (
-    <main className="from-primary-darker to-primary-darker-2 @container relative flex h-dvh w-full flex-col bg-linear-to-br/decreasing font-sans">
+    <main className="from-sidepanel-start to-sidepanel-end @container relative flex h-dvh w-full flex-col bg-linear-to-br/oklch font-sans">
       <div className="app-region-drag pointer-events-none absolute inset-x-0 z-20 h-10"></div>
       <nav className="absolute inset-x-0 top-0 z-10 flex h-10 flex-col items-center justify-center bg-transparent">
         {accessToken && user && (
@@ -444,30 +445,21 @@ const RootLayout = () => {
 
             <div className="mb-1.5 flex h-full w-full items-start justify-start overflow-hidden">
               {/* side panel */}
-              <div className="flex h-full w-20 flex-col items-center justify-between overflow-hidden pb-4">
+              <div className="mt-3 flex h-full w-20 flex-col items-center justify-between overflow-hidden pb-4">
                 <div className="flex flex-1 flex-col items-center justify-start gap-3">
                   {/* logo */}
-                  <div className="bg-primary mb-2 w-min rounded-xl p-2 text-white">
-                    <svg
-                      className="size-7"
-                      fill="none"
-                      viewBox="0 0 227 228"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12 124.669c0 56.279 45.623 91.36 101.902 91.36 56.278 0 101.901-45.623 101.901-101.901S176.448 12.227 113.902 12.227c-43.572 0-88.001-5.742-88.001 40.532 0 46.275-4.275 75.51 54.268 24.122 63.249-55.518 109.631 37.247 73.79 73.088-35.841 35.841-78.007 0-78.007 0"
-                        stroke="currentColor"
-                        strokeWidth={22.033}
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                  <div className="mb-2 aspect-square w-min rounded-xl bg-white/10 text-white">
+                    <img
+                      src={icon}
+                      alt="Spark Logo"
+                      className="size-12 object-cover"
+                    />
                   </div>
                   {/* logo */}
 
                   {/* navigation links */}
-
                   <Link
-                    to={"/"}
+                    to={"/home/chat"}
                     className={
                       "group flex flex-col items-center justify-center gap-1"
                     }

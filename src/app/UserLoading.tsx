@@ -13,22 +13,24 @@ const UserLoading = () => {
         />
       </div>
 
-      <div className="relative z-50 grid w-full flex-1 grid-cols-7 overflow-hidden p-10">
-        <div className="col-span-4"></div>
+      <div className="@container relative z-50 grid w-full flex-1 grid-cols-2 overflow-hidden p-10">
+        <div className="w-full"></div>
         {/* form */}
-        <div className="items-start-safe scrollbar col-span-3 flex w-full flex-1 flex-col justify-center-safe overflow-y-auto pl-20">
-          <div className="flex w-full max-w-md items-center justify-start gap-5">
-            <h1 className="shrink-0 text-4xl font-medium text-balance text-white">
-              Initializing Spark
-            </h1>
-            <div className="flex w-min items-center justify-center">
-              <Spinner className="size-5 text-white" />
+        <div className="scrollbar flex w-full flex-1 flex-col items-end-safe justify-center-safe overflow-y-auto">
+          <div className="flex w-full max-w-sm flex-col">
+            <div className="flex w-full items-center justify-start gap-5">
+              <h1 className="shrink-0 text-4xl font-medium text-balance text-white">
+                Initializing Spark
+              </h1>
+              <div className="flex w-min items-center justify-center">
+                <Spinner className="size-5 text-white" />
+              </div>
             </div>
-          </div>
 
-          <p className="mt-5 max-w-sm text-base text-white/80">
-            Spark is getting ready to assist you. This may take a moment.
-          </p>
+            <p className="mt-5 max-w-sm text-base text-white/80">
+              Spark is getting ready to assist you. This may take a moment.
+            </p>
+          </div>
         </div>
         {/* form */}
       </div>

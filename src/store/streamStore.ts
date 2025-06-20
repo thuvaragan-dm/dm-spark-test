@@ -36,11 +36,7 @@ interface StreamManagerState {
   completedStreams: CompletedStream[];
 
   getHandler: (threadId: string) => MessageHandler | undefined;
-  getOrCreateHandler: (
-    threadId: string,
-    agentId: string,
-    accessToken: string,
-  ) => MessageHandler;
+  getOrCreateHandler: (threadId: string, accessToken: string) => MessageHandler;
   updateMessage: (threadId: string, message: string, botId: string) => void;
   getMessage: (
     threadId: string,
@@ -70,7 +66,7 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     return get().handlers.get(threadId);
   },
 
-  getOrCreateHandler: (threadId, agentId, accessToken) => {
+  getOrCreateHandler: (threadId, accessToken) => {
     let handler = get().handlers.get(threadId);
     if (!handler) {
       // 1. Get the apiUrl from the configuration store.
@@ -88,7 +84,7 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
 
       // 3. Pass the apiUrl to the MessageHandler constructor.
       //    (Note: This assumes the MessageHandler's constructor is updated to accept apiUrl).
-      handler = new MessageHandler(threadId, agentId, accessToken, apiUrl);
+      handler = new MessageHandler(threadId, accessToken, apiUrl);
 
       // --- Event Listener for incoming message chunks ---
       handler.on("messageChunk", (id, message) => {

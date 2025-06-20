@@ -3,16 +3,16 @@ import { cn } from "../utilities/cn";
 import { VscCircleFilled } from "react-icons/vsc";
 
 export type AvailableMCPProviders =
-  | "github"
-  | "jira"
-  | "slack"
-  | "google_calendar";
+  | "GitHubMCP"
+  | "JiraMCP"
+  | "SlackMCP"
+  | "GoogleCalendarMCP";
 
 interface IMCPConnectionIcon extends ComponentProps<"svg"> {
   icon: AvailableMCPProviders;
 }
 const MCPConnectionIcon = ({ icon, className }: IMCPConnectionIcon) => {
-  if (icon.includes("github")) {
+  if (icon.includes("GitHubMCP")) {
     return (
       <svg
         className={cn("size-8", className)}
@@ -29,7 +29,7 @@ const MCPConnectionIcon = ({ icon, className }: IMCPConnectionIcon) => {
     );
   }
 
-  if (icon.includes("jira")) {
+  if (icon.includes("JiraMCP")) {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -74,7 +74,7 @@ const MCPConnectionIcon = ({ icon, className }: IMCPConnectionIcon) => {
     );
   }
 
-  if (icon.includes("slack")) {
+  if (icon.includes("SlackMCP")) {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +101,7 @@ const MCPConnectionIcon = ({ icon, className }: IMCPConnectionIcon) => {
     );
   }
 
-  if (icon.includes("googlecalendar") || icon.includes("google_calendar")) {
+  if (icon.includes("GoogleCalendarMCP")) {
     return (
       <svg
         className={cn("size-8", className)}

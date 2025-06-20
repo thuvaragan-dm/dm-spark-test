@@ -1,16 +1,18 @@
+import { ComponentProps } from "react";
 import { Focusable } from "react-aria-components";
-import { VscNewFile } from "react-icons/vsc";
-import { Link } from "react-router-dom";
+import {
+  HiOutlineServerStack,
+  HiOutlineShare,
+  HiOutlineTrash,
+  HiOutlineUser,
+} from "react-icons/hi2";
+import { VscAdd } from "react-icons/vsc";
+import { Link, useLocation } from "react-router-dom";
 import Tooltip from "../../../components/tooltip";
-import { COMMAND_KEY } from "../../../components/tooltip/TooltipKeyboardShortcut";
-import { useChatInputActions } from "../../../store/chatInputStore";
 import { cn } from "../../../utilities/cn";
 import { SidebarWrapper } from "./sidebarWrapper";
-import AllThreads from "./threads/AllThreads";
 
 const Sidebar = () => {
-  const { reset } = useChatInputActions();
-
   return (
     <SidebarWrapper>
       <div className="dark:bg-primary-dark relative flex h-full flex-1 flex-col overflow-hidden border-r border-gray-300 bg-white dark:border-white/10">
@@ -32,23 +34,18 @@ const Sidebar = () => {
             <Tooltip>
               <Focusable>
                 <Link
-                  to={"/home/chat"}
+                  to={"/mcp"}
                   className={
                     "text-primary hover:bg-secondary/50 flex shrink-0 items-center justify-start gap-2 rounded-lg p-1 text-xs leading-0 md:p-1 dark:text-white dark:hover:bg-white/10"
                   }
-                  onClick={() => {
-                    reset();
-                  }}
                 >
-                  <VscNewFile className="size-5" />
+                  <VscAdd className="size-4" />
+                  <p className="text-sm">Connect</p>
                 </Link>
               </Focusable>
 
               <Tooltip.Content placement="right" offset={10}>
-                <Tooltip.Shorcut
-                  title="New chat"
-                  shortcuts={[COMMAND_KEY, "n"]}
-                />
+                <Tooltip.Shorcut title="Add new connection" />
                 <Tooltip.Arrow className={"-mt-1"} />
               </Tooltip.Content>
             </Tooltip>
@@ -58,11 +55,47 @@ const Sidebar = () => {
 
         <div className="mt-3 w-full overflow-hidden border-t border-gray-300 pb-2 dark:border-white/10"></div>
 
-        <div className="scrollbar w-full flex-1 overflow-x-hidden overflow-y-auto px-5 pr-3">
-          <AllThreads />
+        <div className="scrollbar flex w-full flex-1 flex-col overflow-x-hidden overflow-y-auto px-2">
+          {/* links goes here */}
+          <NavLink to="/mcp/connected">
+            <HiOutlineServerStack className="size-4.5" />
+            All Your Servers
+          </NavLink>
+          <NavLink to="/mcp/created-by-you">
+            <HiOutlineUser className="size-4.5" />
+            Created by you
+          </NavLink>
+          <NavLink to="/mcp/shared-with-you">
+            <HiOutlineShare className="size-4.5" />
+            Shared with you
+          </NavLink>
+          <NavLink to="/mcp/deleted">
+            <HiOutlineTrash className="size-4.5" />
+            Deleted
+          </NavLink>
         </div>
       </div>
     </SidebarWrapper>
+  );
+};
+
+interface INavlink extends ComponentProps<typeof Link> {}
+const NavLink = ({ to, children }: INavlink) => {
+  const { pathname } = useLocation();
+  return (
+    <Link
+      to={to}
+      className={cn(
+        "flex w-full items-center justify-start gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-800 dark:text-white",
+        "hover:bg-gray-200 dark:hover:bg-white/5",
+        {
+          "bg-secondary dark:bg-primary/30 text-primary hover:bg-secondary dark:hover:bg-primary/30 dark:text-white":
+            pathname.includes(to.toString()),
+        },
+      )}
+    >
+      {children}
+    </Link>
   );
 };
 

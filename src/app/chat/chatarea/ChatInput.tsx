@@ -10,7 +10,6 @@ import {
 import { useDeleteDocument } from "../../../api/document/useDeleteDocument";
 import { Button } from "../../../components/Button";
 import Dropdown from "../../../components/dropdown";
-import { useAgent } from "../../../store/agentStore";
 import {
   useChatInput,
   useChatInputActions,
@@ -34,8 +33,6 @@ const ChatInput = ({
   isFileUploadLoading,
   stopStreaming,
 }: IChatInput) => {
-  const { selectedAgent } = useAgent();
-
   const [openAttachment, setOpenAttachment] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { query, files } = useChatInput();
@@ -92,11 +89,6 @@ const ChatInput = ({
           </motion.div>
         )}
       </AnimatePresence>
-
-      <p className="max-w-xl truncate p-2 text-xs text-gray-600 dark:text-white/60">
-        <span className="font-bold">{selectedAgent?.name}</span> |{" "}
-        <span className="dark:text-white/50">{selectedAgent?.description}</span>
-      </p>
 
       <div className="flex h-full flex-1 items-end rounded-[calc(var(--radius-xl)-(--spacing(1)))] border border-gray-200 shadow-sm dark:border-white/10">
         <div className="flex h-full items-end pb-1">

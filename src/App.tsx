@@ -1,15 +1,21 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Academy from "./app/academy/Academy";
+import Course from "./app/academy/Course";
 import BluePrints from "./app/blueprints/BluePrints";
 import ChatLayout from "./app/chat/ChatLayout";
 import ChatPage from "./app/chat/ChatPage";
 import ConfigurationsLayout from "./app/ConfigurationsLayout";
-import McpConnections from "./app/mcp/McpConnections";
+import AllConnectedMCPServers from "./app/mcp/AllConnectedMCPServers";
+import MCPDetails from "./app/mcp/MCPDetails";
+import McpLayout from "./app/mcp/McpLayout";
+import NewMCPServers from "./app/mcp/NewMCPServers";
 import RootLayout from "./app/RootLayout";
 import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
 import AppChangelog from "./components/AppChangelog";
 import AppUpdater from "./components/AppUpdater";
-import Course from "./app/academy/Course";
+import MCPServersCreatedByYou from "./app/mcp/MCPServersCreatedByYou";
+import MCPServersSharedWithYou from "./app/mcp/MCPServersSharedWithYou";
+import DeletedMCPServers from "./app/mcp/DeletedMCPServers";
 
 function App() {
   return (
@@ -26,7 +32,25 @@ function App() {
               <Route path="chat" element={<ChatPage />} />
             </Route>
             <Route path="/worker-agents" element={<ViewWorkerAgents />} />
-            <Route path="/mcp" element={<McpConnections />} />
+
+            <Route path="/mcp" element={<McpLayout />}>
+              <Route index element={<NewMCPServers />} />
+              <Route
+                path="details/:service_provider"
+                element={<MCPDetails />}
+              />
+              <Route path="connected" element={<AllConnectedMCPServers />} />
+              <Route
+                path="created-by-you"
+                element={<MCPServersCreatedByYou />}
+              />
+              <Route
+                path="shared-with-you"
+                element={<MCPServersSharedWithYou />}
+              />
+              <Route path="deleted" element={<DeletedMCPServers />} />
+            </Route>
+
             <Route path="/blueprints" element={<BluePrints />} />
 
             <Route path="/academy">

@@ -1,30 +1,18 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useAgent } from "../../../store/agentStore";
-import Avatar from "../../../components/Avatar";
+import icon from "../../../assets/icon.png";
 import Spinner from "../../../components/Spinner";
 
 const ChatZeroState = ({ isLoading }: { isLoading: boolean }) => {
-  const { selectedAgent } = useAgent();
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="relative z-30 flex w-full flex-col items-center-safe justify-center-safe"
+      className="relative z-30 flex w-full flex-col items-center-safe justify-center-safe overflow-hidden"
     >
-      {selectedAgent && (
-        <div className="bg-secondary size-16 shrink-0 rounded-full">
-          <Avatar
-            Fallback={() => (
-              <Avatar.Fallback className="bg-secondary size-16 text-xs">
-                {selectedAgent.name[0]} {selectedAgent.name[1]}
-              </Avatar.Fallback>
-            )}
-            className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-16 w-full flex-shrink-0 items-center justify-center overflow-hidden rounded-full object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
-            src={selectedAgent.avatar || ""}
-          />
-        </div>
-      )}
+      <div className="aspect-square w-min rounded-full bg-white/10 p-2 text-white">
+        <img src={icon} alt="Spark Logo" className="size-20 object-cover" />
+      </div>
 
       <div className="mt-5">
         <h3 className="text-center text-lg font-light text-gray-600 dark:text-white/60">
