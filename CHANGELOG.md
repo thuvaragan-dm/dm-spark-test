@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 4.0.1
+
+### Patch Changes
+
+- [`90bbb35`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/90bbb35efe5032b6085f275c3beea2a5f1450b9c) Thanks [@Dhuvii](https://github.com/Dhuvii)! - spark chat added.
+
 ## 4.0.0
 
 ### Major Changes
