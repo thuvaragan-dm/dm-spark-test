@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 4.1.0
+
+### Minor Changes
+
+- [`fda633e`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/fda633e62c660ad89f5a65cd40b887af060043a4) Thanks [@Dhuvii](https://github.com/Dhuvii)! - MCP server UI refreshed.
+
 ## 4.0.2
 
 ### Patch Changes
