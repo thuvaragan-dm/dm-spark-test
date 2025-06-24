@@ -164,7 +164,7 @@ const ChatInput = ({
                     {
                       "bg-secondary dark:bg-secondary text-primary hover:bg-secondary/80 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-white/10 dark:disabled:text-gray-800":
                         query.length <= 0 || isFileUploadLoading,
-                      "bg-primary dark:bg-secondary dark:text-primary dark:hover:bg-secondary/90 hover:bg-primary data-[pressed]:bg-primary text-white":
+                      "bg-primary dark:bg-secondary dark:hover:bg-secondary/90 hover:bg-primary data-[pressed]:bg-primary text-white dark:text-white":
                         query.length > 0,
                     },
                   )}

@@ -1,44 +1,147 @@
-import { ComponentProps } from "react";
-import { Focusable } from "react-aria-components";
-import {
-  HiOutlineServerStack,
-  HiOutlineShare,
-  HiOutlineUser,
-} from "react-icons/hi2";
-import { Link, useLocation } from "react-router-dom";
-import Tooltip from "../../../components/tooltip";
-import { cn } from "../../../utilities/cn";
-import { SidebarWrapper } from "./sidebarWrapper";
+import { useMemo, useState } from "react";
+import { VscArrowRight, VscSearch } from "react-icons/vsc";
+import { Link } from "react-router-dom";
+import { z } from "zod";
+import { useGetAvailableMCPServers } from "../../api/mcp/useGetAvailableMCPServers";
+import mcpBannerImage from "../../assets/mcp_banner.png";
+import { Button } from "../../components/Button";
+import DashedBorder from "../../components/DashedBorder";
+import Field from "../../components/Forms/Field";
+import Form from "../../components/Forms/Form";
+import Input from "../../components/Forms/Input";
+import InputGroup from "../../components/Forms/InputGroup";
+import MCPConnectionIcon, {
+  AvailableMCPProviders,
+} from "../../components/MCPConnectionIcon";
+import { Pagination } from "../../components/Pagination";
+import Spinner from "../../components/Spinner";
 
-const Sidebar = () => {
+const AvailableMCPServers = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [records_per_page, _setRecords_per_page] = useState(20);
+
+  const AvailableMCPConnectionOptions = useMemo(
+    () => ({
+      search: searchQuery,
+      page,
+      records_per_page: records_per_page,
+    }),
+    [searchQuery, page, records_per_page],
+  );
+
+  const { data: connections, isPending: isConnectionsLoading } =
+    useGetAvailableMCPServers(AvailableMCPConnectionOptions);
+
   return (
-    <SidebarWrapper>
-      <div className="dark:bg-primary-dark relative flex h-full flex-1 flex-col overflow-hidden border-r border-gray-300 bg-white dark:border-white/10">
-        <header
-          className={cn(
-            "sticky top-0 z-[999] flex items-center justify-between overflow-x-hidden px-3 pt-3 pb-0 pl-5",
+    <section className="dark:bg-primary-dark-foreground flex flex-1 flex-col overflow-hidden bg-gray-100">
+      <header className="relative flex h-56 w-full shrink-0 items-center justify-center overflow-hidden dark:mask-b-from-80% dark:mask-b-to-100%">
+        <div className="absolute inset-0 z-20 bg-black/50"></div>
+        <div className="absolute inset-0 z-10">
+          <img
+            className="h-full w-full object-cover object-center"
+            src={mcpBannerImage}
+            alt="Academy banner image"
+          />
+        </div>
+        <div className="relative z-30 flex flex-col">
+          <h1 className="text-center text-5xl font-medium text-white">
+            MCP Servers
+          </h1>
+          <p className="mt-2 text-center text-base text-white/80">
+            Deploy your custom agents seamlessly within your Spark workspace
+          </p>
+        </div>
+      </header>
+
+      <div className="mx-auto mt-5 flex w-full max-w-2xl flex-1 flex-col overflow-hidden p-1">
+        <div className="">
+          <Form validationSchema={z.object({ search: z.string() })}>
+            <Field>
+              <InputGroup>
+                <VscSearch data-slot="icon" />
+                <Input
+                  placeholder="Search for MCP connections"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </InputGroup>
+            </Field>
+          </Form>
+        </div>
+
+        <div className="scrollbar mt-5 flex w-full flex-1 flex-col overflow-y-auto pb-5">
+          {isConnectionsLoading && (
+            <div className="flex flex-1 flex-col items-center justify-center">
+              <Spinner className="size-5 dark:text-white" />
+            </div>
           )}
-        >
-          <div className="shrink-0">
-            <h3 className="font-gilroy text-xl text-gray-800 dark:text-white">
-              Spark
-            </h3>
-            <p className="shrink-0 text-[0.5rem] text-gray-500 dark:text-white/50">
-              Powered By Deepmodel
-            </p>
-          </div>
-          <div className="flex items-center justify-end gap-1">
-            {/* new chat button */}
-            <Tooltip>
-              <Focusable>
-                <Link
-                  to={"/mcp/templates"}
-                  className={
-                    "hover:bg-secondary/60 bg-secondary dark:bg-primary/30 dark:hover:bg-primary/50 flex shrink-0 items-center justify-start gap-1 rounded-lg p-1 px-2 text-xs leading-0 text-white md:p-1 md:px-2 dark:text-white"
-                  }
-                >
+
+          {!isConnectionsLoading &&
+            connections &&
+            connections.items.length > 0 && (
+              <>
+                <div className="flex flex-1 flex-col">
+                  <div className="grid grid-cols-2 gap-5">
+                    {connections.items.map((connection, idx) => (
+                      <DashedBorder key={idx}>
+                        <Link
+                          to={`/mcp/details/template/${connection.service_provider}`}
+                          className="flex items-start justify-start gap-3 rounded-xl p-3"
+                        >
+                          {/* icon */}
+                          <div className="rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
+                            <MCPConnectionIcon
+                              icon={
+                                connection.service_provider as AvailableMCPProviders
+                              }
+                            />
+                          </div>
+                          {/* icon */}
+
+                          <div className="flex w-full flex-col">
+                            <div className="flex w-full items-center justify-between">
+                              <h3 className="text-base font-medium text-gray-800 dark:text-white">
+                                {connection.name}
+                              </h3>
+
+                              <VscArrowRight className="size-4 text-gray-800 dark:text-white" />
+                            </div>
+
+                            <p className="mt-1 text-xs text-gray-600 dark:text-white/60">
+                              Lorem ipsum dolor sit amet consectetur adipisicing
+                              elit. Nam excepturi quod fugit
+                            </p>
+
+                            <span className="mt-2 w-min rounded-full bg-gray-200 px-3 py-1.5 text-[0.65rem] font-medium tracking-wider text-gray-800 shadow dark:bg-white/10 dark:text-white">
+                              {connection.category}
+                            </span>
+                          </div>
+                        </Link>
+                      </DashedBorder>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex w-full items-center justify-end px-5">
+                  <Pagination
+                    currentPage={page}
+                    numberOfPages={Math.ceil(
+                      connections.total / records_per_page,
+                    )}
+                    setCurrentPage={setPage}
+                  />
+                </div>
+              </>
+            )}
+
+          {!isConnectionsLoading &&
+            connections &&
+            connections?.items.length <= 0 && (
+              <div className="flex w-full flex-1 flex-col items-center justify-center p-3 @lg:p-5">
+                <div className="bg-secondary dark:bg-primary-700/20 text-primary flex w-min items-center justify-center rounded-full p-5 dark:text-white">
                   <svg
-                    className="size-5"
+                    className="size-16"
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
@@ -62,59 +165,32 @@ const Sidebar = () => {
                       mask="url(#a)"
                     />
                   </svg>
-                  <p className="text-sm">New</p>
-                </Link>
-              </Focusable>
-
-              <Tooltip.Content placement="right" offset={10}>
-                <Tooltip.Shorcut title="Add new connection" />
-                <Tooltip.Arrow className={"-mt-1"} />
-              </Tooltip.Content>
-            </Tooltip>
-            {/* new chat button */}
-          </div>
-        </header>
-
-        <div className="mt-3 w-full overflow-hidden border-t border-gray-300 pb-2 dark:border-white/10"></div>
-
-        <div className="scrollbar flex w-full flex-1 flex-col overflow-x-hidden overflow-y-auto px-2">
-          {/* links goes here */}
-          <NavLink to="/mcp/connections">
-            <HiOutlineServerStack className="size-4.5 shrink-0" />
-            All Your Servers
-          </NavLink>
-          <NavLink to="/mcp/created-by-you">
-            <HiOutlineUser className="size-4.5 shrink-0" />
-            Created by you
-          </NavLink>
-          <NavLink to="/mcp/shared-with-you">
-            <HiOutlineShare className="size-4.5 shrink-0" />
-            Shared with you
-          </NavLink>
+                </div>
+                <p className="mt-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  No MCP servers found
+                </p>
+                <p className="text-center text-sm text-balance text-gray-600 dark:text-white/60">
+                  Try adjusting your filters or reset to see all MCP servers
+                </p>
+                <Button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setPage(1);
+                  }}
+                  variant={"ghost"}
+                  wrapperClass="w-max"
+                  className={
+                    "text-primary dark:text-secondary ring-primary px-1 text-xs hover:underline md:px-1"
+                  }
+                >
+                  Reset filters
+                </Button>
+              </div>
+            )}
         </div>
       </div>
-    </SidebarWrapper>
+    </section>
   );
 };
 
-interface INavlink extends ComponentProps<typeof Link> {}
-const NavLink = ({ to, children }: INavlink) => {
-  const { pathname } = useLocation();
-  return (
-    <Link
-      to={to}
-      className={cn(
-        "flex w-full shrink-0 items-center justify-start gap-2 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap text-gray-800 dark:text-white",
-        "hover:bg-gray-200 dark:hover:bg-white/5",
-        {
-          "bg-secondary dark:bg-primary/30 hover:bg-secondary dark:hover:bg-primary/30 text-white dark:text-white":
-            pathname.includes(to.toString()),
-        },
-      )}
-    >
-      {children}
-    </Link>
-  );
-};
-
-export default Sidebar;
+export default AvailableMCPServers;

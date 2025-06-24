@@ -2,15 +2,15 @@ import { useApi } from "../../providers/ApiProvider";
 import { PaginatedResult } from "../../types/type-utils";
 import { useCreateQuery } from "../apiFactory";
 import { EMCP, mcpKey } from "./config";
-import { AvailableMCPConnection, AvailableMCPConnectionParams } from "./types";
+import { AvailableMCPServer, AvailableMCPServersParams } from "./types";
 
-export const useGetAvailableMCPConnections = (
-  params?: AvailableMCPConnectionParams,
+export const useGetAvailableMCPServers = (
+  params?: AvailableMCPServersParams,
 ) => {
   const { apiClient } = useApi();
 
-  return useCreateQuery<PaginatedResult<AvailableMCPConnection>>({
-    queryKey: mcpKey[EMCP.FETCH_AVAILABLE],
+  return useCreateQuery<PaginatedResult<AvailableMCPServer>>({
+    queryKey: mcpKey[EMCP.FETCH_ALL_CONNECTED],
     apiClient,
     url: "/mcp-templates",
     queryParams: params,

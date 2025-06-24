@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { academyKey, EAcademy } from "./config";
+import { bootcampKey, EBootcamp } from "./config";
 import { Course } from "./types";
-import { useGetAcademy } from "./useGetAcademy";
+import { useGetBootcamp } from "./useGetBootcamp";
 
 export const useGetCourse = ({ name }: { name: string }) => {
-  const { data: catalogData, isPending: isAcademyLoading } = useGetAcademy();
+  const { data: catalogData, isPending: isAcademyLoading } = useGetBootcamp();
 
   return useQuery<Course | null>({
-    queryKey: [academyKey[EAcademy.FETCH_SINGLE] + name],
+    queryKey: [bootcampKey[EBootcamp.FETCH_SINGLE] + name],
     queryFn: async () => {
       if (!catalogData) {
         return null;

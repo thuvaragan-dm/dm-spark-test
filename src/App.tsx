@@ -1,21 +1,22 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import Academy from "./app/academy/Academy";
-import Course from "./app/academy/Course";
+import Bootcamp from "./app/bootcamp/Bootcamp";
+import Course from "./app/bootcamp/Course";
 import BluePrints from "./app/blueprints/BluePrints";
 import ChatLayout from "./app/chat/ChatLayout";
 import ChatPage from "./app/chat/ChatPage";
 import ConfigurationsLayout from "./app/ConfigurationsLayout";
 import AllConnectedMCPServers from "./app/mcp/AllConnectedMCPServers";
-import MCPDetails from "./app/mcp/MCPDetails";
+import AvailableMCPServers from "./app/mcp/AvailableMCPServers";
+import MCPConnectionDetails from "./app/mcp/MCPConnectionDetails";
 import McpLayout from "./app/mcp/McpLayout";
-import NewMCPServers from "./app/mcp/NewMCPServers";
+import MCPServersCreatedByYou from "./app/mcp/MCPServersCreatedByYou";
+import MCPServersSharedWithYou from "./app/mcp/MCPServersSharedWithYou";
+import MCPTemplateDetails from "./app/mcp/MCPTemplateDetails";
 import RootLayout from "./app/RootLayout";
 import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
 import AppChangelog from "./components/AppChangelog";
 import AppUpdater from "./components/AppUpdater";
-import MCPServersCreatedByYou from "./app/mcp/MCPServersCreatedByYou";
-import MCPServersSharedWithYou from "./app/mcp/MCPServersSharedWithYou";
-import DeletedMCPServers from "./app/mcp/DeletedMCPServers";
+import MCPPage from "./app/mcp/MCPPage";
 
 function App() {
   return (
@@ -34,12 +35,20 @@ function App() {
             <Route path="/worker-agents" element={<ViewWorkerAgents />} />
 
             <Route path="/mcp" element={<McpLayout />}>
-              <Route index element={<NewMCPServers />} />
+              <Route index element={<MCPPage />} />
+
+              <Route path="templates" element={<AvailableMCPServers />} />
               <Route
-                path="details/:service_provider"
-                element={<MCPDetails />}
+                path="details/template/:service_provider"
+                element={<MCPTemplateDetails />}
               />
-              <Route path="connected" element={<AllConnectedMCPServers />} />
+
+              <Route path="connections" element={<AllConnectedMCPServers />} />
+              <Route
+                path="details/connection/:connection_id"
+                element={<MCPConnectionDetails />}
+              />
+
               <Route
                 path="created-by-you"
                 element={<MCPServersCreatedByYou />}
@@ -48,13 +57,12 @@ function App() {
                 path="shared-with-you"
                 element={<MCPServersSharedWithYou />}
               />
-              <Route path="deleted" element={<DeletedMCPServers />} />
             </Route>
 
             <Route path="/blueprints" element={<BluePrints />} />
 
-            <Route path="/academy">
-              <Route index element={<Academy />} />
+            <Route path="/bootcamp">
+              <Route index element={<Bootcamp />} />
               <Route path="course/:name" element={<Course />} />
             </Route>
           </Route>

@@ -10,7 +10,7 @@ const variants = {
   },
 };
 
-const defaultStyles = "w-10 h-10 text-gray-800";
+const defaultStyles = "w-10 h-10 text-gray-800 dark:text-white";
 
 const SpinnerVariants = cva(defaultStyles, {
   variants,
@@ -26,7 +26,7 @@ interface ISpinner
 const Spinner = forwardRef<HTMLDivElement, ISpinner>(
   (
     { size, className, wrapperClass, "aria-label": ariaLabel, ...rest },
-    ref
+    ref,
   ) => {
     return (
       <div
@@ -76,7 +76,7 @@ const Spinner = forwardRef<HTMLDivElement, ISpinner>(
         <span className="sr-only">{ariaLabel || "Loading..."}</span>
       </div>
     );
-  }
+  },
 );
 
 Spinner.displayName = "Spinner";

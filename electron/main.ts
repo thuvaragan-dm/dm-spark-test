@@ -1,20 +1,20 @@
 import {
   app,
   BrowserWindow,
-  ipcMain,
-  shell,
   dialog,
-  nativeTheme,
+  ipcMain,
   Menu,
   MenuItemConstructorOptions,
+  nativeTheme,
   session,
+  shell,
 } from "electron";
+import { autoUpdater, UpdateInfo } from "electron-updater";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, URL } from "node:url"; // Added URL for parsing
-import { autoUpdater, UpdateInfo } from "electron-updater";
-import { AppConfiguration, GlobalAppConfig, VersionAppConfig } from "./types";
 import { apiUrl } from "../src/api/variables";
+import { AppConfiguration, GlobalAppConfig, VersionAppConfig } from "./types";
 
 // Determine the correct __dirname for ESM context.
 // This should point to the 'dist-electron' folder after build.
@@ -225,31 +225,21 @@ async function handleUrlAndExtractParams(urlLink: string) {
     if (parsedUrl.protocol === "dm:") {
       // Check if it's an MCP link (e.g., dm://mcp?accessToken=...)
       if (parsedUrl.hostname === "mcp") {
-        extractedMcpParams = {};
-        parsedUrl.searchParams.forEach((value, key) => {
-          (extractedMcpParams as Record<string, string | null>)[key] = value;
-        });
+        extractedMcpParams = Object.fromEntries(
+          parsedUrl.searchParams.entries(),
+        );
+
         console.log("[Main] MCP params extracted:", extractedMcpParams);
 
         if (Object.keys(extractedMcpParams).length > 0) {
           currentMcpParams = extractedMcpParams;
-          if (
-            win &&
-            win.webContents &&
-            !win.webContents.isDestroyed() &&
-            !win.webContents.isLoading()
-          ) {
+          if (win && win.webContents && !win.webContents.isDestroyed()) {
             sendMcpParamsToRenderer(currentMcpParams);
           } else {
-            console.log(
-              "[Main] Window/webContents not ready for immediate MCP params send after extraction.",
-            );
+            console.log("[Main] Window not ready for MCP params send.");
           }
         } else {
-          console.warn(
-            "[Main] dm://mcp link had no query parameters.",
-            urlLink,
-          );
+          console.warn("[Main] Link had no query parameters.", urlLink);
         }
       } else {
         // Handle original authtoken logic (dm://authtoken=... or dm:authtoken=...)

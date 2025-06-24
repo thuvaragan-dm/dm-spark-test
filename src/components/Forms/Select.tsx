@@ -61,7 +61,7 @@ const SelectRoot = forwardRef<HTMLButtonElement, SelectProps>(
           "dark:focus-within:ring-offset-primary-dark focus-within:ring-offset-1 focus-within:ring-offset-inherit",
 
           // Invalid state
-          "has-[button[data-invalid]]:focus-within:ring-red-700",
+          "has-[button[data-invalid=true]]:focus-within:ring-red-700",
 
           // Custom class
           className,
@@ -96,7 +96,8 @@ const SelectRoot = forwardRef<HTMLButtonElement, SelectProps>(
 
               // States
               "hover:border-gray-400 focus:outline-none dark:hover:border-white/20",
-              "data-[invalid]:border-red-700 focus:data-[invalid]:border-red-100",
+              "data-[invalid=true]:border-red-700 focus:data-[invalid=true]:border-red-100 dark:data-[invalid=true]:border-red-700/70 dark:focus:data-[invalid=true]:border-red-700/50",
+              "data-[invalid=true]:enabled:hover:border-red-700 dark:data-[invalid=true]:enabled:hover:border-red-700",
               "data-disabled:border-gray-200 data-disabled:bg-gray-100 data-disabled:text-gray-400 dark:data-disabled:border-white/10 dark:data-disabled:bg-gray-900/50 dark:data-disabled:text-white/50",
 
               // Transitions

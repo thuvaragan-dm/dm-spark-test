@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { useMemo } from "react";
 import { RiGraduationCapFill } from "react-icons/ri";
 import { Link, useParams } from "react-router-dom";
-import { useGetCourse } from "../../api/academy/useGetCourse";
+import { useGetCourse } from "../../api/bootcamp/useGetCourse";
 import { MemoizedMarkdown } from "../../components/MemMDRenderer";
 import Spinner from "../../components/Spinner";
 import { transformToEmbedUrl } from "../../utilities/transformToEmbedUrl";
@@ -73,7 +73,7 @@ const Course = () => {
             The course you are looking for does not exist or has been removed.
           </p>
           <Link
-            to={"/academy"}
+            to={"/bootcamp"}
             className={
               "text-primary dark:text-secondary ring-primary mt-5 px-1 text-xs hover:underline md:px-1"
             }

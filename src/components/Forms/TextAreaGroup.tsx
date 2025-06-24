@@ -36,10 +36,10 @@ const TextAreaGroup = ({ className, children, ...rest }: ITextAreaGroup) => {
         "focus-within:*:data-[slot=icon]:text-primary focus-within:*:data-[slot=icon]:dark:text-white",
 
         // When child textarea has data-invalid attribute
-        "has-[textarea[data-invalid]]:focus-within:*:data-[slot=icon]:text-red-700",
+        "has-[textarea[data-invalid=true]]:focus-within:*:data-[slot=icon]:text-red-700",
 
         // When child select has data-invalid attribute
-        "has-[button[data-invalid][role='combobox']]:focus-within:*:data-[slot=icon]:text-red-700",
+        "has-[button[data-invalid=true][role='combobox']]:focus-within:*:data-[slot=icon]:text-red-700",
 
         className,
       )}

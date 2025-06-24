@@ -36,10 +36,10 @@ const InputGroup = ({ className, children, ...rest }: IInputGroup) => {
         "focus-within:*:data-[slot=icon]:text-primary focus-within:*:data-[slot=icon]:dark:text-white",
 
         // When child input has data-invalid attribute
-        "has-[input[data-invalid]]:focus-within:*:data-[slot=icon]:text-red-700",
+        "has-[input[data-invalid=true]]:focus-within:*:data-[slot=icon]:text-red-700",
 
         // When child select has data-invalid attribute
-        "has-[button[data-invalid][role='combobox']]:focus-within:*:data-[slot=icon]:text-red-700",
+        "has-[button[data-invalid=true][role='combobox']]:focus-within:*:data-[slot=icon]:text-red-700",
 
         className,
       )}

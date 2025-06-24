@@ -1,11 +1,6 @@
 import { useApi } from "../../providers/ApiProvider";
-import { PaginatedResult } from "../../types/type-utils";
 import { useCreateMutation } from "../apiFactory";
-import {
-  ConnectedMCPConnectionItem,
-  ConnectedMCPGroup,
-  UpdateMCPConnectionInput,
-} from "./types";
+import { MCPConnectionDetail, UpdateMCPConnectionInput } from "./types";
 
 export const useUpdateMCPConnection = ({
   invalidateQueryKey,
@@ -17,8 +12,8 @@ export const useUpdateMCPConnection = ({
   return useCreateMutation<
     { id: string },
     UpdateMCPConnectionInput,
-    ConnectedMCPConnectionItem,
-    PaginatedResult<ConnectedMCPGroup>
+    MCPConnectionDetail,
+    MCPConnectionDetail
   >({
     apiClient,
     method: "patch",
@@ -26,5 +21,9 @@ export const useUpdateMCPConnection = ({
     errorMessage: "Failed to update mcp connection.",
     invalidateQueryKey,
     mutationOptions: {},
+    optimisticUpdate: (mcpDetails, variables) => {
+      if (!mcpDetails) return;
+      return { ...mcpDetails, ...variables };
+    },
   });
 };

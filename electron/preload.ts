@@ -130,7 +130,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Updated for MCP Params (object)
   onMCPTokensReceived: (
-    callback: (params: Record<string, string | null>) => void,
+    callback: (params: Record<string, any>) => void,
   ): (() => void) => {
     const channel = "deep-link-mcp-tokens";
     if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {

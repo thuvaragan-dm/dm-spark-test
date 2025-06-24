@@ -36,7 +36,7 @@ const Input = forwardRef<HTMLInputElement, IInput>(
           "dark:focus-within:ring-offset-primary-dark focus-within:ring-offset-1 focus-within:ring-offset-inherit",
 
           // Invalid state
-          "has-[input[data-invalid]]:focus-within:ring-red-700",
+          "has-[input[data-invalid=true]]:focus-within:ring-red-700",
 
           // Custom class
           className,
@@ -57,8 +57,8 @@ const Input = forwardRef<HTMLInputElement, IInput>(
 
             // States
             "focus:outline-hidden enabled:hover:border-gray-400 dark:enabled:hover:border-white/20",
-            "data-invalid:border-red-700 focus:data-invalid:border-red-100",
-            "data-invalid:data-hover:border-red-700",
+            "data-[invalid=true]:border-red-700 focus:data-[invalid=true]:border-red-100 dark:data-[invalid=true]:border-red-700/70 dark:focus:data-[invalid=true]:border-red-700/50",
+            "data-[invalid=true]:enabled:hover:border-red-700 dark:data-[invalid=true]:enabled:hover:border-red-700",
 
             // Disabled state
             "group-data-[disabled=true]:bg-gray-100 dark:group-data-[disabled=true]:bg-white/20",

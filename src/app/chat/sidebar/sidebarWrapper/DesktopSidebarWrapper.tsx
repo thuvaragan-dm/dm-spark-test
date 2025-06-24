@@ -23,7 +23,7 @@ const DesktopSidebarWrapper = ({
 
   return (
     <motion.aside
-      initial="expand"
+      initial={isSidebarExpanded ? "expand" : "contract"}
       animate={sidebarExpansionAnimationControler}
       variants={{
         expand: {

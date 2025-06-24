@@ -1,7 +1,7 @@
 import { useApi } from "../../providers/ApiProvider";
 import { PaginatedResult } from "../../types/type-utils";
 import { useCreateMutation } from "../apiFactory";
-import { ConnectedMCPConnectionItem, ConnectedMCPGroup } from "./types";
+import { ConnectedMCPServer } from "./types";
 
 export const useDeleteMCPConnection = ({
   invalidateQueryKey,
@@ -11,10 +11,10 @@ export const useDeleteMCPConnection = ({
   const { apiClient } = useApi();
 
   return useCreateMutation<
-    { id: string; name: string },
+    { id: string; service_provider: string },
     unknown,
-    ConnectedMCPConnectionItem,
-    PaginatedResult<ConnectedMCPGroup>
+    ConnectedMCPServer,
+    PaginatedResult<ConnectedMCPServer>
   >({
     apiClient,
     method: "delete",
@@ -28,17 +28,10 @@ export const useDeleteMCPConnection = ({
       if (oldData) {
         return {
           ...oldData,
-          items: oldData.items.map((mcpConnection) => {
-            if (mcpConnection.name === params.name) {
-              return {
-                ...mcpConnection,
-                connections: mcpConnection.connections.filter(
-                  (con) => con.id !== params.id,
-                ),
-              };
-            }
-            return mcpConnection;
-          }),
+          items: oldData.items.filter(
+            (mcpConnection) =>
+              mcpConnection.service_provider !== params.service_provider,
+          ),
         };
       }
     },

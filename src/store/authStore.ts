@@ -2,11 +2,7 @@ import { create } from "zustand";
 import { User } from "../api/user/types";
 import { useAppConfigStore } from "./configurationStore"; // Import the configuration store
 
-type MCPAuth = {
-  access_token: string;
-  expires_in?: string | number;
-  refresh_token?: string;
-};
+export interface MCPAuth extends Record<string, any> {}
 
 interface AuthState {
   states: {
