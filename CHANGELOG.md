@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 4.2.0
+
+### Minor Changes
+
+- [`cd9670d`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/cd9670dac500f2801c5076b99ce2de6946165753) Thanks [@Dhuvii](https://github.com/Dhuvii)! - worker agents and blueprints configured.
+
 ## 4.1.1
 
 ### Patch Changes
