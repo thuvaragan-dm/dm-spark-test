@@ -45,10 +45,8 @@ const Tabs = ({
           }}
           data-active={activeTab === tab.id}
           className={cn(
-            "text-primary ring-secondary relative px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2",
+            "text-primary hover:text-primary/80 ring-secondary data-[active=true]:text-primary relative cursor-pointer px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2",
             buttonClass,
-            { "text-primary": activeTab === tab.id },
-            { "hover:text-primary/80": activeTab !== tab.id },
           )}
           style={{
             WebkitTapHighlightColor: "transparent",

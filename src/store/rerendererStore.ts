@@ -10,7 +10,7 @@ interface RerendererState {
   };
 }
 
-const useSidebarStore = create<RerendererState>()((set) => ({
+const useRendererStore = create<RerendererState>()((set) => ({
   states: {
     rerenderThreadList: 0,
   },
@@ -28,7 +28,7 @@ const useSidebarStore = create<RerendererState>()((set) => ({
   },
 }));
 
-export const useRerenderer = () => useSidebarStore((state) => state.states);
+export const useRerenderer = () => useRendererStore((state) => state.states);
 
 export const useRerendererActions = () =>
-  useSidebarStore((state) => state.actions);
+  useRendererStore((state) => state.actions);

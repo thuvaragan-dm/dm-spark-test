@@ -173,7 +173,7 @@ const MCPConnectionDetails = () => {
                   {MCPDetails.overview}
                 </p>
                 <div className="mt-2 flex flex-wrap items-start justify-start gap-3">
-                  <span className="w-min rounded-full bg-gray-200 px-3 py-1.5 text-[0.65rem] font-medium tracking-wider text-gray-800 shadow dark:bg-white/10 dark:text-white">
+                  <span className="w-min shrink-0 rounded-full bg-gray-200 px-3 py-1.5 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-800 shadow dark:bg-white/10 dark:text-white">
                     {MCPDetails.category}
                   </span>
                 </div>

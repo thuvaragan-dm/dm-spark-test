@@ -25,8 +25,6 @@ export const useDeleteWorkerAgent = ({
     optimisticUpdate: (oldData, _newData, params) => {
       if (!params || !oldData) return oldData;
 
-      console.log(oldData);
-
       return {
         ...oldData,
         items: oldData.items.filter((agent) => agent.id !== params.id),

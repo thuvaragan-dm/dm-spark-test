@@ -113,7 +113,7 @@ const AvailableMCPServers = () => {
                               elit. Nam excepturi quod fugit
                             </p>
 
-                            <span className="mt-2 w-min rounded-full bg-gray-200 px-3 py-1.5 text-[0.65rem] font-medium tracking-wider text-gray-800 shadow dark:bg-white/10 dark:text-white">
+                            <span className="mt-2 w-min shrink-0 rounded-full bg-gray-200 px-3 py-1.5 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-800 shadow dark:bg-white/10 dark:text-white">
                               {connection.category}
                             </span>
                           </div>

@@ -1,7 +1,6 @@
 import { useApi } from "../../providers/ApiProvider";
-import { PaginatedResult } from "../../types/type-utils";
 import { useCreateMutation } from "../apiFactory";
-import { WorkerAgent, WorkerAgentInput } from "./types";
+import { UpdateWorkerAgentInput, WorkerAgent } from "./types";
 
 export const useUpdateWorkerAgent = ({
   invalidateQueryKey,
@@ -12,9 +11,9 @@ export const useUpdateWorkerAgent = ({
 
   return useCreateMutation<
     { id: string },
-    WorkerAgentInput,
+    UpdateWorkerAgentInput,
     WorkerAgent,
-    PaginatedResult<WorkerAgent>
+    WorkerAgent
   >({
     apiClient,
     method: "patch",
@@ -22,19 +21,11 @@ export const useUpdateWorkerAgent = ({
     errorMessage: "Failed to update worker agent.",
     invalidateQueryKey,
     mutationOptions: {},
-    optimisticUpdate: (oldData, newData, params) => {
-      if (!params) return oldData;
+    optimisticUpdate: (oldData, newData) => {
+      if (!oldData) return oldData;
 
       if (oldData) {
-        return {
-          ...oldData,
-          items: oldData.items.map((agent) => {
-            if (agent.id === params.id) {
-              return { ...agent, ...newData };
-            }
-            return agent;
-          }),
-        };
+        return { ...oldData, ...newData } as WorkerAgent;
       }
     },
   });

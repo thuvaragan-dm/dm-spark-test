@@ -48,7 +48,7 @@ const Loader = ({
   isLoading = false,
   isDisabled = false,
   className,
-  disabledClass = "text-[var(--color-btn-text-disabled)]",
+  disabledClass = "text-[var(--color-btn-text-disabled)] dark:text-[var(--color-btn-text-disabled)]",
 }: {
   children: React.ReactNode;
   isLoading?: boolean;

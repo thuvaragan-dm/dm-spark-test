@@ -5,7 +5,7 @@ import { VscSearch } from "react-icons/vsc";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import { useGetBootcamp } from "../../api/bootcamp/useGetBootcamp";
-import bootcamp from "../../assets/bootcamp.jpg";
+import bootcampImage from "../../assets/blueprints_banner.jpg";
 import Field from "../../components/Forms/Field";
 import Form from "../../components/Forms/Form";
 import Input from "../../components/Forms/Input";
@@ -62,7 +62,7 @@ const Bootcamp = () => {
         <div className="absolute inset-0 z-10">
           <img
             className="h-full w-full object-cover object-center"
-            src={bootcamp}
+            src={bootcampImage}
             alt="Bootcamp banner image"
           />
         </div>

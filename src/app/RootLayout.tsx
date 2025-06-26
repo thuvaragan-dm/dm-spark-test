@@ -472,7 +472,7 @@ const RootLayout = () => {
                   </Link>
 
                   <Link
-                    to={"/worker-agents"}
+                    to={"/worker-agents/all"}
                     className={
                       "group flex flex-col items-center justify-center gap-1"
                     }
@@ -624,7 +624,7 @@ const RootLayout = () => {
                           <div className="aspect-square size-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/10">
                             <Avatar
                               Fallback={() => (
-                                <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
+                                <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs text-white dark:text-white">
                                   {user?.first_name?.[0]} {user?.last_name?.[0]}
                                 </Avatar.Fallback>
                               )}
@@ -666,7 +666,7 @@ const RootLayout = () => {
                               user.id
                             }
                             Fallback={() => (
-                              <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs">
+                              <Avatar.Fallback className="bg-secondary size-11 rounded-xl text-xs text-white dark:text-white">
                                 {user?.first_name?.[0]} {user?.last_name?.[0]}
                               </Avatar.Fallback>
                             )}

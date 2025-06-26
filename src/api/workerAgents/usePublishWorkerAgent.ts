@@ -1,8 +1,8 @@
 import { useApi } from "../../providers/ApiProvider";
 import { useCreateMutation } from "../apiFactory";
-import { WorkerAgent, WorkerAgentInput } from "./types";
+import { WorkerAgent } from "./types";
 
-export const useCreateWorkerAgent = ({
+export const usePublishWorkerAgent = ({
   invalidateQueryKey,
 }: {
   invalidateQueryKey?: unknown[];
@@ -10,15 +10,15 @@ export const useCreateWorkerAgent = ({
   const { apiClient } = useApi();
 
   return useCreateMutation<
-    Record<string, unknown>,
-    WorkerAgentInput,
+    { worker_agent_id: string },
+    unknown,
     WorkerAgent,
-    WorkerAgent[]
+    WorkerAgent
   >({
     apiClient,
     method: "post",
-    url: "/worker-agent",
-    errorMessage: "Failed to create worker agent.",
+    url: "/worker-agent/${worker_agent_id}/publish",
+    errorMessage: "Failed to publish worker agent.",
     invalidateQueryKey,
     mutationOptions: {},
   });

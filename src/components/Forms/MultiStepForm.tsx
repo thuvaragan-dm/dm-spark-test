@@ -4,6 +4,7 @@ import {
   createContext,
   ReactNode,
   useContext,
+  useMemo,
   useState,
 } from "react";
 import { useForm, UseFormProps, UseFormReturn } from "react-hook-form";
@@ -42,8 +43,14 @@ interface MultiStepFormProps<T extends z.ZodType<any, any>>
   children: ReactNode;
   validationSchema: T;
   defaultValues?: z.infer<T>;
-  onSubmit: (values: z.infer<T>) => void | Promise<void>;
+  onSubmit: (
+    values: z.infer<T>,
+    goToStep: (step: number) => void,
+    methods: UseFormReturn<z.infer<T>>,
+  ) => void | Promise<void>;
   formOptions?: UseFormProps<z.infer<T>>;
+  isLoading?: boolean;
+  "aria-label"?: string;
 }
 
 /**
@@ -71,6 +78,8 @@ export const MultiStepForm = <T extends z.ZodType<any, any>>({
   onSubmit,
   formOptions = { mode: "onSubmit" },
   className,
+  "aria-label": ariaLabel = "Form",
+  isLoading = false,
   ...rest
 }: MultiStepFormProps<T>) => {
   const methods = useForm<z.infer<T>>({
@@ -78,6 +87,22 @@ export const MultiStepForm = <T extends z.ZodType<any, any>>({
     defaultValues,
     ...formOptions,
   });
+
+  const {
+    handleSubmit,
+    formState: { isSubmitting, errors, isDirty, isValid },
+  } = methods;
+
+  const formState = useMemo(
+    () => ({
+      isSubmitting,
+      isLoading,
+      isDirty,
+      isValid,
+      hasErrors: Object.keys(errors).length > 0,
+    }),
+    [isSubmitting, isLoading, isDirty, isValid, errors],
+  );
 
   // Calculate totalSteps by finding FormSteps and counting its FormStep children
   let totalSteps = 0;
@@ -134,9 +159,9 @@ export const MultiStepForm = <T extends z.ZodType<any, any>>({
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
 
-  const handleSubmit = methods.handleSubmit((values) => {
+  const handleFormSubmit = handleSubmit(async (values) => {
     if (!isLastStep) return nextStep();
-    onSubmit(values);
+    await onSubmit(values, goToStep, methods);
   });
 
   return (
@@ -153,9 +178,13 @@ export const MultiStepForm = <T extends z.ZodType<any, any>>({
       }}
     >
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleFormSubmit}
         className={cn("group", className)}
         noValidate
+        aria-label={ariaLabel}
+        aria-busy={formState.isSubmitting || formState.isLoading}
+        data-disabled={formState.isSubmitting || formState.isLoading}
+        role="form"
         {...rest}
       >
         {children}

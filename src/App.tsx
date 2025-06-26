@@ -1,7 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import AllBlueprints from "./app/blueprint/AllBlueprints";
+import BlueprintDetail from "./app/blueprint/BlueprintDetail";
 import Bootcamp from "./app/bootcamp/Bootcamp";
 import Course from "./app/bootcamp/Course";
-import BluePrints from "./app/blueprints/BluePrints";
 import ChatLayout from "./app/chat/ChatLayout";
 import ChatPage from "./app/chat/ChatPage";
 import ConfigurationsLayout from "./app/ConfigurationsLayout";
@@ -9,14 +10,18 @@ import AllConnectedMCPServers from "./app/mcp/AllConnectedMCPServers";
 import AvailableMCPServers from "./app/mcp/AvailableMCPServers";
 import MCPConnectionDetails from "./app/mcp/MCPConnectionDetails";
 import McpLayout from "./app/mcp/McpLayout";
+import MCPPage from "./app/mcp/MCPPage";
 import MCPServersCreatedByYou from "./app/mcp/MCPServersCreatedByYou";
 import MCPServersSharedWithYou from "./app/mcp/MCPServersSharedWithYou";
 import MCPTemplateDetails from "./app/mcp/MCPTemplateDetails";
 import RootLayout from "./app/RootLayout";
-import ViewWorkerAgents from "./app/workerAgents/ViewWorkerAgents";
+import AllWorkerAgents from "./app/workerAgent/AllWorkerAgents";
+import CreatedByYouWorkerAgents from "./app/workerAgent/CreatedByYouWorkerAgents";
+import SharedWithYouWorkerAgents from "./app/workerAgent/SharedWithYouWorkerAgents";
+import WorkerAgentDetail from "./app/workerAgent/WorkerAgentDetail";
+import WorkerAgentLayout from "./app/workerAgent/WorkerAgentLayout";
 import AppChangelog from "./components/AppChangelog";
 import AppUpdater from "./components/AppUpdater";
-import MCPPage from "./app/mcp/MCPPage";
 
 function App() {
   return (
@@ -32,7 +37,20 @@ function App() {
             <Route path="/home" element={<ChatLayout />}>
               <Route path="chat" element={<ChatPage />} />
             </Route>
-            <Route path="/worker-agents" element={<ViewWorkerAgents />} />
+
+            <Route path="/worker-agents" element={<WorkerAgentLayout />}>
+              <Route index element={<Navigate to={"all"} />} />
+              <Route path="all" element={<AllWorkerAgents />} />
+              <Route
+                path="shared-with-you"
+                element={<SharedWithYouWorkerAgents />}
+              />
+              <Route
+                path="created-by-you"
+                element={<CreatedByYouWorkerAgents />}
+              />
+              <Route path="details/:id" element={<WorkerAgentDetail />} />
+            </Route>
 
             <Route path="/mcp" element={<McpLayout />}>
               <Route index element={<MCPPage />} />
@@ -59,7 +77,10 @@ function App() {
               />
             </Route>
 
-            <Route path="/blueprints" element={<BluePrints />} />
+            <Route path="/blueprints">
+              <Route index element={<AllBlueprints />} />
+              <Route path="details/:id" element={<BlueprintDetail />} />
+            </Route>
 
             <Route path="/bootcamp">
               <Route index element={<Bootcamp />} />
