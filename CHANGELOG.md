@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 4.3.1
+
+### Patch Changes
+
+- [`d736e1b`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/d736e1bafde6013fcfb5b2728502184899860b91) Thanks [@Dhuvii](https://github.com/Dhuvii)! - configured for prod
+
 ## 4.3.0
 
 ### Minor Changes
