@@ -52,8 +52,7 @@ const Login = () => {
 
             <footer>
               <p className="mt-10 max-w-60 text-[0.65rem] text-white/50">
-                By clicking Continue you confirm that you agree to
-                Deepmodel&apos;s{" "}
+                By clicking Continue you confirm that you agree to Spark&apos;s{" "}
                 <a
                   onClick={(e) => {
                     e.preventDefault();

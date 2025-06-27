@@ -22,6 +22,12 @@ import WorkerAgentDetail from "./app/workerAgent/WorkerAgentDetail";
 import WorkerAgentLayout from "./app/workerAgent/WorkerAgentLayout";
 import AppChangelog from "./components/AppChangelog";
 import AppUpdater from "./components/AppUpdater";
+import PromptLayout from "./app/prompt/PromptLayout";
+import AllPrompts from "./app/prompt/AllPrompts";
+import SharedWithYouPrompts from "./app/prompt/SharedWithYouPrompts";
+import CreatedByYouPrompts from "./app/prompt/CreatedByYouPrompts";
+import PromptDetail from "./app/prompt/PromptDetail";
+import Memory from "./app/memory/Memory";
 
 function App() {
   return (
@@ -37,6 +43,8 @@ function App() {
             <Route path="/home" element={<ChatLayout />}>
               <Route path="chat" element={<ChatPage />} />
             </Route>
+
+            <Route path="/memory" element={<Memory />} />
 
             <Route path="/worker-agents" element={<WorkerAgentLayout />}>
               <Route index element={<Navigate to={"all"} />} />
@@ -85,6 +93,17 @@ function App() {
             <Route path="/bootcamp">
               <Route index element={<Bootcamp />} />
               <Route path="course/:name" element={<Course />} />
+            </Route>
+
+            <Route path="/prompts" element={<PromptLayout />}>
+              <Route index element={<Navigate replace to="/prompts/all" />} />
+              <Route path="all" element={<AllPrompts />} />
+              <Route
+                path="shared-with-you"
+                element={<SharedWithYouPrompts />}
+              />
+              <Route path="created-by-you" element={<CreatedByYouPrompts />} />
+              <Route path="details/:id" element={<PromptDetail />} />
             </Route>
           </Route>
         </Route>

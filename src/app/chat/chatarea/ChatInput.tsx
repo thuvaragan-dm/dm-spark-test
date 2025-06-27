@@ -1,5 +1,6 @@
+import { ComboboxOption } from "@headlessui/react";
 import { AnimatePresence, motion } from "motion/react";
-import { ComponentProps, Fragment, useRef, useState } from "react";
+import { ComponentProps, Fragment, useMemo, useRef, useState } from "react";
 import {
   IoArrowUpOutline,
   IoCloudUpload,
@@ -7,13 +8,18 @@ import {
   IoLogoMarkdown,
   IoStop,
 } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 import { useDeleteDocument } from "../../../api/document/useDeleteDocument";
+import { Prompt, PromptParams } from "../../../api/prompt/types";
+import { useGetPrompts } from "../../../api/prompt/useGetPrompts";
 import { Button } from "../../../components/Button";
+import ComboboxDropdown from "../../../components/ComboboxDropdown";
 import Dropdown from "../../../components/dropdown";
 import {
   useChatInput,
   useChatInputActions,
 } from "../../../store/chatInputStore";
+import { usePromptAction } from "../../../store/promptStore";
 import capitalizeFirstLetter from "../../../utilities/capitalizeFirstLetter";
 import { cn } from "../../../utilities/cn";
 
@@ -33,10 +39,29 @@ const ChatInput = ({
   isFileUploadLoading,
   stopStreaming,
 }: IChatInput) => {
+  const navigate = useNavigate();
+  const { setIsCreatePromptDrawerOpen } = usePromptAction();
   const [openAttachment, setOpenAttachment] = useState(false);
+  const [isPromptsOpen, setIsPromptsOpen] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { query, files } = useChatInput();
   const { setQuery, setFiles, reset } = useChatInputActions();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page] = useState(1);
+  const [records_per_page, _setRecords_per_page] = useState(20);
+
+  const promptsOptions = useMemo<PromptParams>(
+    () => ({
+      search: searchQuery,
+      page,
+      records_per_page: records_per_page,
+    }),
+    [searchQuery, page, records_per_page],
+  );
+
+  const { data: prompts, isPending: isPromptsLoading } =
+    useGetPrompts(promptsOptions);
 
   const submit = () => {
     if (query.length > 0 && !isLoading && !isFileUploadLoading) {
@@ -147,6 +172,98 @@ const ChatInput = ({
         ></textarea>
 
         <div className="mb-px flex h-full items-end justify-center gap-1 p-1">
+          <ComboboxDropdown<Prompt>
+            isOpen={isPromptsOpen}
+            setIsOpen={setIsPromptsOpen}
+            placeholder="Prompts Search"
+            query={searchQuery}
+            setQuery={setSearchQuery}
+            isLoading={isPromptsLoading}
+            onSelect={(option) => {
+              setQuery(option.prompt);
+              setIsPromptsOpen(false);
+            }}
+            Option={({ optionValue }) => (
+              <ComboboxOption
+                key={optionValue.id}
+                className={
+                  "dark:data-[focus]:bg-primary/30 data-[focus]:bg-primary -mx-1 cursor-pointer rounded-lg px-3 py-1.5 text-gray-800 data-[focus]:text-white dark:text-white"
+                }
+                value={optionValue}
+              >
+                <div className="flex flex-shrink-0 items-center justify-start gap-2">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="size-4 shrink-0"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20.938 1a.687.687 0 01.687.688v.687h.688a.687.687 0 010 1.375h-.688v.688a.687.687 0 11-1.375 0V3.75h-.688a.687.687 0 010-1.375h.688v-.688A.687.687 0 0120.938 1zM3.063 18.875a.687.687 0 01.687.688v.687h.688a.687.687 0 110 1.375H3.75v.688a.687.687 0 01-1.375 0v-.688h-.688a.687.687 0 110-1.375h.688v-.688a.687.687 0 01.688-.687zM8.563 1c-.893 0-1.547.705-1.703 1.455a5.706 5.706 0 01-1.533 2.872c-.982.983-2.117 1.375-2.87 1.532C1.708 7.014 1 7.67 1 8.565c.001.894.707 1.546 1.456 1.701a5.684 5.684 0 012.87 1.532 5.715 5.715 0 011.533 2.874c.157.746.81 1.453 1.704 1.453.893 0 1.548-.707 1.704-1.456a5.68 5.68 0 011.53-2.87 5.694 5.694 0 012.872-1.533c.75-.155 1.456-.808 1.456-1.704 0-.893-.705-1.548-1.456-1.703a5.693 5.693 0 01-2.87-1.532 5.707 5.707 0 01-1.531-2.872C10.111 1.705 9.457 1 8.563 1zm-.688 17.875v-1.453c.452.11.923.11 1.375 0v1.453a2.75 2.75 0 002.75 2.75h6.875a2.75 2.75 0 002.75-2.75V12a2.75 2.75 0 00-2.75-2.75H17.42a2.88 2.88 0 000-1.375h1.455A4.125 4.125 0 0123 12v6.875A4.125 4.125 0 0118.875 23H12a4.125 4.125 0 01-4.125-4.125zM12 16.812a.687.687 0 01.688-.687h4.124a.687.687 0 110 1.375h-4.125a.687.687 0 01-.687-.688zm.688-3.437a.687.687 0 100 1.375h6.187a.687.687 0 100-1.375h-6.188z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <span>{optionValue.name}</span>
+                </div>
+              </ComboboxOption>
+            )}
+            EmptyState={() => (
+              <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center p-3 @lg:p-5">
+                <div className="bg-secondary dark:bg-primary-700/20 text-primary flex w-min items-center justify-center rounded-full p-5 dark:text-white">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="size-8 shrink-0"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20.938 1a.687.687 0 01.687.688v.687h.688a.687.687 0 010 1.375h-.688v.688a.687.687 0 11-1.375 0V3.75h-.688a.687.687 0 010-1.375h.688v-.688A.687.687 0 0120.938 1zM3.063 18.875a.687.687 0 01.687.688v.687h.688a.687.687 0 110 1.375H3.75v.688a.687.687 0 01-1.375 0v-.688h-.688a.687.687 0 110-1.375h.688v-.688a.687.687 0 01.688-.687zM8.563 1c-.893 0-1.547.705-1.703 1.455a5.706 5.706 0 01-1.533 2.872c-.982.983-2.117 1.375-2.87 1.532C1.708 7.014 1 7.67 1 8.565c.001.894.707 1.546 1.456 1.701a5.684 5.684 0 012.87 1.532 5.715 5.715 0 011.533 2.874c.157.746.81 1.453 1.704 1.453.893 0 1.548-.707 1.704-1.456a5.68 5.68 0 011.53-2.87 5.694 5.694 0 012.872-1.533c.75-.155 1.456-.808 1.456-1.704 0-.893-.705-1.548-1.456-1.703a5.693 5.693 0 01-2.87-1.532 5.707 5.707 0 01-1.531-2.872C10.111 1.705 9.457 1 8.563 1zm-.688 17.875v-1.453c.452.11.923.11 1.375 0v1.453a2.75 2.75 0 002.75 2.75h6.875a2.75 2.75 0 002.75-2.75V12a2.75 2.75 0 00-2.75-2.75H17.42a2.88 2.88 0 000-1.375h1.455A4.125 4.125 0 0123 12v6.875A4.125 4.125 0 0118.875 23H12a4.125 4.125 0 01-4.125-4.125zM12 16.812a.687.687 0 01.688-.687h4.124a.687.687 0 110 1.375h-4.125a.687.687 0 01-.687-.688zm.688-3.437a.687.687 0 100 1.375h6.187a.687.687 0 100-1.375h-6.188z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </div>
+                <p className="mt-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  No Prompts Created Yet
+                </p>
+                <p className="text-center text-sm text-balance text-gray-600 dark:text-white/60">
+                  Click the button below to create your first prompt
+                </p>
+                <div
+                  role="button"
+                  onClick={() => {
+                    navigate("/prompts/all");
+                    setIsCreatePromptDrawerOpen(true);
+                  }}
+                  className={
+                    "text-primary dark:text-secondary ring-primary mt-5 cursor-pointer px-1 text-xs hover:underline md:px-1"
+                  }
+                >
+                  Create prompt
+                </div>
+              </div>
+            )}
+            searchResults={prompts?.items || []}
+          >
+            <Button
+              onClick={() => setIsPromptsOpen(true)}
+              variant={"ghost"}
+              wrapperClass="w-min flex"
+              className="hover:text-primary data-[state=open]:text-primary cursor-pointer rounded-full p-2 text-gray-600 md:p-2 dark:text-white/60 dark:hover:text-white dark:data-[state=open]:text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="size-5"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20.938 1a.687.687 0 01.687.688v.687h.688a.687.687 0 010 1.375h-.688v.688a.687.687 0 11-1.375 0V3.75h-.688a.687.687 0 010-1.375h.688v-.688A.687.687 0 0120.938 1zM3.063 18.875a.687.687 0 01.687.688v.687h.688a.687.687 0 110 1.375H3.75v.688a.687.687 0 01-1.375 0v-.688h-.688a.687.687 0 110-1.375h.688v-.688a.687.687 0 01.688-.687zM8.563 1c-.893 0-1.547.705-1.703 1.455a5.706 5.706 0 01-1.533 2.872c-.982.983-2.117 1.375-2.87 1.532C1.708 7.014 1 7.67 1 8.565c.001.894.707 1.546 1.456 1.701a5.684 5.684 0 012.87 1.532 5.715 5.715 0 011.533 2.874c.157.746.81 1.453 1.704 1.453.893 0 1.548-.707 1.704-1.456a5.68 5.68 0 011.53-2.87 5.694 5.694 0 012.872-1.533c.75-.155 1.456-.808 1.456-1.704 0-.893-.705-1.548-1.456-1.703a5.693 5.693 0 01-2.87-1.532 5.707 5.707 0 01-1.531-2.872C10.111 1.705 9.457 1 8.563 1zm-.688 17.875v-1.453c.452.11.923.11 1.375 0v1.453a2.75 2.75 0 002.75 2.75h6.875a2.75 2.75 0 002.75-2.75V12a2.75 2.75 0 00-2.75-2.75H17.42a2.88 2.88 0 000-1.375h1.455A4.125 4.125 0 0123 12v6.875A4.125 4.125 0 0118.875 23H12a4.125 4.125 0 01-4.125-4.125zM12 16.812a.687.687 0 01.688-.687h4.124a.687.687 0 110 1.375h-4.125a.687.687 0 01-.687-.688zm.688-3.437a.687.687 0 100 1.375h6.187a.687.687 0 100-1.375h-6.188z"
+                  fill="currentColor"
+                />
+              </svg>
+            </Button>
+          </ComboboxDropdown>
+
           <AnimatePresence initial={false} mode="popLayout">
             {!isLoading && (
               <motion.div

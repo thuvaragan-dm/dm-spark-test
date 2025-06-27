@@ -7,7 +7,13 @@ import {
   useQuery,
   UseQueryOptions,
 } from "@tanstack/react-query";
-import { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from "axios";
+import {
+  AxiosError,
+  AxiosInstance,
+  AxiosResponse,
+  CanceledError,
+  isAxiosError,
+} from "axios";
 import queryClient from "./queryClient";
 import { toast } from "sonner";
 import ErrorAlert from "../components/alerts/Error";
@@ -135,6 +141,7 @@ export function useCreateMutation<
         });
         return response.data;
       } catch (error) {
+        if (error instanceof CanceledError) throw error;
         if (isAxiosError(error)) {
           const axiosError = error as AxiosError;
           // Avoid spamming toasts for auth errors, as they are often handled globally (e.g., redirect to login)
@@ -240,6 +247,7 @@ export function useCreateQuery<TData = unknown>({
 
         return response.data;
       } catch (error) {
+        if (error instanceof CanceledError) throw error;
         if (errorMessage && error instanceof AxiosError) {
           const errMessage =
             typeof errorMessage === "function"
@@ -330,6 +338,7 @@ export function useCreateInfiniteQuery<
 
         return response.data;
       } catch (error) {
+        if (error instanceof CanceledError) throw error;
         if (errorMessage && error instanceof AxiosError) {
           const errMessage =
             typeof errorMessage === "function"

@@ -22,9 +22,6 @@ const Sidebar = () => {
             <h3 className="font-gilroy text-xl text-gray-800 dark:text-white">
               Spark
             </h3>
-            <p className="shrink-0 text-[0.5rem] text-gray-500 dark:text-white/50">
-              Powered By Deepmodel
-            </p>
           </div>
           <div className="flex items-center justify-end gap-1">
             {/* new chat button */}

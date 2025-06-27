@@ -15,6 +15,26 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <ReactQueryClientProvider>
           <ApiProvider>
             <AlertProvider />
+            <div
+              id="tooltip-container"
+              className="relative isolate z-[999999999]"
+            ></div>
+            <div
+              id="select-container"
+              className="relative isolate z-[999999999]"
+            ></div>
+            <div
+              id="menu-container"
+              className="relative isolate z-[99999999999]"
+            ></div>
+            <div
+              id="modal-container"
+              className="relative isolate z-[99999999999]"
+            ></div>
+            <div
+              id="drawer-container"
+              className="relative isolate z-[999999999]"
+            ></div>
             <App />
           </ApiProvider>
         </ReactQueryClientProvider>
