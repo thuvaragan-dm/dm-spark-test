@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 4.3.0
+
+### Minor Changes
+
+- [`e14b3e1`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/e14b3e126f1c3d558a0b9f2d98f35c4db1e33038) Thanks [@Dhuvii](https://github.com/Dhuvii)! - prompts and memory added.
+
 ## 4.3.1
 
 ### Patch Changes
