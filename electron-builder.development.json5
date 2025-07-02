@@ -20,6 +20,7 @@
     "package.json",
   ],
   mac: {
+    identity: "-",
     icon: "assets/build/icon.icns",
     target: [
       {
