@@ -26,6 +26,7 @@ export interface WorkerAgent {
   http_endpoint: string | null;
   payload_schema: Record<string, any> | null;
   created_at: string;
+  updated_at: string;
   verification_token: string;
   workspace_id: string;
   origin: WorkerAgentOrigin;

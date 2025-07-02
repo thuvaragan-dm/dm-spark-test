@@ -3,7 +3,7 @@
   "private": true,
   "version": "4.3.1",
   "type": "module",
-  "description": "DeepModel Desktop Application",
+  "description": "Spark Desktop Application",
   "author": {
     "name": "Thuvaragan",
     "email": "thuvaragan@deepmodel.com"
@@ -37,6 +37,7 @@
     "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-tooltip": "^1.2.6",
+    "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.6",
     "@tanstack/react-query": "^5.76.1",
     "@tanstack/react-query-devtools": "^5.76.1",

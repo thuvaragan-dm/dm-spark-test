@@ -25,7 +25,7 @@ const ChatResponse = ({
 
   return (
     <div className="group mr-auto flex h-full w-full items-start justify-start gap-2 pb-5">
-      <div className="flex w-full flex-1 flex-col">
+      <div className="prose dark:prose-invert flex w-full flex-1 flex-col">
         <div
           data-status={isStreaming && isLast ? "running" : "idle"}
           className="aui-md text-gray-800 dark:text-white"
