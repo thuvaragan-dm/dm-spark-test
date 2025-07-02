@@ -14,10 +14,8 @@ import Input from "../../components/Forms/Input";
 import InputGroup from "../../components/Forms/InputGroup";
 import { Pagination } from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
-import { useWorkerAgentActions } from "../../store/workerAgentStore";
 
 const SharedWithYouWorkerAgents = () => {
-  const { setIsRegisterWorkerAgentModalOpen } = useWorkerAgentActions();
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [records_per_page, _setRecords_per_page] = useState(20);
@@ -62,7 +60,8 @@ const SharedWithYouWorkerAgents = () => {
             No Shared Worker Agents Yet
           </h3>
           <p className="mt-2 max-w-sm text-center text-base text-balance text-gray-600 dark:text-white/60">
-            Worker agents are specialists. Spark inteliigently delegate tasks to the best best worker agent.
+            Worker agents are specialists. Spark inteliigently delegate tasks to
+            the best best worker agent.
           </p>
 
           {/*
@@ -74,8 +73,7 @@ const SharedWithYouWorkerAgents = () => {
           >
             Add new worker agent
           </Button>
-          */
-          }
+          */}
         </div>
       </section>
     );
