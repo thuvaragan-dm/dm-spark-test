@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 5.0.0
+
+### Major Changes
+
+- [`993553d`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/993553d9d3a5349613d225277174d455a9822d34) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - temp code signing added.
+
 ## 4.4.1
 
 ### Patch Changes
