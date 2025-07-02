@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 5.0.0
+
+### Major Changes
+
+- [`ca7eb74`](https://github.com/thuvaragan-dm/dm-desktop-test/commit/ca7eb7480e6cc36a0f0797c1b5431fe824def1de) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - screen text changed and temp certificate added for mac
+
 ## 4.4.1
 
 ### Patch Changes
