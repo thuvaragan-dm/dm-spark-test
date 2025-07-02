@@ -43,7 +43,7 @@ export default function CopyButton({ textToCopy }: CopyButtonProps) {
       type="button"
       onClick={handleCopy}
       className={cn(
-        "focus:ring-offset-primary-dark pointer-events-auto flex h-8 w-20 cursor-pointer items-center gap-1 overflow-hidden rounded-full border text-xs backdrop-blur-lg select-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:outline-none",
+        "focus:ring-offset-primary-dark focus-visible::ring-2 pointer-events-auto flex h-8 w-20 cursor-pointer items-center gap-1 overflow-hidden rounded-full border text-xs backdrop-blur-lg select-none focus:ring-sky-500 focus:ring-offset-2 focus:outline-none",
         {
           "border-white/10 bg-white/10 text-white/50 hover:bg-white/15":
             !copied,

@@ -58,13 +58,6 @@ const Blocked = () => {
             />
           </svg>
         </div>
-
-        <div className="">
-          <p className="text-[0.5rem] text-white">Powered by</p>
-          <h2 className="font-gilroy text-base/tight font-medium text-white">
-            DeepModel
-          </h2>
-        </div>
       </div>
       {/* logo */}
     </div>

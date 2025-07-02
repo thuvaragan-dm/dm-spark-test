@@ -312,7 +312,7 @@ const WorkerAgentDetail = () => {
 
                   <p className="text-[0.65rem] text-gray-600 dark:text-white/60">
                     Last Updated{" "}
-                    {format(new Date(workerAgent.created_at), "do MMMM, yyyy")}
+                    {format(new Date(workerAgent.updated_at), "do MMMM, yyyy")}
                   </p>
                 </div>
               </div>

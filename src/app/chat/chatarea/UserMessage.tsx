@@ -50,7 +50,7 @@ const UserMessage = ({ id, message }: { id: string; message: string }) => {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col rounded-xl border border-gray-400/50 bg-white/50 px-3 text-sm/6 text-gray-800 dark:border-white/10 dark:bg-white/10 dark:text-white">
+      <div className="prose dark:prose-invert hide-scrollbar flex flex-col overflow-x-auto rounded-xl border border-gray-400/50 bg-white/50 px-3 py-2.5 text-sm/6 text-gray-800 dark:border-white/10 dark:bg-white/10 dark:text-white">
         <MemoizedMarkdown id={id} content={extractedMessage} showDot={false} />
       </div>
     </div>

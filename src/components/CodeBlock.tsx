@@ -14,9 +14,9 @@ function CodeBlock({ className, children }: CodeBlockProps) {
   const codeToCopy = children.trim();
 
   return (
-    <div className="relative flex w-full flex-col">
+    <div className="relative my-5 flex w-full flex-col">
       {/* Copy Button */}
-      <div className="pointer-events-none absolute inset-0 mx-5 mt-[0.8rem] mb-5">
+      <div className="pointer-events-none absolute inset-0 mx-5 mt-[0.4rem] mb-5">
         <div className="sticky top-0 right-0 z-[9999] flex w-full justify-end overflow-hidden">
           <CopyButton textToCopy={codeToCopy} />
         </div>

@@ -11,43 +11,12 @@ export function useMDXComponents(
   components?: ReactMarkdownComponents,
 ): ReactMarkdownComponents {
   return {
-    h1: ({ node: _node, ...props }) => (
-      <h1
-        className="mt-8 mb-4 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white"
-        {...props}
-      />
-    ),
-    h2: ({ node: _node, ...props }) => (
-      <h2
-        className="mt-6 mb-3 text-2xl font-bold text-gray-800 dark:text-white"
-        {...props}
-      />
-    ),
-    h3: ({ node: _node, ...props }) => (
-      <h3
-        className="mt-6 mb-3 text-xl font-bold text-gray-800 dark:text-white"
-        {...props}
-      />
-    ),
-    p: ({ node: _node, ...props }) => (
-      <p
-        className="my-4 text-base leading-7 text-gray-800 dark:text-white"
-        {...props}
-      />
-    ),
-    pre: ({ node: _node, children, ...props }) => (
-      // The CodeBlock component itself might render a <pre> tag.
-      // If CodeBlock doesn't render a <pre>, you'd wrap it here:
-      // <pre className="your-pre-styles" {...props}>{children}</pre>
-      // For now, assuming CodeBlock handles the <pre> or is styled to fit.
-      <div {...props}>{children}</div> // Simple div wrapper for the 'pre' element from markdown
-    ),
     code: ({ node: _node, inline, className, children, ...props }) => {
       if (inline) {
         // Handle inline code (e.g., `code`)
         return (
           <code
-            className="rounded-sm bg-gray-100 px-1 py-0.5 font-mono text-sm dark:bg-gray-700"
+            className="my-1 rounded-sm bg-gray-100 px-1 py-0.5 font-mono text-sm dark:bg-gray-700"
             {...props}
           >
             {children}
@@ -64,73 +33,6 @@ export function useMDXComponents(
         </CodeBlock>
       );
     },
-    ul: ({ node: _node, ...props }) => (
-      <ul
-        className="my-4 list-inside list-disc space-y-2 text-gray-800 dark:text-white"
-        {...props}
-      />
-    ),
-    ol: ({ node: _node, ...props }) => (
-      <ol
-        className="my-4 list-inside list-decimal space-y-2 text-gray-800 dark:text-white"
-        {...props}
-      />
-    ),
-    li: ({ node: _node, ...props }) => (
-      <li
-        className="my-4 text-sm leading-7 text-gray-800 dark:text-white"
-        {...props}
-      />
-    ),
-    blockquote: ({ node: _node, ...props }) => (
-      <blockquote
-        className="my-4 border-l-4 border-gray-300 bg-gray-50 py-1 pl-4 text-gray-600 italic dark:border-white/10 dark:text-white/60"
-        {...props}
-      />
-    ),
-    img: ({ node: _node, ...props }) => (
-      <img
-        {...props}
-        alt={props.alt || "chat image"} // Provide a default alt if not present
-        className="my-4 max-w-full rounded-md shadow-sm"
-      />
-    ),
-    a: ({ node: _node, ...props }) => (
-      <a
-        target="_blank"
-        className="text-primary dark:text-secondary text-sm font-medium underline"
-        {...props}
-      />
-    ),
-    table: ({ node: _node, ...props }) => (
-      <div className="scrollbar my-6 overflow-x-auto">
-        <table
-          className="w-full border-collapse border border-gray-200 dark:border-gray-700"
-          {...props}
-        />
-      </div>
-    ),
-    th: ({ node: _node, isHeader: _isHeader, ...props }) => (
-      <th
-        className="border border-gray-200 bg-gray-100 p-3 text-left font-semibold text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-        {...props}
-      />
-    ),
-    td: ({ node: _node, isHeader: _isHeader, ...props }) => (
-      <td
-        className="border border-gray-200 p-3 text-gray-800 dark:border-gray-600 dark:text-white"
-        {...props}
-      />
-    ),
-    div: ({ node: _node, isHeader: _isHeader, ...props }) => (
-      <div className="my-5 text-gray-800 dark:text-white" {...props} />
-    ),
-    hr: ({ node: _node, isHeader: _isHeader, ...props }) => (
-      <hr
-        className="my-3 border-t border-gray-300 dark:border-white/10"
-        {...props}
-      />
-    ),
     // Spread any additional components passed in, allowing overrides
     ...(components || {}),
   };

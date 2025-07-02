@@ -49,7 +49,6 @@ import Form from "../components/Forms/Form";
 import Input from "../components/Forms/Input";
 import InputGroup from "../components/Forms/InputGroup";
 import Label from "../components/Forms/Label";
-import Switch from "../components/Forms/Switch";
 import Modal from "../components/modal";
 import SlidingContainer from "../components/SlidingContainer";
 import Spinner from "../components/Spinner";
@@ -701,11 +700,7 @@ const RootLayout = () => {
                                 </Avatar.Fallback>
                               )}
                               className="dark:ring-primary-dark-foreground relative z-10 flex aspect-square size-11 w-full shrink-0 items-center justify-center rounded-none object-cover p-0 shadow-inner ring-2 ring-white md:p-0"
-                              src={
-                                (user.is_avatar_enabled
-                                  ? user.avatar_url
-                                  : user?.original_profile_picture_url) || ""
-                              }
+                              src={user?.original_profile_picture_url || ""}
                             />
                           </div>
                         </Button>
@@ -848,10 +843,6 @@ const SettingsModal = ({
       invalidateQueryKey: [userKey[EUser.FETCH_SINGLE]],
     });
 
-  const { mutate: updateUser } = useUpdateUser({
-    invalidateQueryKey: [userKey[EUser.FETCH_SINGLE]],
-  });
-
   const { getRootProps, getInputProps, open } = useFileUpload({
     files: file,
     setFiles: setFile,
@@ -866,10 +857,6 @@ const SettingsModal = ({
           regenerate_avatar: false,
         },
       });
-
-      if (user?.is_avatar_enabled) {
-        setPicture({ url: avatar_url || "" });
-      }
 
       setUser((pv) =>
         pv
@@ -886,10 +873,7 @@ const SettingsModal = ({
   useEffect(() => {
     if (user && user?.avatar_url) {
       setPicture({
-        url:
-          (user.is_avatar_enabled
-            ? user.avatar_url
-            : user.original_profile_picture_url) || "",
+        url: user.original_profile_picture_url || "",
       });
     }
   }, [user, setPicture]);
@@ -1016,44 +1000,6 @@ const SettingsModal = ({
                             <IoImage className="text-primary size-6 flex-shrink-0" />
                             {picture?.url ? "Update picture" : "Add picture"}
                           </Button>
-
-                          <div className="mt-3">
-                            <Form
-                              validationSchema={z.object({
-                                keepOriginal: z.boolean(),
-                              })}
-                            >
-                              <Field>
-                                <Switch
-                                  isSelected={!user.is_avatar_enabled}
-                                  value={!user.is_avatar_enabled ? "t" : ""}
-                                  onChange={(val) => {
-                                    if (val) {
-                                      setPicture({
-                                        url:
-                                          user.original_profile_picture_url ||
-                                          "",
-                                      });
-                                    } else {
-                                      setPicture({
-                                        url: user.avatar_url || "",
-                                      });
-                                    }
-                                    updateUser({
-                                      body: {
-                                        ...user,
-                                        is_avatar_enabled: !val,
-                                      },
-                                    });
-                                  }}
-                                >
-                                  <p className="ml-3 text-sm font-medium text-gray-800 dark:text-white">
-                                    Keep the original
-                                  </p>
-                                </Switch>
-                              </Field>
-                            </Form>
-                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
