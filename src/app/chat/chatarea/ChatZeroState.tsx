@@ -16,10 +16,10 @@ const ChatZeroState = ({ isLoading }: { isLoading: boolean }) => {
 
       <div className="mt-5">
         <h3 className="text-center text-lg font-light text-gray-600 dark:text-white/60">
-          Good to see you!
+          Good to see you. How can I help?
         </h3>
         <h1 className="text-center text-xl text-gray-800 dark:text-white">
-          How can i be an Assistance?
+          
         </h1>
       </div>
 

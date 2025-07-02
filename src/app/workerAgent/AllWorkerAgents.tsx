@@ -62,8 +62,7 @@ const AllWorkerAgents = () => {
             No Worker Agents Available Yet
           </h3>
           <p className="mt-2 max-w-sm text-center text-base text-balance text-gray-600 dark:text-white/60">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Incidunt
-            corporis eligendi eius accusantium
+            Worker agents are specialists. Spark inteliigently delegate tasks to the best best worker agent.
           </p>
 
           <Button

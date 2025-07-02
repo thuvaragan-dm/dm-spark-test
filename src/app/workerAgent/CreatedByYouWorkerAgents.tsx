@@ -59,11 +59,10 @@ const CreatedByYouWorkerAgents = () => {
 
         <div className="mt-5 flex h-52 w-full flex-col items-center justify-center pb-5">
           <h3 className="text-4xl font-medium text-gray-800 dark:text-white">
-            No Worker Agents Available Yet
+            Create Your First Worker Agent
           </h3>
           <p className="mt-2 max-w-sm text-center text-base text-balance text-gray-600 dark:text-white/60">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Incidunt
-            corporis eligendi eius accusantium
+            Worker agents are specialists. Spark inteliigently delegate tasks to the best best worker agent.
           </p>
 
           <Button

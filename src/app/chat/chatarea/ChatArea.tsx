@@ -509,7 +509,7 @@ const ChatArea = () => {
               openExplorer={open}
               handleSubmit={handleChatSubmit}
               stopStreaming={handleInterupt}
-              placeholder="What do you want to know?"
+              placeholder="Ask anything"
             />
           </div>
         </motion.div>

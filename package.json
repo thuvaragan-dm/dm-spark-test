@@ -3,7 +3,7 @@
   "private": true,
   "version": "4.3.1",
   "type": "module",
-  "description": "DeepModel Desktop Application",
+  "description": "Spark is your AI super agent",
   "author": {
     "name": "Thuvaragan",
     "email": "thuvaragan@deepmodel.com"
