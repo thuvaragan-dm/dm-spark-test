@@ -1,5 +1,5 @@
 # .github/workflows/changesets-pr.yml
-# This file should be at the ROOT of your Git repository (e.g., dm-desktop-test/.github/workflows/changesets-pr.yml)
+# This file should be at the ROOT of your Git repository (e.g., dm-spark-test/.github/workflows/changesets-pr.yml)
 
 name: Changesets Version PR
 
@@ -14,7 +14,7 @@ jobs:
   version-pr:
     # This 'if' condition ensures the action only runs in your main repository,
     # not on forks, which is good practice.
-    if: github.repository == 'thuvaragan-dm/dm-desktop-test'
+    if: github.repository == 'thuvaragan-dm/dm-spark-test'
     timeout-minutes: 15
     runs-on: ubuntu-latest
     # Add permissions for the GITHUB_TOKEN

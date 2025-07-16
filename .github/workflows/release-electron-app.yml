@@ -1,5 +1,5 @@
 # .github/workflows/release-electron-app.yml
-# This workflow runs in your PRIVATE source code repository (dm-desktop-test)
+# This workflow runs in your PRIVATE source code repository (dm-spark-test)
 # but publishes releases to your PUBLIC release repository (dm-desktop-release)
 # OR a separate DEV release repository (e.g., dm-desktop-dev-release).
 # It also updates a separate configuration repository (dm-desktop-configs).
