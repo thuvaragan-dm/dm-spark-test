@@ -21,6 +21,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Dropdown from "../../components/dropdown";
 import Modal from "../../components/modal";
 import { useDeletePrompt } from "../../api/prompt/useDeletePrompt";
+import { IoClose } from "react-icons/io5";
 
 const UpdatePromptDrawer = () => {
   const { isUpdatePromptDrawerOpen, newCategoryName, selectedPromptForEdit } =
@@ -155,6 +156,17 @@ const UpdatePromptDrawer = () => {
                       </Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
+
+                  <Button
+                    onClick={() => setIsUpdatePromptDrawerOpen(false)}
+                    variant={"ghost"}
+                    wrapperClass="flex items-center justify-center"
+                    className={
+                      "dark:ring-offset-primary-dark-foreground shrink-0 rounded-full border p-1 ring-gray-300 hover:bg-gray-200 data-[pressed]:bg-gray-200 md:p-1 dark:text-white dark:hover:bg-white/20 dark:data-[pressed]:bg-white/20"
+                    }
+                  >
+                    <IoClose className="size-5" />
+                  </Button>
                 </div>
               </Drawer.Header>
 

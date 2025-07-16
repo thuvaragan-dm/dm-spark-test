@@ -33,6 +33,13 @@ export function useMDXComponents(
         </CodeBlock>
       );
     },
+    pre: ({ node: _node, children, ...props }) => {
+      return (
+        <code className="bg-gray-100 p-0 dark:bg-white/10" {...props}>
+          {children}
+        </code>
+      );
+    },
     // Spread any additional components passed in, allowing overrides
     ...(components || {}),
   };

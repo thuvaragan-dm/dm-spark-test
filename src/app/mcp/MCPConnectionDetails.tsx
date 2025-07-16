@@ -6,23 +6,20 @@ import { EMCP, mcpKey } from "../../api/mcp/config";
 import { MCPTemplateDetailParams, MCPToolsParams } from "../../api/mcp/types";
 import { useDeleteMCPConnection } from "../../api/mcp/useDeleteMCPConnection";
 import { useGetMCPConnectionDetails } from "../../api/mcp/useGetMCPConnectionDetails ";
+import { useGetMCPTemplateDetails } from "../../api/mcp/useGetMCPTemplateDetails";
 import { useGetMCPTools } from "../../api/mcp/useGetMCPTools";
+import { useUpdateMCPConnection } from "../../api/mcp/useUpdateMCPConnection";
 import mcpBannerImage from "../../assets/mcp_banner.png";
 import { Button } from "../../components/Button";
 import Dropdown from "../../components/dropdown";
 import Field from "../../components/Forms/Field";
 import Form from "../../components/Forms/Form";
 import Switch from "../../components/Forms/Switch";
-import MCPConnectionIcon, {
-  AvailableMCPProviders,
-} from "../../components/MCPConnectionIcon";
 import Modal from "../../components/modal";
+import { Pagination } from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
 import { cn } from "../../utilities/cn";
-import { useUpdateMCPConnection } from "../../api/mcp/useUpdateMCPConnection";
-import { Pagination } from "../../components/Pagination";
 import ReConnectionModal from "./ReConnectionModal";
-import { useGetMCPTemplateDetails } from "../../api/mcp/useGetMCPTemplateDetails";
 
 const MCPConnectionDetails = () => {
   const navigate = useNavigate();
@@ -158,10 +155,11 @@ const MCPConnectionDetails = () => {
         <>
           <div className="mt-5 flex w-full items-end justify-between px-5">
             <div className="flex items-start justify-start gap-3">
-              <div className="rounded-lg border border-gray-300 bg-white p-1 shadow-lg">
-                <MCPConnectionIcon
-                  className="size-6"
-                  icon={MCPDetails.service_provider as AvailableMCPProviders}
+              <div className="aspect-square rounded-lg border border-gray-300 bg-white p-1 shadow-lg">
+                <img
+                  className="w-9 object-cover"
+                  alt="mcp image"
+                  src={MCPDetails.mcp_logo_url}
                 />
               </div>
 
@@ -325,6 +323,7 @@ const MCPConnectionDetails = () => {
             serviceProvider={MCPDetails.service_provider}
             authMethods={MCPTemplateDetails.auth_method}
             credentials={MCPTemplateDetails.credentials}
+            logo={MCPDetails.mcp_logo_url}
           />
         </>
       )}

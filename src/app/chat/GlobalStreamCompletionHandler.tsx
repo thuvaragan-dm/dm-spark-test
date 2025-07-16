@@ -68,7 +68,9 @@ export const GlobalStreamCompletionHandler = () => {
             queryClient.invalidateQueries({
               queryKey: [threadKey[EThread.ALL], agentOptions],
             });
-            setRerenderThreadList((prev) => prev + 1);
+            setTimeout(() => {
+              setRerenderThreadList((prev) => prev + 1);
+            }, 500);
           },
           onError: (error) => {
             console.error(
@@ -85,6 +87,9 @@ export const GlobalStreamCompletionHandler = () => {
     // This is critical to prevent processing the same stream more than once.
     if (processedIds.length > 0) {
       processCompletedStreams(processedIds);
+      setTimeout(() => {
+        setRerenderThreadList((prev) => prev + 1);
+      }, 500);
     }
   }, [
     completedStreams,

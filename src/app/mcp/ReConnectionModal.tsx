@@ -19,9 +19,6 @@ import Field from "../../components/Forms/Field";
 import Form from "../../components/Forms/Form";
 import Input from "../../components/Forms/Input";
 import Label from "../../components/Forms/Label";
-import MCPConnectionIcon, {
-  AvailableMCPProviders,
-} from "../../components/MCPConnectionIcon";
 import Modal from "../../components/modal";
 import Spinner from "../../components/Spinner";
 import { MCPAuth, useAuth, useAuthActions } from "../../store/authStore";
@@ -41,6 +38,7 @@ const ReConnectionModal = ({
   connectionId,
   authMethods,
   credentials,
+  logo,
 }: {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
@@ -49,6 +47,7 @@ const ReConnectionModal = ({
   connectionId: string;
   authMethods: AuthMethod[];
   credentials: CredentialConfig[];
+  logo: string;
 }) => {
   const { apiUrl } = useAppConfig();
   const { MCP } = useAuth();
@@ -323,11 +322,8 @@ const ReConnectionModal = ({
               wrapperClass="mt-3 w-full"
               className="flex w-full items-center justify-center gap-2 rounded-lg py-1.5 [--border-highlight-radius:var(--radius-lg)]"
             >
-              <div className="rounded-lg bg-white p-1 shadow-inner">
-                <MCPConnectionIcon
-                  icon={serviceProvider as AvailableMCPProviders}
-                  className="size-5 text-black"
-                />
+              <div className="aspect-square rounded-lg bg-white p-1 shadow-inner">
+                <img className="w-6 object-cover" alt="mcp image" src={logo} />
               </div>
               Connect using oauth
             </Button>

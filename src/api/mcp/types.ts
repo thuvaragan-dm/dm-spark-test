@@ -51,6 +51,7 @@ export interface AvailableMCPServer {
   description: string;
   service_provider: string;
   category: string;
+  mcp_logo_url: string;
 }
 export interface ConnectedMCPServer {
   id: string;
@@ -63,6 +64,7 @@ export interface ConnectedMCPServer {
   auth_method: string;
   is_active: boolean;
   is_workspace_shared: boolean;
+  mcp_logo_url: string;
 }
 
 // Interface for a single tool provided by a service
@@ -85,6 +87,7 @@ export interface MCPTemplateDetail {
   overview: string;
   auth_method: AuthMethod[];
   credentials: CredentialConfig[];
+  mcp_logo_url: string;
 }
 export interface MCPConnectionDetail {
   id: string;
@@ -94,6 +97,7 @@ export interface MCPConnectionDetail {
   category: string;
   overview: string;
   is_workspace_shared: boolean;
+  mcp_logo_url: string;
 }
 
 export type CreateMCPConnectionParams = {

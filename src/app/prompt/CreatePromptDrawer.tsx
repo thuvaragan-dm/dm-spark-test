@@ -1,6 +1,12 @@
 import { useState } from "react";
+
+import { IoClose } from "react-icons/io5";
+import { VscAdd, VscEdit } from "react-icons/vsc";
+import { EPrompt, promptKey } from "../../api/prompt/config";
 import { CreatePromptSchema } from "../../api/prompt/PromptSchema";
+import { useCreatePrompt } from "../../api/prompt/useCreatePrompt";
 import { useGetCategories } from "../../api/prompt/useGetCategories";
+import { Button, ButtonWithLoader } from "../../components/Button";
 import CodeEditor from "../../components/CodeEditor";
 import { Drawer } from "../../components/drawer";
 import ErrorMessage from "../../components/Forms/ErrorMessage";
@@ -8,15 +14,11 @@ import Field from "../../components/Forms/Field";
 import Form from "../../components/Forms/Form";
 import Input from "../../components/Forms/Input";
 import Label from "../../components/Forms/Label";
+import Switch from "../../components/Forms/Switch";
 import Grid from "../../components/patterns/Grid";
 import Spinner from "../../components/Spinner";
 import { usePrompt, usePromptAction } from "../../store/promptStore";
 import { cn } from "../../utilities/cn";
-import { VscAdd, VscEdit } from "react-icons/vsc";
-import Switch from "../../components/Forms/Switch";
-import { ButtonWithLoader } from "../../components/Button";
-import { useCreatePrompt } from "../../api/prompt/useCreatePrompt";
-import { EPrompt, promptKey } from "../../api/prompt/config";
 
 const CreatePromptDrawer = () => {
   const { isCreatePromptDrawerOpen, newCategoryName } = usePrompt();
@@ -60,12 +62,25 @@ const CreatePromptDrawer = () => {
               )}
             />
             {/* pattern */}
-            <Drawer.Header className="p-5 text-left">
-              <Drawer.Title>Create Prompt</Drawer.Title>
-              <Drawer.Description className="mt-1 max-w-md text-xs">
-                Lorem, ipsum dolor sit amet consectetur adipisicing elit. Minus
-                perspiciatis enim natus odio doloremque tempora.
-              </Drawer.Description>
+            <Drawer.Header className="flex items-start justify-between p-5 text-left">
+              <div className="">
+                <Drawer.Title>Create Prompt</Drawer.Title>
+                <Drawer.Description className="mt-1 max-w-md text-xs">
+                  Lorem, ipsum dolor sit amet consectetur adipisicing elit.
+                  Minus perspiciatis enim natus odio doloremque tempora.
+                </Drawer.Description>
+              </div>
+
+              <Button
+                onClick={() => setIsCreatePromptDrawerOpen(false)}
+                variant={"ghost"}
+                wrapperClass="flex items-center justify-center -mt-2"
+                className={
+                  "dark:ring-offset-primary-dark-foreground shrink-0 rounded-full border bg-gray-100 p-0.5 ring-gray-300 hover:bg-gray-200 data-[pressed]:bg-gray-200 md:p-0.5 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:data-[pressed]:bg-white/20"
+                }
+              >
+                <IoClose className="size-4" />
+              </Button>
             </Drawer.Header>
 
             <div className="scrollbar scrollbar flex flex-1 flex-col overflow-hidden">
