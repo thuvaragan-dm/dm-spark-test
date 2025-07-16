@@ -103,7 +103,7 @@ const AllPrompts = () => {
         </div>
       </header>
 
-      <div className="mt-5 flex w-full flex-1 flex-col overflow-hidden p-1">
+      <div className="mt-5 flex w-full flex-1 flex-col overflow-hidden p-1 px-5">
         <div className="mx-auto w-full max-w-2xl">
           <Form validationSchema={z.object({ search: z.string() })}>
             <Field>
@@ -129,7 +129,7 @@ const AllPrompts = () => {
           {!isPromptsLoading && prompts && prompts.items.length > 0 && (
             <>
               <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 gap-5">
                   {prompts.items.map((prompt, idx) => (
                     <button
                       key={idx}
@@ -137,21 +137,32 @@ const AllPrompts = () => {
                         setSelectedPromptForEdit(prompt);
                         setIsUpdatePromptDrawerOpen(true);
                       }}
-                      className="flex cursor-pointer items-start justify-start gap-3 rounded-xl border border-gray-300 p-3 text-left dark:border-white/10"
+                      className="group flex w-full cursor-pointer items-start justify-start gap-3 truncate rounded-xl border border-gray-300 p-3 text-left dark:border-white/10"
                     >
-                      <div className="flex w-full flex-col">
-                        <div className="flex w-full items-center justify-between gap-3">
-                          <h3 className="max-w-52 truncate text-base font-medium text-gray-800 dark:text-white">
-                            {prompt.name}
-                          </h3>
+                      <div className="rounded-lg p-2 dark:bg-purple-500/20 dark:text-purple-100">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="size-5"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M20.938 1a.687.687 0 01.687.688v.687h.688a.687.687 0 010 1.375h-.688v.688a.687.687 0 11-1.375 0V3.75h-.688a.687.687 0 010-1.375h.688v-.688A.687.687 0 0120.938 1zM3.063 18.875a.687.687 0 01.687.688v.687h.688a.687.687 0 110 1.375H3.75v.688a.687.687 0 01-1.375 0v-.688h-.688a.687.687 0 110-1.375h.688v-.688a.687.687 0 01.688-.687zM8.563 1c-.893 0-1.547.705-1.703 1.455a5.706 5.706 0 01-1.533 2.872c-.982.983-2.117 1.375-2.87 1.532C1.708 7.014 1 7.67 1 8.565c.001.894.707 1.546 1.456 1.701a5.684 5.684 0 012.87 1.532 5.715 5.715 0 011.533 2.874c.157.746.81 1.453 1.704 1.453.893 0 1.548-.707 1.704-1.456a5.68 5.68 0 011.53-2.87 5.694 5.694 0 012.872-1.533c.75-.155 1.456-.808 1.456-1.704 0-.893-.705-1.548-1.456-1.703a5.693 5.693 0 01-2.87-1.532 5.707 5.707 0 01-1.531-2.872C10.111 1.705 9.457 1 8.563 1zm-.688 17.875v-1.453c.452.11.923.11 1.375 0v1.453a2.75 2.75 0 002.75 2.75h6.875a2.75 2.75 0 002.75-2.75V12a2.75 2.75 0 00-2.75-2.75H17.42a2.88 2.88 0 000-1.375h1.455A4.125 4.125 0 0123 12v6.875A4.125 4.125 0 0118.875 23H12a4.125 4.125 0 01-4.125-4.125zM12 16.812a.687.687 0 01.688-.687h4.124a.687.687 0 110 1.375h-4.125a.687.687 0 01-.687-.688zm.688-3.437a.687.687 0 100 1.375h6.187a.687.687 0 100-1.375h-6.188z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </div>
 
-                          <VscArrowRight className="size-4 shrink-0 text-gray-800 dark:text-white" />
-                        </div>
-
-                        <p className="mt-1 line-clamp-3 text-xs text-gray-600 dark:text-white/60">
+                      <div className="w-full truncate">
+                        <h3 className="truncate text-base font-medium text-gray-800 group-hover:underline dark:text-white">
+                          {prompt.name}
+                        </h3>
+                        <p className="mt-1 line-clamp-2 text-xs whitespace-normal text-gray-600 dark:text-white/60">
                           {prompt.prompt}
                         </p>
+                      </div>
 
+                      <div className="flex shrink-0 items-center justify-end gap-3">
                         {prompt.category && (
                           <div className="mt-2 flex flex-wrap items-start justify-start gap-3">
                             <span className="w-min rounded-full bg-gray-200 px-3 py-1.5 text-[0.65rem] font-medium tracking-wider whitespace-nowrap text-gray-800 shadow dark:bg-white/10 dark:text-white">
@@ -159,13 +170,15 @@ const AllPrompts = () => {
                             </span>
                           </div>
                         )}
+
+                        <VscArrowRight className="size-4 shrink-0 text-gray-800 dark:text-white" />
                       </div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="mx-auto flex w-full max-w-2xl items-center justify-end px-5">
+              <div className="mx-auto flex w-full max-w-2xl items-center justify-end">
                 <Pagination
                   currentPage={page}
                   numberOfPages={Math.ceil(prompts.total / records_per_page)}

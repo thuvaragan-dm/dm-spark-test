@@ -1,6 +1,13 @@
 import { ComboboxOption } from "@headlessui/react";
 import { AnimatePresence, motion } from "motion/react";
-import { ComponentProps, Fragment, useMemo, useRef, useState } from "react";
+import {
+  ComponentProps,
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   IoArrowUpOutline,
   IoCloudUpload,
@@ -22,6 +29,7 @@ import {
 import { usePromptAction } from "../../../store/promptStore";
 import capitalizeFirstLetter from "../../../utilities/capitalizeFirstLetter";
 import { cn } from "../../../utilities/cn";
+import useSearchQuery from "../../../hooks/useSearchQuery";
 
 interface IChatInput extends ComponentProps<"textarea"> {
   handleSubmit: (query: string) => void;
@@ -39,6 +47,7 @@ const ChatInput = ({
   isFileUploadLoading,
   stopStreaming,
 }: IChatInput) => {
+  const { searchParams, deleteFromSearchQuery } = useSearchQuery();
   const navigate = useNavigate();
   const { setIsCreatePromptDrawerOpen } = usePromptAction();
   const [openAttachment, setOpenAttachment] = useState(false);
@@ -50,6 +59,22 @@ const ChatInput = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [page] = useState(1);
   const [records_per_page, _setRecords_per_page] = useState(20);
+
+  const moveCursorToEnd = () => {
+    if (textAreaRef.current) {
+      // Focus on the textarea to make the cursor visible
+      textAreaRef.current.focus();
+      const length = textAreaRef.current.value.length;
+      // Set both the start and end of the selection to the end of the text
+      textAreaRef.current.setSelectionRange(length, length);
+    }
+  };
+  const focusTextArea = () => {
+    if (textAreaRef.current) {
+      // Focus on the textarea to make the cursor visible
+      textAreaRef.current.focus();
+    }
+  };
 
   const promptsOptions = useMemo<PromptParams>(
     () => ({
@@ -69,6 +94,48 @@ const ChatInput = ({
       reset();
     }
   };
+
+  const isTrigered = useRef<boolean>(false);
+  useEffect(() => {
+    if (
+      !searchParams.get("thread") &&
+      searchParams.get("trigger-submit") &&
+      query &&
+      !isTrigered.current
+    ) {
+      if (query) {
+        isTrigered.current = true;
+        handleSubmit(query);
+        setTimeout(() => {
+          reset();
+          isTrigered.current = false;
+          deleteFromSearchQuery("trigger-submit");
+        }, 200);
+      }
+    }
+  }, [
+    searchParams,
+    query,
+    isTrigered,
+    deleteFromSearchQuery,
+    setQuery,
+    handleSubmit,
+    reset,
+  ]);
+
+  useEffect(() => {
+    if (
+      !searchParams.get("thread") &&
+      searchParams.get("set-prompt") &&
+      query
+    ) {
+      if (query) {
+        setTimeout(() => {
+          moveCursorToEnd();
+        }, 500);
+      }
+    }
+  }, [searchParams, query]);
 
   return (
     <div className="flex w-full flex-col">
@@ -188,6 +255,12 @@ const ChatInput = ({
               onSelect={(option) => {
                 setQuery(option.prompt);
                 setIsPromptsOpen(false);
+                setTimeout(() => {
+                  moveCursorToEnd();
+                }, 50);
+                setTimeout(() => {
+                  focusTextArea();
+                }, 400);
               }}
               Option={({ optionValue }) => (
                 <ComboboxOption
@@ -254,7 +327,7 @@ const ChatInput = ({
                 onClick={() => setIsPromptsOpen(true)}
                 variant={"ghost"}
                 wrapperClass="w-min flex"
-                className="hover:text-primary data-[state=open]:text-primary cursor-pointer rounded-full p-2 text-gray-600 md:p-2 dark:text-white/60 dark:hover:text-white dark:data-[state=open]:text-white"
+                className="hover:text-primary data-[state=open]:text-primary flex cursor-pointer items-center justify-center gap-2 rounded-full p-2 text-gray-600 md:p-2 dark:text-white/60 dark:hover:text-white dark:data-[state=open]:text-white"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -267,6 +340,8 @@ const ChatInput = ({
                     fill="currentColor"
                   />
                 </svg>
+
+                <p className="text-[0.6rem] tracking-wider">prompts</p>
               </Button>
             </ComboboxDropdown>
 

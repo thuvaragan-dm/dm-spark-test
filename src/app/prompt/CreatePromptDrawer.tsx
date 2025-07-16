@@ -12,9 +12,9 @@ import Grid from "../../components/patterns/Grid";
 import Spinner from "../../components/Spinner";
 import { usePrompt, usePromptAction } from "../../store/promptStore";
 import { cn } from "../../utilities/cn";
-import { VscAdd, VscEdit } from "react-icons/vsc";
+import { VscAdd, VscClose, VscEdit } from "react-icons/vsc";
 import Switch from "../../components/Forms/Switch";
-import { ButtonWithLoader } from "../../components/Button";
+import { Button, ButtonWithLoader } from "../../components/Button";
 import { useCreatePrompt } from "../../api/prompt/useCreatePrompt";
 import { EPrompt, promptKey } from "../../api/prompt/config";
 
@@ -60,13 +60,25 @@ const CreatePromptDrawer = () => {
               )}
             />
             {/* pattern */}
-            <Drawer.Header className="p-5 text-left">
-              <Drawer.Title>Create Prompt</Drawer.Title>
-              <Drawer.Description className="mt-1 max-w-md text-xs">
-                Lorem, ipsum dolor sit amet consectetur adipisicing elit. Minus
-                perspiciatis enim natus odio doloremque tempora.
-              </Drawer.Description>
-            </Drawer.Header>
+            <div className="flex w-full items-start justify-between gap-10 p-5">
+              <Drawer.Header className="w-full text-left">
+                <Drawer.Title>Create Prompt</Drawer.Title>
+                <Drawer.Description className="mt-1 max-w-md text-xs">
+                  Lorem, ipsum dolor sit amet consectetur adipisicing elit.
+                  Minus perspiciatis enim natus odio doloremque tempora.
+                </Drawer.Description>
+              </Drawer.Header>
+
+              <Button
+                onClick={() => setIsCreatePromptDrawerOpen(false)}
+                variant={"ghost"}
+                className={
+                  "rounded-full border border-gray-600 p-1 text-gray-600 hover:bg-gray-300 md:p-1 dark:border-white dark:text-white dark:hover:bg-white/10"
+                }
+              >
+                <VscClose className="size-4" />
+              </Button>
+            </div>
 
             <div className="scrollbar scrollbar flex flex-1 flex-col overflow-hidden">
               <Form
@@ -112,7 +124,7 @@ const CreatePromptDrawer = () => {
                         <Field>
                           <Label>Prompt Name</Label>
                           <Input
-                            placeholder="Enter agent name"
+                            placeholder="Enter prompt name"
                             data-invalid={!!errors.name?.message}
                             {...register("name")}
                           />

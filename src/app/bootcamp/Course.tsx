@@ -49,7 +49,7 @@ const Course = () => {
           </div>
 
           {course.content && (
-            <div className="mt-10 w-full">
+            <div className="prose dark:prose-invert mt-10 w-full">
               <MemoizedMarkdown
                 id={course.name}
                 content={course.content}

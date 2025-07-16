@@ -37,55 +37,64 @@ export const GlobalStreamCompletionHandler = () => {
 
   // 3. Use an effect to react whenever the list of completed streams changes.
   useEffect(() => {
-    // If there are no streams in the queue to process, do nothing.
-    if (completedStreams.length === 0) {
-      return;
-    }
+    const handleCompletion = async () => {
+      // If there are no streams in the queue to process, do nothing.
+      if (completedStreams.length === 0) {
+        return;
+      }
 
-    console.log(`Processing ${completedStreams.length} completed stream(s).`);
+      console.log(`Processing ${completedStreams.length} completed stream(s).`);
 
-    const processedIds: string[] = [];
+      const processedIds: string[] = [];
 
-    // Iterate over all streams currently in the completion queue.
-    completedStreams.forEach((stream) => {
-      // Add the stream's unique ID to our list of processed items.
-      processedIds.push(stream.completionId);
+      // Iterate over all streams currently in the completion queue.
 
-      // Fire the mutation to save the final message data.
-      createMessage(
-        { body: stream.finalData },
-        {
-          // Provide dynamic callbacks for this specific mutation instance.
-          onSuccess: () => {
-            console.log(
-              `Successfully saved bot message for thread ${stream.threadId}`,
-            );
-            // On success, invalidate the query for the specific thread that was updated.
-            // This ensures the UI for that chat fetches the latest data, confirming the save.
-            queryClient.invalidateQueries({
-              queryKey: [messageKey[EMessage.FETCH_ALL] + stream.threadId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: [threadKey[EThread.ALL], agentOptions],
-            });
-            setRerenderThreadList((prev) => prev + 1);
+      for (const stream of completedStreams) {
+        processedIds.push(stream.completionId);
+
+        // Fire the mutation to save the final message data.
+        createMessage(
+          { body: stream.finalData },
+          {
+            // Provide dynamic callbacks for this specific mutation instance.
+            onSettled: async () => {
+              console.log(
+                `Successfully saved bot message for thread ${stream.threadId}`,
+              );
+              // On success, invalidate the query for the specific thread that was updated.
+              // This ensures the UI for that chat fetches the latest data, confirming the save.
+              await queryClient.invalidateQueries({
+                queryKey: [messageKey[EMessage.FETCH_ALL] + stream.threadId],
+              });
+
+              await queryClient.invalidateQueries({
+                queryKey: [threadKey[EThread.ALL]],
+                exact: false,
+              });
+
+              setTimeout(() => {
+                setRerenderThreadList((prev) => prev + 1);
+              }, 100);
+            },
+            onError: (error) => {
+              console.error(
+                `Failed to save bot message for thread ${stream.threadId}:`,
+                error,
+              );
+              // You could add more robust error handling here, like sending to a logging service.
+            },
           },
-          onError: (error) => {
-            console.error(
-              `Failed to save bot message for thread ${stream.threadId}:`,
-              error,
-            );
-            // You could add more robust error handling here, like sending to a logging service.
-          },
-        },
-      );
-    });
+        );
+      }
 
-    // 4. After firing all mutations, clear the processed items from the store's queue.
-    // This is critical to prevent processing the same stream more than once.
-    if (processedIds.length > 0) {
-      processCompletedStreams(processedIds);
-    }
+      // 4. After firing all mutations, clear the processed items from the store's queue.
+      // This is critical to prevent processing the same stream more than once.
+      if (processedIds.length > 0) {
+        processCompletedStreams(processedIds);
+      }
+    };
+
+    handleCompletion();
   }, [
     completedStreams,
     createMessage,

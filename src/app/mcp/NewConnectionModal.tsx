@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { VscLock } from "react-icons/vsc";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { EMCP, mcpKey } from "../../api/mcp/config";
 import { AuthMethod, CredentialConfig } from "../../api/mcp/types";
@@ -19,9 +20,6 @@ import Field from "../../components/Forms/Field";
 import Form from "../../components/Forms/Form";
 import Input from "../../components/Forms/Input";
 import Label from "../../components/Forms/Label";
-import MCPConnectionIcon, {
-  AvailableMCPProviders,
-} from "../../components/MCPConnectionIcon";
 import Modal from "../../components/modal";
 import Spinner from "../../components/Spinner";
 import { MCPAuth, useAuth, useAuthActions } from "../../store/authStore";
@@ -32,7 +30,6 @@ import {
   getFormFieldsFromSchema,
   getNestedError,
 } from "../../utilities/generateZodSchemaAndFields";
-import { useNavigate } from "react-router-dom";
 
 const NewConnectionModal = ({
   isOpen,
@@ -42,6 +39,7 @@ const NewConnectionModal = ({
   authMethods,
   credentials,
   category,
+  logo,
 }: {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
@@ -50,6 +48,7 @@ const NewConnectionModal = ({
   authMethods: AuthMethod[];
   credentials: CredentialConfig[];
   category: string;
+  logo: string;
 }) => {
   const navigate = useNavigate();
   const { apiUrl } = useAppConfig();
@@ -313,10 +312,11 @@ const NewConnectionModal = ({
               wrapperClass="mt-3 w-full"
               className="flex w-full items-center justify-center gap-2 rounded-lg py-1.5 [--border-highlight-radius:var(--radius-lg)]"
             >
-              <div className="rounded-lg bg-white p-1 shadow-inner">
-                <MCPConnectionIcon
-                  icon={serviceProvider as AvailableMCPProviders}
-                  className="size-5 text-black"
+              <div className="rounded-lg border border-gray-300 bg-white p-1 shadow-lg">
+                <img
+                  src={logo}
+                  className="w-5 rounded-lg object-cover"
+                  alt=""
                 />
               </div>
               Connect using oauth

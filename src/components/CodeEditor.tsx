@@ -8,6 +8,7 @@ import {
   editor as MonacoEditorNamespaceType,
 } from "monaco-editor";
 import { formatCodeWithPrettier } from "../utilities/codeFormatter"; // Your working formatter
+import { useSetInitialTheme, useTheme } from "../store/themeStore";
 
 interface ICodeEditor {
   value: string;
@@ -295,6 +296,18 @@ const CodeEditor = ({
     value,
   ]);
 
+  const { mode } = useTheme();
+  const { colorScheme } = useSetInitialTheme();
+  const [isDarkModeEffective, setIsDarkModeEffective] = useState(false);
+
+  useEffect(() => {
+    if (mode === "system") {
+      setIsDarkModeEffective(colorScheme?.matches ?? false);
+    } else {
+      setIsDarkModeEffective(mode === "dark");
+    }
+  }, [mode, colorScheme]);
+
   return (
     <Editor
       onMount={handleEditorDidMount}
@@ -302,7 +315,7 @@ const CodeEditor = ({
       language={language}
       height="100%"
       defaultValue={value}
-      theme="vs-dark"
+      theme={isDarkModeEffective ? "vs-dark" : "vs-light"}
       options={{
         minimap: { enabled: false },
         readOnly: readOnly, // This is what makes the editor instance read-only

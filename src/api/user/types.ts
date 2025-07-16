@@ -27,6 +27,7 @@ export type User = {
     other?: string | null;
   };
   created_at: string;
+  login_method: "EMAIL" | "GOOGLE_OAUTH" | "MICROSOFT_OAUTH";
 };
 
 export interface GenerateAvatarInput {

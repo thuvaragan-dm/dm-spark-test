@@ -5,9 +5,6 @@ import { useGetMCPTemplateDetails } from "../../api/mcp/useGetMCPTemplateDetails
 import { useGetMCPTools } from "../../api/mcp/useGetMCPTools";
 import mcpBannerImage from "../../assets/mcp_banner.png";
 import { Button } from "../../components/Button";
-import MCPConnectionIcon, {
-  AvailableMCPProviders,
-} from "../../components/MCPConnectionIcon";
 import { Pagination } from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
 import NewConnectionModal from "./NewConnectionModal";
@@ -61,9 +58,10 @@ const MCPTemplateDetails = () => {
           <div className="mt-5 flex w-full items-end justify-between px-5">
             <div className="flex items-start justify-start gap-3">
               <div className="rounded-lg border border-gray-300 bg-white p-1 shadow-lg">
-                <MCPConnectionIcon
-                  className="size-6"
-                  icon={service_provider as AvailableMCPProviders}
+                <img
+                  src={MCPDetails.mcp_logo_url}
+                  className="w-6 rounded-lg object-cover"
+                  alt=""
                 />
               </div>
 
@@ -165,6 +163,7 @@ const MCPTemplateDetails = () => {
             authMethods={MCPDetails.auth_method}
             credentials={MCPDetails.credentials}
             category={MCPDetails.category}
+            logo={MCPDetails.mcp_logo_url}
           />
         </>
       )}

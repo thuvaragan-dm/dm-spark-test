@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import Success from "../../components/alerts/Success";
 import { useGetWorkerAgentSecrets } from "../../api/workerAgents/useGetWorkerAgentSecrets";
 import { useAppConfig } from "../../store/configurationStore";
+import { WorkerAgentOrigin } from "../../api/workerAgents/types";
 
 const WorkerAgentDetail = () => {
   const { apiUrl } = useAppConfig();
@@ -142,51 +143,56 @@ const WorkerAgentDetail = () => {
                     </div>
                   )}
 
-                {(!workerAgent?.github_metadata ||
-                  !workerAgent?.github_metadata?.published_commit_hash) && (
-                  <Button
-                    onClick={() => {
-                      const url = `${apiUrl}/github-worker-agent-login?blue_print_reference_link=${workerAgent.github_metadata?.github_reference_link}&worker_agent_id=${workerAgent.id}&workspace_id=${workerAgent.workspace_id}`;
-                      if (window.electronAPI && window.electronAPI.send) {
-                        // Send a message to the main process to open the URL
-                        window.electronAPI.send("open-external-url", url);
-                      }
-                    }}
-                    wrapperClass="w-min"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg py-1.5 whitespace-nowrap [--border-highlight-radius:var(--radius-lg)]"
-                  >
-                    <div className="rounded-sm bg-white p-0.5 shadow-inner">
-                      <MCPConnectionIcon
-                        icon={"GitHubMCP"}
-                        className="size-4 text-black"
-                      />
-                    </div>
-                    Sync with your Github
-                  </Button>
-                )}
+                {workerAgent.origin !== WorkerAgentOrigin.CUSTOM &&
+                  (!workerAgent?.github_metadata ||
+                    !workerAgent?.github_metadata?.published_commit_hash) && (
+                    <Button
+                      onClick={() => {
+                        const url = `${apiUrl}/github-worker-agent-login?blue_print_reference_link=${workerAgent.github_metadata?.github_reference_link}&worker_agent_id=${workerAgent.id}&workspace_id=${workerAgent.workspace_id}`;
+                        if (window.electronAPI && window.electronAPI.send) {
+                          // Send a message to the main process to open the URL
+                          window.electronAPI.send("open-external-url", url);
+                        }
+                      }}
+                      wrapperClass="w-min"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg py-1.5 whitespace-nowrap [--border-highlight-radius:var(--radius-lg)]"
+                    >
+                      <div className="rounded-sm bg-white p-0.5 shadow-inner">
+                        <MCPConnectionIcon
+                          icon={"GitHubMCP"}
+                          className="size-4 text-black"
+                        />
+                      </div>
+                      Sync with your Github
+                    </Button>
+                  )}
 
-                <ButtonWithLoader
-                  onClick={async () => {
-                    await publishWorkerAgent({
-                      params: {
-                        worker_agent_id: id || "",
-                      },
-                    });
+                {workerAgent.origin !== WorkerAgentOrigin.CUSTOM &&
+                  workerAgent?.github_metadata &&
+                  workerAgent?.github_metadata?.github_reference_link && (
+                    <ButtonWithLoader
+                      onClick={async () => {
+                        await publishWorkerAgent({
+                          params: {
+                            worker_agent_id: id || "",
+                          },
+                        });
 
-                    toast.custom((t) => (
-                      <Success
-                        t={t}
-                        title={`Published ${workerAgent?.name}`}
-                        description={`We have successfully pushlished your ${workerAgent?.name} worker agent.`}
-                      />
-                    ));
-                  }}
-                  isLoading={isPublishWorkerAgentLoading}
-                  variant={"secondary"}
-                  className={"rounded-lg px-3 py-1.5 md:px-3 md:py-1.5"}
-                >
-                  {isPublishWorkerAgentLoading ? "Publishing" : "Publish"}
-                </ButtonWithLoader>
+                        toast.custom((t) => (
+                          <Success
+                            t={t}
+                            title={`Published ${workerAgent?.name}`}
+                            description={`We have successfully pushlished your ${workerAgent?.name} worker agent.`}
+                          />
+                        ));
+                      }}
+                      isLoading={isPublishWorkerAgentLoading}
+                      variant={"secondary"}
+                      className={"rounded-lg px-3 py-1.5 md:px-3 md:py-1.5"}
+                    >
+                      {isPublishWorkerAgentLoading ? "Publishing" : "Publish"}
+                    </ButtonWithLoader>
+                  )}
 
                 <Dropdown
                   open={isContextMenuOpen}
