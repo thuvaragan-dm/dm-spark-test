@@ -35,7 +35,7 @@ import {
 } from "../../../store/chatInputStore";
 import { useStreamManager } from "../../../store/streamStore";
 import sleep from "../../../utilities/sleep";
-import ChatInput from "./ChatInput";
+import ChatInput, { ChatInputHandle } from "./ChatInput";
 import ChatResponse from "./ChatResponse";
 import ChatZeroState from "./ChatZeroState";
 import UserMessage from "./UserMessage";
@@ -44,7 +44,7 @@ const ChatArea = () => {
   const [searchParams] = useSearchParams();
   const appendToUrl = useAppendToSearchQuery();
   const prevScrollHeightRef = useRef<number | null>(null);
-
+  const chatInputRef = useRef<ChatInputHandle>(null);
   const { scrollRef, contentRef, scrollToBottom } = useStickToBottom({
     initial: "smooth",
   });
@@ -59,8 +59,8 @@ const ChatArea = () => {
 
   const { selectedAgent } = useAgent();
 
-  const { files, fileData } = useChatInput();
-  const { setFiles, setFileData } = useChatInputActions();
+  const { files, fileData, query } = useChatInput();
+  const { setFiles, setFileData, setQuery } = useChatInputActions();
 
   const { mutateAsync: uploadFile } = useUploadDocument({
     invalidateQueryKey: [documentKey[EDocument.FETCH_ALL]],
@@ -294,6 +294,42 @@ const ChatArea = () => {
     state.statuses.get(focusedThreadId || ""),
   );
 
+  const autoChatSubmitTriggered = useRef(false);
+  useEffect(() => {
+    const isTriggerSubmit = !!searchParams.get("trigger-submit");
+    const threadId = searchParams.get("thread");
+
+    if (
+      isTriggerSubmit &&
+      !threadId &&
+      query &&
+      !autoChatSubmitTriggered.current
+    ) {
+      autoChatSubmitTriggered.current = true;
+
+      setTimeout(() => {
+        handleChatSubmit(query);
+        setQuery("");
+      }, 500);
+    }
+  }, [
+    searchParams,
+    query,
+    handleChatSubmit,
+    setQuery,
+    autoChatSubmitTriggered,
+  ]);
+
+  useEffect(() => {
+    const isPrompt = !!searchParams.get("prompt");
+    const threadId = searchParams.get("thread");
+    if (isPrompt && !threadId) {
+      setTimeout(() => {
+        chatInputRef.current?.scrollToBottom();
+      }, 300);
+    }
+  }, [searchParams]);
+
   return (
     <section
       {...getRootProps()}
@@ -500,6 +536,7 @@ const ChatArea = () => {
           <div className="relative mx-auto flex w-full max-w-4xl flex-col overflow-hidden px-5 py-1 md:px-10">
             <input className="sr-only" type="file" {...getInputProps()} />
             <ChatInput
+              ref={chatInputRef}
               isLoading={
                 isSendMessageLoading ||
                 status === "loading" ||

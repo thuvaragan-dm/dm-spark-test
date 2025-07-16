@@ -10,9 +10,6 @@ import Field from "../../components/Forms/Field";
 import Form from "../../components/Forms/Form";
 import Input from "../../components/Forms/Input";
 import InputGroup from "../../components/Forms/InputGroup";
-import MCPConnectionIcon, {
-  AvailableMCPProviders,
-} from "../../components/MCPConnectionIcon";
 import { Pagination } from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
 import { cn } from "../../utilities/cn";
@@ -138,11 +135,11 @@ const MCPServersCreatedByYou = () => {
                         className="flex items-start justify-start gap-3 rounded-xl border border-gray-300 p-3 dark:border-white/10"
                       >
                         {/* icon */}
-                        <div className="rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
-                          <MCPConnectionIcon
-                            icon={
-                              connection.service_provider as AvailableMCPProviders
-                            }
+                        <div className="aspect-square rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
+                          <img
+                            className="w-10 object-cover"
+                            alt="mcp image"
+                            src={connection.mcp_logo_url}
                           />
                         </div>
                         {/* icon */}

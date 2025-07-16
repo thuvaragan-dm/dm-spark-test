@@ -191,19 +191,6 @@ const Combobox = <T extends { id: string }>({
               </div>
             </motion.div>
           </ComboboxOptions>
-
-          <div className="flex items-center justify-end border-t border-gray-300 bg-gray-200/70 px-3 py-3 dark:border-white/10 dark:bg-white/3">
-            <p className="text-xs text-gray-500 dark:text-white/70">
-              Not the results you expected?{" "}
-              <span className="dark:text-secondary text-primary cursor-pointer hover:underline">
-                Give feedback
-              </span>{" "}
-              or{" "}
-              <span className="dark:text-secondary text-primary cursor-pointer hover:underline">
-                Learn more
-              </span>
-            </p>
-          </div>
         </Cb>
       </Dialog.Content>
     </Dialog>

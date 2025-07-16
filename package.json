@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Spark is your AI super agent",
   "author": {
-    "name": "Thuvaragan",
-    "email": "thuvaragan@deepmodel.com"
+    "name": "spark",
+    "email": "spark@deepmodel.ai"
   },
   "scripts": {
     "dev": "vite",

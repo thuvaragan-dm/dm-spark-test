@@ -4,7 +4,10 @@ import { useCreateQuery } from "../apiFactory";
 import { EPrompt, promptKey } from "./config";
 import { Prompt, PromptParams } from "./types";
 
-export const useGetPrompts = (params?: PromptParams) => {
+export const useGetPrompts = (
+  params?: PromptParams,
+  options?: { enabled?: boolean },
+) => {
   const { apiClient } = useApi();
 
   return useCreateQuery<PaginatedResult<Prompt>>({
@@ -13,5 +16,6 @@ export const useGetPrompts = (params?: PromptParams) => {
     url: "/prompts",
     errorMessage: "Failed to fetch prompts.",
     queryParams: params,
+    queryOptions: { enabled: options?.enabled },
   });
 };
