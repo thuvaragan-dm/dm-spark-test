@@ -1,10 +1,12 @@
+"use client";
+
 import { cva, VariantProps } from "class-variance-authority";
 import {
   AnimationDefinition,
   motion,
   useAnimationControls,
 } from "motion/react";
-import { ComponentProps, forwardRef } from "react";
+import { forwardRef } from "react";
 import { Button as Btn, ButtonProps, PressEvent } from "react-aria-components";
 import { cn } from "../utilities/cn";
 import Spinner from "./Spinner";
@@ -21,7 +23,7 @@ const variants = {
 };
 
 const defaultStyles = cn(
-  "touch-none select-none cursor-pointer overflow-hidden disabled:cursor-not-allowed rounded-xl [--border-highlight-radius:var(--radius-xl)] bg-[var(--color-btn)] dark:bg-[var(--color-btn-dark)] text-[var(--color-btn-text)] text-sm font-medium outline-none ring-[var(--color-btn-ring)] ring-offset-2 ring-offset-inherit hover:bg-[var(--color-btn-hover)] focus:outline-none disabled:text-[var(--color-btn-text-disabled)] disabled:bg-[var(--color-btn-disabled)] data-[pressed]:bg-[var(--color-btn-active)] data-[focus-visible]:ring-2 px-5 py-3",
+  "touch-none select-none cursor-pointer overflow-hidden disabled:cursor-not-allowed rounded-xl bg-[var(--color-btn)] dark:bg-[var(--color-btn-dark)] text-[var(--color-btn-text)] text-sm font-medium outline-none ring-[var(--color-btn-ring)] ring-offset-2 ring-offset-inherit hover:bg-[var(--color-btn-hover)] focus:outline-none disabled:text-[var(--color-btn-text-disabled)] disabled:bg-[var(--color-btn-disabled)] data-[pressed]:bg-[var(--color-btn-active)] data-[focus-visible]:ring-2 px-5 py-3",
 );
 
 export const ButtonVariants = cva(defaultStyles, {
@@ -48,7 +50,7 @@ const Loader = ({
   isLoading = false,
   isDisabled = false,
   className,
-  disabledClass = "text-[var(--color-btn-text-disabled)] dark:text-[var(--color-btn-text-disabled)]",
+  disabledClass = "text-[var(--color-btn-text-disabled)]",
 }: {
   children: React.ReactNode;
   isLoading?: boolean;
@@ -90,7 +92,7 @@ const Loader = ({
         >
           <Spinner
             className={cn(
-              "absolute h-4 w-4 text-[var(--color-btn-spinner)]",
+              "absolute h-4 w-4 text-[var(--color-btn-text-disabled)] dark:text-[var(--color-btn-text-disabled)]",
               isDisabled && disabledClass,
               className,
             )}
@@ -164,10 +166,7 @@ const ButtonWithLoader = forwardRef<HTMLButtonElement, IButton>(
           }}
           onPress={handleClick}
           isDisabled={disabled || isLoading}
-          className={cn(
-            "relative [--border-highlight-radius:var(--radius-xl)]",
-            ButtonVariants({ variant, className }),
-          )}
+          className={cn("relative", ButtonVariants({ variant, className }))}
           {...props}
           aria-disabled={disabled || isLoading}
         >
@@ -256,25 +255,14 @@ Button.displayName = "Button";
 
 export { Button, ButtonWithLoader };
 
-interface IBorderHighligher extends ComponentProps<"div"> {}
-const BorderHighligher = ({ className }: IBorderHighligher) => {
+const BorderHighligher = () => {
   return (
     <>
-      <span
-        className={cn(
-          "pointer-events-none absolute inset-0 overflow-hidden rounded-[var(--border-highlight-radius)]",
-          className,
-        )}
-      >
-        <div className="size-full rounded-[var(--border-highlight-radius)] border-t-2 border-white/20"></div>
+      <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+        <div className="size-full rounded-xl border-t-2 border-white/20"></div>
       </span>
-      <span
-        className={cn(
-          "pointer-events-none absolute inset-0 overflow-hidden rounded-[var(--border-highlight-radius)]",
-          className,
-        )}
-      >
-        <div className="size-full rounded-[var(--border-highlight-radius)] border border-t-0 border-white/10"></div>
+      <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+        <div className="size-full rounded-xl border border-t-0 border-white/10"></div>
       </span>
     </>
   );

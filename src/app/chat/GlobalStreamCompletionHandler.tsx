@@ -68,7 +68,10 @@ export const GlobalStreamCompletionHandler = () => {
             queryClient.invalidateQueries({
               queryKey: [threadKey[EThread.ALL], agentOptions],
             });
-            setRerenderThreadList((prev) => prev + 1);
+
+            setTimeout(() => {
+              setRerenderThreadList((prev) => prev + 1);
+            }, 500);
           },
           onError: (error) => {
             console.error(
