@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 5.1.0
+
+### Minor Changes
+
+- [`7fb6ed9`](https://github.com/thuvaragan-dm/dm-spark-test/commit/7fb6ed9ba2ec7fd5d39880c6ef4f0e8448a7de85) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - command palette option added.
+
 ## 5.0.0
 
 ### Major Changes
