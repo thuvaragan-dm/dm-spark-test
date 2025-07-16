@@ -30,7 +30,7 @@ const toastService = {
   },
 };
 
-type HttpMethod = "post" | "put" | "patch" | "delete";
+type HttpMethod = "post" | "put" | "patch" | "delete" | "get";
 
 // Mutation context to store previous data for rollback in case of failure
 export type MutationContext<TOptimisticData> =

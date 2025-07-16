@@ -10,6 +10,7 @@ import {
   VscSearch,
 } from "react-icons/vsc";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useGetPrompts } from "../api/prompt/useGetPrompts";
 import icon from "../assets/icon.png";
 import Avatar from "../components/Avatar";
 import { Button } from "../components/Button";
@@ -19,20 +20,28 @@ import Tooltip from "../components/tooltip";
 import { COMMAND_KEY } from "../components/tooltip/TooltipKeyboardShortcut";
 import { useAppHistory } from "../hooks/useAppHistory";
 import { useAuth, useAuthActions } from "../store/authStore";
+import { useChatInputActions } from "../store/chatInputStore";
 import { useCombobox, useComboboxActions } from "../store/comboboxStore";
 import { useAppConfig, useAppConfigActions } from "../store/configurationStore";
+import { usePromptAction } from "../store/promptStore";
 import { useSidebar, useSidebarActions } from "../store/sidebarStore";
+import { useWorkerAgentActions } from "../store/workerAgentStore";
 import { cn } from "../utilities/cn";
+import fuzzySearch from "../utilities/fuzzySearch";
 import Login from "./Login";
 import { SettingsModal } from "./Settings";
 import UserLoading from "./UserLoading";
 
 const RootLayout = () => {
+  const navigate = useNavigate();
+  const { setQuery: setChatQuery } = useChatInputActions();
+  const { setIsRegisterWorkerAgentModalOpen } = useWorkerAgentActions();
   const { pathname: path } = useLocation();
-  const { config, showAnnouncement } = useAppConfig();
+  const { config, showAnnouncement, apiUrl } = useAppConfig();
   const { setShowAnnouncement } = useAppConfigActions();
   const { user, accessToken } = useAuth();
   const { setAccessToken, refetchUser, logout, setMCP } = useAuthActions();
+  const { setIsCreatePromptDrawerOpen } = usePromptAction();
 
   useEffect(() => {
     // 1. Check for a token that might already be stored on disk.
@@ -67,21 +76,6 @@ const RootLayout = () => {
   }, [setAccessToken, refetchUser]);
 
   useEffect(() => {
-    const handleTokenReceived = (token: string) => {
-      setAccessToken(token);
-      refetchUser();
-    };
-
-    const unsubscribe = window.electronAPI.onTokenReceived(handleTokenReceived);
-
-    return () => {
-      if (typeof unsubscribe === "function") {
-        unsubscribe();
-      }
-    };
-  }, [setAccessToken, refetchUser]);
-
-  useEffect(() => {
     const handleTokensReceived = (tokens: Record<string, any> | null) => {
       if (!tokens) return;
       console.log({ tokens });
@@ -99,7 +93,6 @@ const RootLayout = () => {
   }, [setMCP]);
 
   const { canGoBack, canGoForward } = useAppHistory();
-  const navigate = useNavigate();
 
   const { isSidebarExpanded } = useSidebar();
   const { setIsSidebarExpanded } = useSidebarActions();
@@ -120,8 +113,14 @@ const RootLayout = () => {
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const { isLoading, isOpen, query } = useCombobox();
-  const { setIsOpen, setQuery } = useComboboxActions();
+  const { isLoading, isOpen, query, recentOptions } = useCombobox();
+  const { setIsOpen, setQuery, addRecentOption } = useComboboxActions();
+
+  const promptsEnabled = !!apiUrl && !!accessToken;
+  const { data: prompts } = useGetPrompts(
+    { page: 1, records_per_page: 20 },
+    { enabled: promptsEnabled },
+  );
 
   useEffect(() => {
     let cleanupToggleSearchBarListener = () => {};
@@ -145,6 +144,164 @@ const RootLayout = () => {
     onClick?: () => void;
   }
 
+  const gotoSearchOptions = useMemo<ComboboxResult[]>(
+    () => [
+      {
+        id: "goto-1",
+        name: "Goto: Chat",
+        onClick: () => {
+          navigate("/home/chat");
+        },
+      },
+      {
+        id: "goto-2",
+        name: "Goto: Memory",
+        onClick: () => {
+          navigate("/memory");
+        },
+      },
+      {
+        id: "goto-3",
+        name: "Goto: All Worker Agents",
+        onClick: () => {
+          navigate("/worker-agents/all");
+        },
+      },
+      {
+        id: "goto-4",
+        name: "Goto: Worker Agents Created by you",
+        onClick: () => {
+          navigate("/worker-agents/created-by-you");
+        },
+      },
+      {
+        id: "goto-5",
+        name: "Goto: Worker Agents Shared with you",
+        onClick: () => {
+          navigate("/worker-agents/shared-with-you");
+        },
+      },
+      {
+        id: "goto-6",
+        name: "Goto: All MCP Servers",
+        onClick: () => {
+          navigate("/mcp/connections");
+        },
+      },
+      {
+        id: "goto-7",
+        name: "Goto: MCP Servers Created by you",
+        onClick: () => {
+          navigate("/mcp/created-by-you");
+        },
+      },
+      {
+        id: "goto-8",
+        name: "Goto: MCP Servers Shared with you",
+        onClick: () => {
+          navigate("/mcp/shared-with-you");
+        },
+      },
+      {
+        id: "goto-9",
+        name: "Goto: Blueprints",
+        onClick: () => {
+          navigate("/blueprints");
+        },
+      },
+      {
+        id: "goto-10",
+        name: "Goto: Bootcamp",
+        onClick: () => {
+          navigate("/bootcamp");
+        },
+      },
+      {
+        id: "goto-11",
+        name: "Goto: All prompts",
+        onClick: () => {
+          navigate("/prompts/all");
+        },
+      },
+      {
+        id: "goto-12",
+        name: "Goto: Prompts Created by you",
+        onClick: () => {
+          navigate("/prompts/created-by-you");
+        },
+      },
+      {
+        id: "goto-13",
+        name: "Goto: Prompts Shared with you",
+        onClick: () => {
+          navigate("/prompts/shared-with-you");
+        },
+      },
+    ],
+    [navigate],
+  );
+
+  const workerAgentRelatedOptions = useMemo<ComboboxResult[]>(
+    () => [
+      {
+        id: "wa-1",
+        name: "Worker Agent: Create new worker agent",
+        onClick: () => {
+          navigate("/worker-agents/all");
+          setTimeout(() => {
+            setIsRegisterWorkerAgentModalOpen(true);
+          }, 100);
+        },
+      },
+    ],
+    [navigate, setIsRegisterWorkerAgentModalOpen],
+  );
+
+  const mcpRelatedOptions = useMemo<ComboboxResult[]>(
+    () => [
+      {
+        id: "mcp-1",
+        name: "MCP: Add new MCP Server",
+        onClick: () => {
+          navigate("/mcp/templates");
+        },
+      },
+    ],
+    [navigate],
+  );
+
+  const promptsRelatedOptions = useMemo<ComboboxResult[]>(
+    () => [
+      {
+        id: "prompt-1",
+        name: "Prompt: Create new prompt",
+        onClick: () => {
+          navigate("/prompts/all");
+          setTimeout(() => {
+            setIsCreatePromptDrawerOpen(true);
+          }, 100);
+        },
+      },
+    ],
+    [navigate, setIsCreatePromptDrawerOpen],
+  );
+
+  const askPromptOptions = useMemo<ComboboxResult[]>(() => {
+    if (prompts && prompts.items.length > 0) {
+      return prompts.items.map((prompt) => ({
+        id: prompt.id,
+        name: `Ask: Use Prompt ${prompt.name}`,
+        onClick: () => {
+          navigate("/home/chat");
+          setTimeout(() => {
+            setChatQuery(prompt.prompt);
+          }, 100);
+        },
+      }));
+    }
+    return [];
+  }, [prompts, navigate, setChatQuery]);
+
   const defaultSearchOptions: ComboboxResult[] = useMemo(
     () => [
       {
@@ -166,23 +323,55 @@ const RootLayout = () => {
   );
 
   const filteredSearchOptions = useMemo(() => {
-    if (!query) return defaultSearchOptions;
+    const combinedOptions = [
+      ...gotoSearchOptions,
+      ...defaultSearchOptions,
+      ...askPromptOptions,
+      ...workerAgentRelatedOptions,
+      ...mcpRelatedOptions,
+      ...promptsRelatedOptions,
+    ];
 
-    const filteredResults = defaultSearchOptions.filter((option) =>
-      option.name.toLowerCase().includes(query.toLowerCase()),
-    );
+    if (query) {
+      const filtered = combinedOptions.filter((option) =>
+        fuzzySearch(query, option.name),
+      );
 
-    if (filteredResults.length <= 0) {
-      return [
-        {
-          id: "default-no-results",
-          name: `search: ${query}`,
-        },
-      ];
+      if (filtered.length > 0) {
+        return filtered;
+      } else {
+        return [
+          {
+            id: "ask",
+            name: `Ask: ${query}`,
+            onClick: () => {
+              navigate(`/home/chat?trigger-submit=true`);
+              setTimeout(() => {
+                setChatQuery(query);
+              }, 100);
+            },
+          },
+        ];
+      }
     }
 
-    return filteredResults;
-  }, [query, defaultSearchOptions]);
+    const recentOptionIds = new Set(recentOptions.map((o) => o.id));
+    const otherOptions = combinedOptions.filter(
+      (option) => !recentOptionIds.has(option.id),
+    );
+    return [...recentOptions, ...otherOptions];
+  }, [
+    query,
+    recentOptions,
+    gotoSearchOptions,
+    askPromptOptions,
+    workerAgentRelatedOptions,
+    defaultSearchOptions,
+    mcpRelatedOptions,
+    promptsRelatedOptions,
+    navigate,
+    setChatQuery,
+  ]);
 
   const anouncement = useMemo(
     () => config?.global?.global_announcement || config?.version?.announcement,
@@ -199,22 +388,18 @@ const RootLayout = () => {
               "relative flex w-full flex-1 items-center justify-between px-1.5",
             )}
           >
-            {/* center controls */}
             <div className="flex h-full w-full items-center justify-center gap-3">
               <div className="flex items-center justify-center gap-1">
                 <Tooltip>
                   <Button
                     variant={"unstyled"}
                     wrapperClass="app-region-no-drag flex items-center"
-                    className={
-                      "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
-                    }
+                    className="rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
                     disabled={!canGoBack}
                     onClick={() => navigate(-1)}
                   >
                     <IoArrowBack className="size-6" />
                   </Button>
-
                   <Tooltip.Content placement="bottom" offset={10}>
                     <Tooltip.Shorcut
                       title="Back in history"
@@ -228,15 +413,12 @@ const RootLayout = () => {
                   <Button
                     variant={"unstyled"}
                     wrapperClass="app-region-no-drag flex items-center"
-                    className={
-                      "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
-                    }
+                    className="rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
                     disabled={!canGoForward}
                     onClick={() => navigate(+1)}
                   >
                     <IoArrowForward className="size-6" />
                   </Button>
-
                   <Tooltip.Content placement="bottom" offset={10}>
                     <Tooltip.Shorcut
                       title="Forward in history"
@@ -252,15 +434,12 @@ const RootLayout = () => {
                   <Focusable>
                     <button
                       onClick={() => setIsOpen((prev) => !prev)}
-                      className={
-                        "app-region-no-drag flex w-full cursor-pointer items-center justify-start gap-2 rounded-md bg-white/15 px-2 py-1 text-sm font-light tracking-wide text-white/50"
-                      }
+                      className="app-region-no-drag flex w-full cursor-pointer items-center justify-start gap-2 rounded-md bg-white/15 px-2 py-1 text-sm font-light tracking-wide text-white/50"
                     >
                       <VscSearch className="size-4" />
                       <p>Spark Search...</p>
                     </button>
                   </Focusable>
-
                   <Tooltip.Content placement="bottom" offset={10}>
                     <Tooltip.Shorcut
                       title="Search Spark"
@@ -272,14 +451,11 @@ const RootLayout = () => {
               </div>
 
               <div className="flex items-center justify-start gap-1">
-                {/* sidebar toggle button */}
                 <Tooltip>
                   <Button
                     variant={"unstyled"}
                     wrapperClass="app-region-no-drag flex items-center"
-                    className={
-                      "rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
-                    }
+                    className="rounded-md bg-transparent p-1 text-white ring-white/10 hover:bg-white/10 disabled:text-white/15"
                     onClick={() => setIsSidebarExpanded((pv) => !pv)}
                   >
                     {isSidebarExpanded ? (
@@ -288,7 +464,6 @@ const RootLayout = () => {
                       <VscLayoutSidebarLeftOff className="size-6" />
                     )}
                   </Button>
-
                   <Tooltip.Content placement="bottom" offset={10}>
                     <Tooltip.Shorcut
                       title="Toggle sidebar"
@@ -297,23 +472,15 @@ const RootLayout = () => {
                     <Tooltip.Arrow />
                   </Tooltip.Content>
                 </Tooltip>
-                {/* sidebar toggle button */}
               </div>
             </div>
-            {/* center controls */}
-
-            {/* far right controls */}
-            {/* <div className=""></div> */}
-            {/* far right controls */}
           </div>
         )}
       </nav>
 
       {!accessToken && !user && <Login />}
-
       {accessToken && !user && <UserLoading />}
 
-      {/* Main content */}
       {accessToken && user && (
         <>
           <section className="mt-10 flex w-full flex-1 flex-col overflow-hidden">
@@ -330,17 +497,16 @@ const RootLayout = () => {
                       <h3 className="text-sm font-medium text-white">
                         {anouncement.title}
                       </h3>
-
                       <p className="text-xs text-white/60">
                         {anouncement.description}
                       </p>
                     </div>
 
                     <div className="flex items-center justify-end gap-3">
-                      {anouncement && anouncement.cta && (
+                      {anouncement?.cta && (
                         <Button
                           onClick={() => {
-                            if (window.electronAPI && window.electronAPI.send) {
+                            if (window.electronAPI?.send) {
                               window.electronAPI.send(
                                 "open-external-url",
                                 anouncement.cta.link,
@@ -348,21 +514,15 @@ const RootLayout = () => {
                             }
                           }}
                           variant={"ghost"}
-                          className={
-                            "text-primary rounded-lg bg-white p-3 py-1.5 hover:bg-white/90 data-[pressed]:bg-white/90 md:p-3 md:py-1.5 dark:bg-white dark:hover:bg-white/90 dark:data-[pressed]:bg-white/90"
-                          }
+                          className="text-primary rounded-lg bg-white p-3 py-1.5 hover:bg-white/90 data-[pressed]:bg-white/90 md:p-3 md:py-1.5 dark:bg-white dark:hover:bg-white/90 dark:data-[pressed]:bg-white/90"
                         >
                           {anouncement.cta.name}
                         </Button>
                       )}
                       <Button
-                        onClick={() => {
-                          setShowAnnouncement(false);
-                        }}
+                        onClick={() => setShowAnnouncement(false)}
                         variant={"ghost"}
-                        className={
-                          "rounded-lg bg-transparent p-1.5 text-white hover:bg-white/5 data-[pressed]:bg-white/90 md:p-1.5 dark:bg-transparent dark:hover:bg-white/5 dark:data-[pressed]:bg-white/5"
-                        }
+                        className="rounded-lg bg-transparent p-1.5 text-white hover:bg-white/5 data-[pressed]:bg-white/90 md:p-1.5 dark:bg-transparent dark:hover:bg-white/5 dark:data-[pressed]:bg-white/5"
                       >
                         <VscClose className="size-6" />
                       </Button>
@@ -373,10 +533,8 @@ const RootLayout = () => {
             </AnimatePresence>
 
             <div className="mb-1.5 flex h-full w-full items-start justify-start overflow-hidden">
-              {/* side panel */}
               <div className="mt-3 flex h-full w-20 flex-col items-center justify-between overflow-hidden pb-4">
                 <div className="flex flex-1 flex-col items-center justify-start gap-3">
-                  {/* logo */}
                   <div className="mb-2 aspect-square w-min rounded-xl bg-white/10 text-white">
                     <img
                       src={icon}
@@ -384,14 +542,10 @@ const RootLayout = () => {
                       className="size-12 object-cover"
                     />
                   </div>
-                  {/* logo */}
 
-                  {/* navigation links */}
                   <Link
-                    to={"/home/chat"}
-                    className={
-                      "group flex flex-col items-center justify-center gap-1"
-                    }
+                    to="/home/chat"
+                    className="group flex flex-col items-center justify-center gap-1"
                   >
                     <div
                       className={cn(
@@ -419,10 +573,8 @@ const RootLayout = () => {
                   </Link>
 
                   <Link
-                    to={"/memory"}
-                    className={
-                      "group flex flex-col items-center justify-center gap-1"
-                    }
+                    to="/memory"
+                    className="group flex flex-col items-center justify-center gap-1"
                   >
                     <div
                       className={cn(
@@ -453,10 +605,8 @@ const RootLayout = () => {
                   </Link>
 
                   <Link
-                    to={"/worker-agents/all"}
-                    className={
-                      "group flex flex-col items-center justify-center gap-1"
-                    }
+                    to="/worker-agents/all"
+                    className="group flex flex-col items-center justify-center gap-1"
                   >
                     <div
                       className={cn(
@@ -488,10 +638,8 @@ const RootLayout = () => {
                   </Link>
 
                   <Link
-                    to={"/mcp"}
-                    className={
-                      "group flex flex-col items-center justify-center gap-1"
-                    }
+                    to="/mcp"
+                    className="group flex flex-col items-center justify-center gap-1"
                   >
                     <div
                       className={cn(
@@ -519,11 +667,6 @@ const RootLayout = () => {
                             d="M19.994 11.335l-.071.071-7.52 7.469a.237.237 0 00-.07.169.244.244 0 00.067.17l.004.005 1.544 1.535a.726.726 0 01.014 1.018l-.013.014a.74.74 0 01-1.04 0l-1.544-1.533a1.68 1.68 0 01-.503-1.205 1.697 1.697 0 01.503-1.205l7.52-7.47c.405-.4.637-.946.644-1.519a2.177 2.177 0 00-.604-1.536l-.04-.042-.044-.042a2.22 2.22 0 00-1.557-.642 2.22 2.22 0 00-1.559.64l-6.193 6.155h-.003l-.084.085a.74.74 0 01-1.04 0 .726.726 0 01-.013-1.018l.013-.014 6.281-6.24a2.182 2.182 0 00.035-3.057l-.037-.039a2.22 2.22 0 00-1.56-.642 2.22 2.22 0 00-1.559.642l-8.311 8.26a.74.74 0 01-1.04 0 .726.726 0 01-.014-1.018l.015-.014 8.313-8.262A3.7 3.7 0 0113.125 1a3.7 3.7 0 012.598 1.069 3.63 3.63 0 011.04 3.097 3.686 3.686 0 013.117 1.033l.044.043a3.64 3.64 0 01.069 5.092m-2.191-2.038a.726.726 0 00.013-1.018l-.013-.014a.74.74 0 00-1.04 0l-6.149 6.108a2.22 2.22 0 01-1.559.642 2.22 2.22 0 01-1.559-.642 2.162 2.162 0 01-.645-1.548 2.185 2.185 0 01.645-1.549l6.15-6.109a.727.727 0 00.014-1.018l-.014-.013a.74.74 0 00-1.04 0l-6.148 6.107c-.34.336-.61.737-.796 1.18a3.64 3.64 0 00.796 3.982 3.701 3.701 0 002.599 1.069c.97 0 1.902-.384 2.598-1.07l6.148-6.107z"
                             fill="currentColor"
                           />
-                          <path
-                            d="M19.923 11.406l1.365 1.375h.001l-1.366-1.375zm-7.52 7.469l1.363 1.378.003-.003-1.365-1.375zm-.003.34l-1.394 1.346.007.008.008.007 1.379-1.361zm.004.004l-1.38 1.361.007.007.006.006 1.367-1.374zm1.544 1.535l-1.367 1.374.004.004 1.363-1.378zm.014 1.018l1.38 1.362.01-.011.011-.012-1.4-1.338zm-.013.014l1.362 1.378.009-.008.008-.009-1.379-1.361zm-1.04 0l-1.365 1.375.003.003 1.362-1.378zm-1.544-1.533l1.365-1.376-.006-.005-1.36 1.38zm0-2.41l1.36 1.381.005-.006-1.365-1.375zm7.52-7.47l-1.362-1.379L17.52 9l1.366 1.374zm.04-3.055l-1.4 1.34.002.003 1.398-1.343zm-.04-.042l1.4-1.34-.03-.031-.033-.031-1.337 1.402zm-.044-.042l-1.361 1.38.012.011.012.012 1.337-1.403zm-3.116-.002L14.367 5.85l-.008.007 1.366 1.375zm-6.193 6.155v1.938h.799l.567-.564-1.366-1.374zm-.003 0v-1.938h-.81l-.57.576 1.38 1.362zm-.084.085l1.362 1.378.008-.008.009-.009-1.38-1.361zm-1.04 0L7.04 14.848l.002.002 1.363-1.378zm-.013-1.018l-1.38-1.362-.01.01-.01.011 1.4 1.34zm.013-.014l-1.366-1.374-.007.006-.007.007 1.38 1.361zm6.281-6.24l-1.364-1.377-.002.002L14.686 6.2zm.035-3.057L13.32 4.48l.007.008 1.395-1.346zm-.037-.039l1.402-1.338-.02-.021-.021-.02-1.361 1.38zm-1.56-.642V4.4 2.461zm-1.559.642l-1.36-1.38-.006.005 1.367 1.375zm-8.311 8.26l1.36 1.38.006-.005-1.366-1.375zm-1.04 0L.853 12.74l.002.002 1.36-1.38zM2.2 10.345L.888 8.919l-.046.042-.043.045L2.2 10.345zm.015-.014l1.313 1.426.027-.025.026-.026-1.366-1.375zm8.313-8.262L9.168.689l-.006.005 1.366 1.375zm5.195 0l-1.36 1.38 1.36-1.38zm1.04 3.097l-1.919-.274-.366 2.56 2.56-.368-.275-1.918zm3.117 1.033l-1.363 1.378.004.004 1.359-1.382zm.044.043l1.36-1.38-.001-.002-1.36 1.382zm-2.122 3.054L16.437 7.92v.001l1.365 1.375zm.013-1.018l1.4-1.34-.01-.011-.011-.01-1.38 1.36zm-.013-.014l1.38-1.36-.01-.01-.008-.008-1.362 1.378zm-1.04 0l-1.363-1.378-.003.004 1.366 1.375zm-6.149 6.108l1.361 1.38.005-.005-1.366-1.375zm-1.559.642v-1.938 1.938zm-1.559-.642l1.361-1.38-1.36 1.38zm0-3.097l1.361 1.38.005-.005-1.366-1.375zm6.15-6.109l-1.363-1.378-.003.003 1.366 1.375zm.014-1.018l1.401-1.339-.043-.045-.045-.042-1.313 1.426zm-.014-.013l-1.362 1.378.024.024.025.023 1.313-1.425zm-.52-.215v1.938V3.92zm-.52.215l-1.363-1.379-.004.004 1.366 1.375zm-6.148 6.107l1.36 1.38.006-.005-1.366-1.375zm-1.076 2.58H3.443h1.938zm1.076 2.582l1.36-1.38-1.36 1.38zm5.197 0l1.36 1.38.005-.005-1.365-1.375zm8.34-4.069l-1.367-1.374-.071.071 1.367 1.374 1.366 1.374.071-.07-1.366-1.375zm-.071.071l-1.366-1.375-7.52 7.469 1.367 1.375 1.365 1.375 7.52-7.469-1.366-1.375zm-7.52 7.469l-1.362-1.379a2.18 2.18 0 00-.475.701l1.785.755 1.785.755c-.086.203-.211.39-.37.546l-1.362-1.378zm-.052.077l-1.785-.755c-.11.262-.168.542-.172.825l1.938.022 1.938.022c-.003.22-.048.438-.134.64l-1.785-.754zm-.019.092l-1.938-.022c-.003.283.049.564.153.828l1.802-.714 1.802-.713c.081.205.122.423.119.643l-1.938-.022zm.017.092l-1.802.714c.105.264.26.506.46.711l1.393-1.346 1.393-1.347c.156.16.277.35.358.555l-1.802.713zm.05.079l-1.378 1.361.003.004 1.38-1.361 1.379-1.362-.004-.004-1.38 1.362zm.005.004l-1.367 1.374 1.544 1.535 1.367-1.374 1.366-1.374-1.544-1.536-1.366 1.375zm1.544 1.535l-1.363 1.378a1.211 1.211 0 01-.36-.845l1.938-.027 1.937-.027a2.665 2.665 0 00-.79-1.857l-1.362 1.378zm.214.506l-1.937.027a1.21 1.21 0 01.336-.853l1.401 1.338 1.401 1.34a2.665 2.665 0 00.737-1.879l-1.938.027zm-.2.512l-1.38-1.361-.012.013 1.38 1.362 1.378 1.361.013-.013-1.379-1.361zm-.013.014l-1.362-1.379a1.2 1.2 0 01.842-.345v3.876c.708 0 1.383-.28 1.882-.774l-1.362-1.378zm-.52.214v-1.938c.32 0 .621.127.842.345l-1.362 1.379-1.362 1.378a2.678 2.678 0 001.882.774V22zm-.52-.214l1.365-1.376-1.544-1.533-1.365 1.376-1.366 1.375 1.545 1.533 1.365-1.375zm-1.544-1.533l1.36-1.381a.256.256 0 01.056.084l-1.788.746-1.789.746c.186.444.457.848.801 1.186l1.36-1.381zm-.372-.551l1.788-.746a.23.23 0 01.019.092H8.924c0 .48.095.956.28 1.4l1.789-.746zm-.131-.654H12.8a.24.24 0 01-.019.092l-1.788-.746-1.789-.746a3.64 3.64 0 00-.28 1.4h1.938zm.13-.654l1.79.746a.257.257 0 01-.058.084l-1.36-1.38-1.359-1.382a3.619 3.619 0 00-.8 1.186l1.788.746zm.373-.55l1.365 1.374 7.52-7.47-1.365-1.375L17.519 9 10 16.469l1.366 1.374zm7.52-7.47l1.361 1.378a4.113 4.113 0 001.221-2.872l-1.938-.026-1.938-.025a.237.237 0 01-.068.165l1.362 1.38zm.644-1.52l1.938.026a4.114 4.114 0 00-1.144-2.904l-1.398 1.342-1.398 1.343c.04.04.065.1.064.168l1.938.025zm-.604-1.536l1.4-1.34-.04-.041-1.4 1.34-1.4 1.339.04.042 1.4-1.34zm-.04-.042l1.337-1.402-.044-.042-1.337 1.402-1.337 1.403.044.042 1.337-1.403zm-.044-.042l1.36-1.38a4.158 4.158 0 00-2.916-1.2l-.001 1.938-.002 1.938c.07 0 .14.027.198.084l1.36-1.38zm-1.557-.642l.001-1.938a4.16 4.16 0 00-2.918 1.196l1.358 1.382 1.359 1.381a.282.282 0 01.198-.083l.002-1.938zm-1.559.64L14.36 5.857l-6.193 6.155 1.366 1.375 1.366 1.374 6.193-6.155-1.366-1.374zm-6.193 6.155v-1.938h-.003v3.876h.003v-1.938zm-.003 0l-1.38-1.362-.083.085 1.379 1.362 1.379 1.361.084-.085-1.379-1.361zm-.084.085l-1.362-1.379c.22-.218.522-.345.842-.345v3.876c.708 0 1.383-.28 1.882-.774l-1.362-1.378zm-.52.214v-1.938c.319 0 .62.127.842.345l-1.362 1.379-1.363 1.378c.5.494 1.175.774 1.883.774v-1.938zm-.52-.214l1.364-1.376c.229.227.355.531.36.845l-1.938.024-1.938.025c.009.695.289 1.364.787 1.858l1.365-1.376zm-.214-.507l1.937-.024a1.21 1.21 0 01-.337.853l-1.4-1.34-1.399-1.34a2.665 2.665 0 00-.74 1.876l1.939-.025zm.2-.511l1.38 1.361.013-.013-1.38-1.362-1.379-1.361-.013.013 1.38 1.361zm.014-.014l1.365 1.375 6.282-6.241-1.366-1.375-1.366-1.375-6.281 6.242 1.366 1.374zm6.281-6.24l1.364 1.376a4.12 4.12 0 00.066-5.778l-1.395 1.345-1.395 1.346a.244.244 0 01-.004.334L14.686 6.2zm.035-3.057l1.402-1.337-.037-.04-1.402 1.338-1.402 1.338.037.04 1.402-1.339zm-.037-.039l1.36-1.38a4.158 4.158 0 00-2.92-1.2V4.4c.07 0 .141.027.199.084l1.36-1.38zm-1.56-.642V.523a4.158 4.158 0 00-2.92 1.2l1.361 1.38 1.362 1.38a.282.282 0 01.198-.084V2.461zm-1.559.642L10.2 1.728l-8.311 8.26 1.366 1.375 1.366 1.375 8.311-8.26-1.365-1.375zm-8.311 8.26l-1.36-1.38c.22-.218.521-.344.84-.344v3.876c.707 0 1.381-.28 1.88-.772l-1.36-1.38zm-.52.214V9.639c.319 0 .62.126.841.344l-1.36 1.38-1.36 1.38a2.674 2.674 0 001.88.772v-1.938zm-.52-.214l1.364-1.378c.229.227.355.531.36.845L2 10.857l-1.938.027c.01.695.291 1.363.79 1.857l1.363-1.378zM2 10.857l1.938-.027c.004.313-.114.62-.336.853L2.2 10.345.8 9.005a2.665 2.665 0 00-.738 1.879L2 10.857zm.2-.512l1.313 1.425.015-.013-1.313-1.426L.902 8.906l-.014.013L2.2 10.345zm.015-.014l1.366 1.375 8.313-8.263-1.366-1.374L9.162.694.849 8.957l1.366 1.374zm8.313-8.262l1.36 1.38c.336-.33.78-.511 1.237-.511V-.938A5.638 5.638 0 009.167.69l1.36 1.38zM13.125 1v1.938c.458 0 .902.18 1.237.511l1.36-1.38 1.361-1.38a5.637 5.637 0 00-3.958-1.627V1zm2.598 1.069l-1.36 1.38c.375.37.558.907.482 1.443l1.918.274 1.918.274A5.567 5.567 0 0017.083.69l-1.36 1.38zm1.04 3.097l.276 1.918a1.749 1.749 0 011.478.493l1.363-1.378 1.363-1.378a5.624 5.624 0 00-4.756-1.573l.276 1.918zm3.117 1.033L18.52 7.58l.044.043 1.359-1.382 1.359-1.382-.045-.043-1.358 1.382zm.044.043l-1.36 1.38c.153.152.277.333.363.535L20.71 7.4l1.784-.758a5.538 5.538 0 00-1.21-1.78l-1.36 1.38zM20.71 7.4l-1.783.757c.086.203.132.421.135.643L21 8.774l1.937-.026a5.577 5.577 0 00-.443-2.106L20.71 7.4zM21 8.774l-1.938.026c.003.222-.037.441-.118.646l1.804.71 1.803.709a5.578 5.578 0 00.386-2.117L21 8.774zm-.252 1.381l-1.804-.709c-.08.205-.2.39-.349.545l1.398 1.343 1.397 1.343a5.545 5.545 0 001.161-1.812l-1.803-.71zm-2.946-.859l1.364 1.376a2.664 2.664 0 00.788-1.858l-1.938-.024-1.938-.025c.004-.314.13-.618.36-.845l1.364 1.376zm.214-.506l1.938.024a2.665 2.665 0 00-.74-1.877l-1.4 1.34-1.399 1.341a1.211 1.211 0 01-.337-.853l1.938.025zm-.201-.512l1.379-1.362-.013-.013-1.38 1.362-1.378 1.36.013.014 1.379-1.361zm-.013-.014l1.362-1.378a2.678 2.678 0 00-1.882-.774v3.876c-.32 0-.621-.127-.842-.345l1.362-1.379zm-.52-.214V6.112c-.708 0-1.383.28-1.883.774l1.363 1.378 1.362 1.379a1.198 1.198 0 01-.842.345V8.05zm-.52.214L15.396 6.89l-6.148 6.107 1.365 1.375 1.366 1.375 6.148-6.108-1.365-1.374zm-6.149 6.108l-1.36-1.38a.282.282 0 01-.199.084v3.876a4.157 4.157 0 002.92-1.2l-1.36-1.38zm-1.559.642v-1.938a.282.282 0 01-.198-.083l-1.36 1.38-1.362 1.379a4.158 4.158 0 002.92 1.2v-1.938zm-1.559-.642l1.361-1.38a.225.225 0 01-.05-.073l-1.788.745-1.789.745c.21.503.517.96.905 1.343l1.361-1.38zm-.477-.708l1.789-.745a.247.247 0 01-.02-.095H4.913c0 .544.108 1.083.317 1.585l1.789-.745zm-.168-.84h1.938c0-.034.007-.066.019-.096l-1.79-.745-1.788-.745a4.124 4.124 0 00-.317 1.586H6.85zm.168-.84l1.789.744a.224.224 0 01.049-.073l-1.36-1.38-1.362-1.38a4.1 4.1 0 00-.905 1.343l1.789.745zm.477-.709l1.366 1.375 6.15-6.11-1.366-1.374-1.366-1.375-6.15 6.11 1.366 1.374zm6.15-6.109l1.363 1.378c.498-.494.78-1.162.79-1.857l-1.939-.027-1.937-.027c.004-.314.13-.618.36-.845l1.363 1.378zm.214-.506l1.938.027a2.664 2.664 0 00-.737-1.878l-1.4 1.339-1.401 1.338a1.211 1.211 0 01-.336-.853l1.937.027zm-.2-.512l1.313-1.426-.014-.013-1.313 1.426-1.313 1.425.014.013 1.313-1.425zm-.014-.013l1.362-1.379a2.678 2.678 0 00-1.882-.774v3.876c-.32 0-.621-.127-.842-.345l1.362-1.378zm-.52-.215V1.982c-.708 0-1.383.28-1.883.774l1.362 1.379 1.363 1.378a1.198 1.198 0 01-.842.345V3.92zm-.52.215L11.237 2.76 5.093 8.867l1.365 1.375 1.366 1.375 6.147-6.108-1.366-1.374zm-6.148 6.107l-1.36-1.38a5.54 5.54 0 00-1.224 1.814l1.788.746 1.789.746c.086-.206.211-.392.367-.545l-1.36-1.38zm-.796 1.18l-1.788-.746c-.284.68-.43 1.41-.43 2.147H7.32c0-.226.045-.449.131-.655l-1.789-.746zm-.28 1.4H3.443c0 .738.146 1.468.43 2.148l1.788-.746 1.789-.746a1.702 1.702 0 01-.13-.655H5.38zm.28 1.402l-1.788.745c.283.68.7 1.298 1.224 1.815l1.36-1.38 1.36-1.38a1.664 1.664 0 01-.367-.546l-1.789.746zm.796 1.18l-1.36 1.38a5.639 5.639 0 003.958 1.627v-3.876c-.457 0-.902-.18-1.237-.512l-1.36 1.38zm2.599 1.069v1.938a5.639 5.639 0 003.958-1.627l-1.36-1.38-1.36-1.38c-.336.33-.78.51-1.239.51v1.939zm2.598-1.07l1.365 1.376 6.149-6.108-1.366-1.375-1.366-1.375-6.148 6.108 1.366 1.375z"
-                            fill="currentColor"
-                            mask="url(#a)"
-                          />
                         </svg>
                       </div>
                     </div>
@@ -533,10 +676,8 @@ const RootLayout = () => {
                   </Link>
 
                   <Link
-                    to={"/blueprints"}
-                    className={
-                      "group flex flex-col items-center justify-center gap-1"
-                    }
+                    to="/blueprints"
+                    className="group flex flex-col items-center justify-center gap-1"
                   >
                     <div
                       className={cn(
@@ -564,10 +705,8 @@ const RootLayout = () => {
                   </Link>
 
                   <Link
-                    to={"/bootcamp"}
-                    className={
-                      "group flex flex-col items-center justify-center gap-1"
-                    }
+                    to="/bootcamp"
+                    className="group flex flex-col items-center justify-center gap-1"
                   >
                     <div
                       className={cn(
@@ -597,10 +736,8 @@ const RootLayout = () => {
                   </Link>
 
                   <Link
-                    to={"/prompts/all"}
-                    className={
-                      "group flex flex-col items-center justify-center gap-1"
-                    }
+                    to="/prompts/all"
+                    className="group flex flex-col items-center justify-center gap-1"
                   >
                     <div
                       className={cn(
@@ -626,10 +763,8 @@ const RootLayout = () => {
                       Prompts
                     </span>
                   </Link>
-                  {/* navigation links */}
                 </div>
 
-                {/* user details */}
                 <div className="flex flex-col items-center justify-center gap-2">
                   <Dropdown
                     open={isUserMenuOpen}
@@ -656,16 +791,15 @@ const RootLayout = () => {
                           </div>
                         </Button>
                       </Dropdown.Button>
-
                       <Tooltip.Content
-                        className={"max-w-40"}
+                        className="max-w-40"
                         placement="right"
                         offset={10}
                       >
                         <h3 className="text-sm text-gray-800 dark:text-white">
                           {user.first_name} {user.last_name}
                         </h3>
-                        <Tooltip.Arrow className={"-mt-1.5"} />
+                        <Tooltip.Arrow className="-mt-1.5" />
                       </Tooltip.Content>
                     </Tooltip>
 
@@ -709,28 +843,22 @@ const RootLayout = () => {
                       <Dropdown.Divider className="my-2 dark:border-white/10" />
                       <Dropdown.Item
                         onSelect={() => setIsSettingsModalOpen(true)}
-                        className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
+                        className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-var(--spacing-1))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
                       >
                         Profile
                       </Dropdown.Item>
 
                       <Dropdown.Divider className="mt-2 mb-1 dark:border-white/10" />
                       <Dropdown.Item
-                        className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-(--spacing(1)))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
-                        onSelect={() => {
-                          logout();
-                        }}
+                        className="flex items-center gap-2 rounded-[calc(var(--radius-lg)-var(--spacing-1))] py-1.5 dark:text-white/80 dark:data-[highlighted]:text-white"
+                        onSelect={logout}
                       >
                         Sign out of Spark
                       </Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
                 </div>
-                {/* user details */}
               </div>
-              {/* side panel */}
-
-              {/* content panel */}
               <div className="mr-1.5 flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/10">
                 <Combobox<ComboboxResult>
                   isOpen={isOpen}
@@ -740,16 +868,17 @@ const RootLayout = () => {
                   setQuery={setQuery}
                   isLoading={isLoading}
                   onSelect={(option) => {
-                    console.log({ option });
+                    if (option && option.id !== "ask") {
+                      addRecentOption(option);
+                    }
                     option?.onClick?.();
                     setIsOpen(false);
+                    setQuery("");
                   }}
                   Option={({ optionValue }) => (
                     <ComboboxOption
                       key={optionValue.id}
-                      className={
-                        "dark:data-[focus]:bg-primary/30 data-[focus]:bg-primary -mx-3 cursor-pointer rounded-lg px-3 py-1.5 text-gray-800 data-[focus]:text-white dark:text-white"
-                      }
+                      className="dark:data-[focus]:bg-primary/30 data-[focus]:bg-primary -mx-3 cursor-pointer rounded-lg px-3 py-1.5 text-gray-800 data-[focus]:text-white dark:text-white"
                       value={optionValue}
                     >
                       <div className="flex flex-shrink-0 items-center justify-start gap-2">
@@ -762,7 +891,6 @@ const RootLayout = () => {
                 />
                 <Outlet />
               </div>
-              {/* content panel */}
             </div>
           </section>
 
@@ -772,7 +900,6 @@ const RootLayout = () => {
           />
         </>
       )}
-      {/* Main content */}
     </main>
   );
 };

@@ -43,6 +43,8 @@ import UserMessage from "./UserMessage";
 const ChatArea = () => {
   const [searchParams] = useSearchParams();
   const appendToUrl = useAppendToSearchQuery();
+  const { query } = useChatInput();
+  const { setQuery } = useChatInputActions();
   const prevScrollHeightRef = useRef<number | null>(null);
 
   const { scrollRef, contentRef, scrollToBottom } = useStickToBottom({
@@ -293,6 +295,31 @@ const ChatArea = () => {
   const status = useStreamManager((state) =>
     state.statuses.get(focusedThreadId || ""),
   );
+
+  const autoChatSubmitTriggered = useRef(false);
+  useEffect(() => {
+    const isTriggerSubmit = !!searchParams.get("trigger-submit");
+    const threadId = searchParams.get("thread");
+
+    if (
+      isTriggerSubmit &&
+      !threadId &&
+      query &&
+      !autoChatSubmitTriggered.current
+    ) {
+      autoChatSubmitTriggered.current = true;
+      setTimeout(() => {
+        handleChatSubmit(query);
+        setQuery("");
+      }, 500);
+    }
+  }, [
+    searchParams,
+    query,
+    handleChatSubmit,
+    setQuery,
+    autoChatSubmitTriggered,
+  ]);
 
   return (
     <section
