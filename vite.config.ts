@@ -4,6 +4,9 @@ import electron from "vite-plugin-electron/simple";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
+//"npm run build && electron-builder --config electron-builder.development.json5"
+//"echo \" update version to 6.0.1 before pushing \""
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
