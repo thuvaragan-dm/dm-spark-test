@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 6.1.0
+
+### Minor Changes
+
+- [`9f11cf1`](https://github.com/thuvaragan-dm/dm-spark-test/commit/9f11cf15456e7e479d106ff55631d8bc0d9985d0) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - fixed bug in prompts
+
 ## 6.0.1
 
 ### Patch Changes
