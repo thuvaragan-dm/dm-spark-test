@@ -14,6 +14,12 @@ import MCPPage from "./app/mcp/MCPPage";
 import MCPServersCreatedByYou from "./app/mcp/MCPServersCreatedByYou";
 import MCPServersSharedWithYou from "./app/mcp/MCPServersSharedWithYou";
 import MCPTemplateDetails from "./app/mcp/MCPTemplateDetails";
+import Memory from "./app/memory/Memory";
+import AllPrompts from "./app/prompt/AllPrompts";
+import CreatedByYouPrompts from "./app/prompt/CreatedByYouPrompts";
+import PromptDetail from "./app/prompt/PromptDetail";
+import PromptLayout from "./app/prompt/PromptLayout";
+import SharedWithYouPrompts from "./app/prompt/SharedWithYouPrompts";
 import RootLayout from "./app/RootLayout";
 import AllWorkerAgents from "./app/workerAgent/AllWorkerAgents";
 import CreatedByYouWorkerAgents from "./app/workerAgent/CreatedByYouWorkerAgents";
@@ -22,12 +28,6 @@ import WorkerAgentDetail from "./app/workerAgent/WorkerAgentDetail";
 import WorkerAgentLayout from "./app/workerAgent/WorkerAgentLayout";
 import AppChangelog from "./components/AppChangelog";
 import AppUpdater from "./components/AppUpdater";
-import PromptLayout from "./app/prompt/PromptLayout";
-import AllPrompts from "./app/prompt/AllPrompts";
-import SharedWithYouPrompts from "./app/prompt/SharedWithYouPrompts";
-import CreatedByYouPrompts from "./app/prompt/CreatedByYouPrompts";
-import PromptDetail from "./app/prompt/PromptDetail";
-import Memory from "./app/memory/Memory";
 
 function App() {
   return (

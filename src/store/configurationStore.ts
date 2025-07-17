@@ -1,18 +1,13 @@
 import { Dispatch, SetStateAction } from "react";
 import { create } from "zustand";
-import { GlobalAppConfig, VersionAppConfig } from "../../electron/types";
-
-// This is the combined configuration type that we expect from the main process.
-export interface AppConfiguration {
-  global: GlobalAppConfig;
-  version: VersionAppConfig;
-}
+import { AppConfiguration } from "../../electron/types";
 
 interface ConfigState {
   states: {
     appVersion: string | null;
     apiUrl: string | null;
     loginUrl: string | null;
+    posthogApiKey: string | null;
     config: AppConfiguration | null;
     showAnnouncement: boolean;
     showChangelog: boolean;
@@ -21,6 +16,7 @@ interface ConfigState {
     setAppVersion: Dispatch<SetStateAction<string | null>>;
     setApiUrl: Dispatch<SetStateAction<string | null>>;
     setLoginUrl: Dispatch<SetStateAction<string | null>>;
+    setPosthogApiKey: Dispatch<SetStateAction<string | null>>; // Added setter for PostHog API key
     setConfiguration: Dispatch<SetStateAction<AppConfiguration | null>>;
     setShowAnnouncement: Dispatch<SetStateAction<boolean>>;
     setShowChangelog: Dispatch<SetStateAction<boolean>>;
@@ -32,6 +28,7 @@ export const useAppConfigStore = create<ConfigState>((set) => ({
     apiUrl: null,
     loginUrl: null,
     appVersion: null,
+    posthogApiKey: null, // Initial state for PostHog API key
     config: null,
     showAnnouncement: true,
     showChangelog: false,
@@ -58,6 +55,15 @@ export const useAppConfigStore = create<ConfigState>((set) => ({
           ...states,
           loginUrl:
             typeof value === "function" ? value(states.loginUrl) : value,
+        },
+      })),
+    // Setter for the PostHog API key
+    setPosthogApiKey: (value) =>
+      set(({ states }) => ({
+        states: {
+          ...states,
+          posthogApiKey:
+            typeof value === "function" ? value(states.posthogApiKey) : value,
         },
       })),
     setConfiguration: (value) =>
@@ -89,8 +95,14 @@ export const useAppConfigStore = create<ConfigState>((set) => ({
 }));
 
 export const initializeConfiguration = async () => {
-  const { setAppVersion, setConfiguration, setApiUrl, setLoginUrl } =
-    useAppConfigStore.getState().actions;
+  // Destructure the new action
+  const {
+    setAppVersion,
+    setConfiguration,
+    setApiUrl,
+    setLoginUrl,
+    setPosthogApiKey,
+  } = useAppConfigStore.getState().actions;
 
   if (!window.electronAPI) {
     const errorMsg =
@@ -120,6 +132,12 @@ export const initializeConfiguration = async () => {
     setConfiguration(appConfig);
     setApiUrl(appConfig.version.backend_url);
     setLoginUrl(appConfig.version.login_url);
+    // Set the PostHog API key, defaulting to null if not provided
+    setPosthogApiKey(
+      appConfig.version.posthog_api_key ??
+        appConfig.global.posthog_api_key ??
+        null,
+    );
   } catch (err) {
     console.error("[ConfigStore] Failed to initialize configuration:", err);
     // Re-throw the error so the calling component (e.g., ConfigurationsLayout)

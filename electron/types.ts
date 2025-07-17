@@ -1,26 +1,26 @@
-interface Cta {
+export interface Cta {
   name: string;
   link: string;
 }
 
-interface VersionPolicy {
+export interface VersionPolicy {
   minimum_supported: string;
   latest_stable: string;
   blocked: string[];
 }
 
-interface MaintenanceMode {
+export interface MaintenanceMode {
   title: string;
   message: string;
 }
 
-interface Announcement {
+export interface Announcement {
   title: string;
   description: string;
   cta: Cta;
 }
 
-interface ResourceLinks {
+export interface ResourceLinks {
   help_docs: string;
   privacy_policy: string;
 }

@@ -68,7 +68,7 @@ interface Window {
 
     // Auth Token (original)
     getToken: () => string | null;
-    getAppConfiguration: () => Promise<AppConfiguration | null>;
+    getAppConfiguration: () => Promise<any | null>;
     getAppVersion: () => Promise<string>;
     deleteToken: () => void;
     onTokenReceived: (callback: (token: string) => void) => () => void;

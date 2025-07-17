@@ -10,6 +10,7 @@ import ConfigError from "./ConfigError";
 import Initializing from "./Initializing";
 import MaintenanceMode from "./MaintenanceMode";
 import NotSupported from "./NotSupported";
+import PosthogProvider from "../providers/PosthogProvider";
 
 const ConfigurationsLayout = () => {
   const { config, appVersion } = useAppConfig();
@@ -71,7 +72,11 @@ const ConfigurationsLayout = () => {
     );
   }
 
-  return <Outlet />;
+  return (
+    <PosthogProvider>
+      <Outlet />
+    </PosthogProvider>
+  );
 };
 
 export default ConfigurationsLayout;
