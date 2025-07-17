@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 6.0.1
+
+### Patch Changes
+
+- [`401f253`](https://github.com/thuvaragan-dm/dm-spark-test/commit/401f253235b3cd455a176e9f3d70ed2fc0afeef4) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - configured for prod
+
 ## 6.0.0
 
 ### Major Changes
