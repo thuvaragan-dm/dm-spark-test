@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 6.0.0
+
+### Major Changes
+
+- [`132b272`](https://github.com/thuvaragan-dm/dm-spark-test/commit/132b272b4cd54be29b743dc6ba33f0d37a7d8cd7) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - Analytics added
+
 ## 5.2.0
 
 ### Minor Changes
