@@ -16,7 +16,7 @@ export interface ThemeState {
 
 export const useThemeStore = create<ThemeState>()((set) => ({
   states: {
-    mode: "system",
+    mode: "dark",
     theme: "default",
   },
   actions: {
@@ -31,7 +31,7 @@ export const useThemeStore = create<ThemeState>()((set) => ({
       set(({ states }) => {
         const extractedValue =
           typeof value === "function" ? value(states.mode) : value;
-        const modeValue = extractedValue ?? "system";
+        const modeValue = extractedValue ?? "dark";
         return {
           states: {
             ...states,
