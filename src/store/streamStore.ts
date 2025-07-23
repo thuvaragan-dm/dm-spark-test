@@ -1,25 +1,23 @@
 import { create } from "zustand";
 import { InfiniteData } from "@tanstack/react-query";
 import {
+  HandlerInfo,
   MessageHandler,
   StreamStatus,
-} from "../app/chat/chatarea/MessageHandler"; // Adjust path as needed
+} from "../app/chat/chatarea/MessageHandler";
 import {
   EnumSender,
   Message,
   MessageInput,
   Suggestion,
   Video,
-} from "../api/messages/types"; // Adjust path as needed
-import queryClient from "../api/queryClient"; // Adjust path as needed
-import { EMessage, messageKey } from "../api/messages/config"; // Adjust path as needed
-import { useAppConfigStore } from "./configurationStore"; // Import the configuration store
+} from "../api/messages/types";
+import queryClient from "../api/queryClient";
+import { EMessage, messageKey } from "../api/messages/config";
+import { useAppConfigStore } from "./configurationStore";
 
-/**
- * Defines the shape of a completed stream event, which is queued for persistence.
- */
 interface CompletedStream {
-  completionId: string; // A unique ID for this specific completion event
+  completionId: string;
   threadId: string;
   finalData: MessageInput;
 }
@@ -30,9 +28,12 @@ interface CompletedStream {
 interface StreamManagerState {
   handlers: Map<string, MessageHandler>;
   messages: Map<string, { botId: string; message: string }>;
+  thinkings: Map<string, string>;
   statuses: Map<string, StreamStatus>;
   suggestions: Map<string, Suggestion[]>;
   videos: Map<string, Video[]>;
+  threadNames: Map<string, string>;
+  handlerInfos: Map<string, HandlerInfo>;
   completedStreams: CompletedStream[];
 
   getHandler: (threadId: string) => MessageHandler | undefined;
@@ -41,12 +42,18 @@ interface StreamManagerState {
   getMessage: (
     threadId: string,
   ) => { botId: string; message: string } | undefined;
+  updateThinking: (threadId: string, chunk: string) => void;
+  getThinking: (threadId: string) => string | undefined;
   updateStatus: (threadId: string, status: StreamStatus) => void;
   getStatus: (threadId: string) => StreamStatus | undefined;
   updateSuggestions: (threadId: string, suggestions: Suggestion[]) => void;
   getSuggestions: (threadId: string) => Suggestion[] | undefined;
   updateVideos: (threadId: string, videos: Video[]) => void;
   getVideos: (threadId: string) => Video[] | undefined;
+  updateThreadName: (threadId: string, name: string) => void;
+  getThreadName: (threadId: string) => string | undefined;
+  updateHandlerInfo: (threadId: string, info: HandlerInfo) => void;
+  getHandlerInfo: (threadId: string) => HandlerInfo | undefined | null;
   clearSuggestionsAndVideos: (threadId: string) => void;
   removeHandler: (threadId: string) => void;
   processCompletedStreams: (completionIdsToRemove: string[]) => void;
@@ -56,9 +63,12 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
   // STATE
   handlers: new Map(),
   messages: new Map(),
+  thinkings: new Map(),
   statuses: new Map(),
   suggestions: new Map(),
   videos: new Map(),
+  threadNames: new Map(),
+  handlerInfos: new Map(),
   completedStreams: [],
 
   // GETTERS & ACTIONS
@@ -69,51 +79,55 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
   getOrCreateHandler: (threadId, accessToken) => {
     let handler = get().handlers.get(threadId);
     if (!handler) {
-      // 1. Get the apiUrl from the configuration store.
       const { apiUrl } = useAppConfigStore.getState().states;
-
-      // 2. Add a safety check to ensure the apiUrl is available.
       if (!apiUrl) {
         console.error(
           "[StreamManager] Cannot create handler: apiUrl is not yet available.",
         );
-        // Throwing an error is appropriate here, as the handler cannot function without a URL.
-        // The calling component should catch this and display an error message.
         throw new Error("Cannot initiate chat: API URL is not configured.");
       }
 
-      // 3. Pass the apiUrl to the MessageHandler constructor.
-      //    (Note: This assumes the MessageHandler's constructor is updated to accept apiUrl).
       handler = new MessageHandler(threadId, accessToken, apiUrl);
 
-      // --- Event Listener for incoming message chunks ---
+      // --- MODIFICATION: Removed all debouncing and buffering logic ---
+      // State updates will now happen immediately as events are received.
+
+      handler.on("thinkingChunk", (_id, chunk) => {
+        get().updateThinking(threadId, chunk);
+      });
+
       handler.on("messageChunk", (id, message) => {
-        // Optimistically update the React Query cache for a smooth UI
+        // Update React Query cache directly
         queryClient.setQueryData<InfiniteData<Message[]>>(
           [messageKey[EMessage.FETCH_ALL] + threadId],
           (prev) =>
             updateMessageInCache(prev, id, (msg) => (msg.message += message)),
         );
-        // Also update the internal message state if needed elsewhere
+        // Update Zustand state
         get().updateMessage(threadId, message, id);
       });
+      // --- End of modification ---
 
-      // --- Event Listener for suggestions ---
       handler.on("suggestions", (_id, suggestions: Suggestion[]) => {
         get().updateSuggestions(threadId, suggestions);
       });
 
-      // --- Event Listener for videos ---
       handler.on("suggestedVideos", (_id, videos: Video[]) => {
         get().updateVideos(threadId, videos);
       });
 
-      // --- Event Listener for status changes ---
       handler.on("status", (status) => {
         get().updateStatus(threadId, status);
       });
 
-      // --- Event Listener for when the entire stream is finished ---
+      handler.on("threadName", (_id, name) => {
+        get().updateThreadName(threadId, name);
+      });
+
+      handler.on("handlerSelected", (_id, info) => {
+        get().updateHandlerInfo(threadId, info);
+      });
+
       handler.on("streamConcluded", (_messageId, finalStreamData) => {
         const finalData: MessageInput = {
           thread_id: threadId,
@@ -123,12 +137,11 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
           flag: null,
         };
 
-        // Add the completed stream to the global queue for processing
         set((state) => ({
           completedStreams: [
             ...state.completedStreams,
             {
-              completionId: `${threadId}-${Date.now()}`, // Create a unique ID
+              completionId: `${threadId}-${Date.now()}`,
               threadId: threadId,
               finalData: finalData,
             },
@@ -141,7 +154,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
         get().updateStatus(threadId, "idle");
       });
 
-      // Add the newly created handler to the store's state
       set((state) => {
         const newHandlers = new Map(state.handlers);
         newHandlers.set(threadId, handler!);
@@ -165,6 +177,19 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
 
   getMessage: (threadId) => {
     return get().messages.get(threadId);
+  },
+
+  updateThinking: (threadId, chunk) => {
+    set((state) => {
+      const newThinkings = new Map(state.thinkings);
+      const current = newThinkings.get(threadId) || "";
+      newThinkings.set(threadId, current + chunk);
+      return { thinkings: newThinkings };
+    });
+  },
+
+  getThinking: (threadId) => {
+    return get().thinkings.get(threadId);
   },
 
   updateStatus: (threadId, status) => {
@@ -203,18 +228,38 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     return get().videos.get(threadId);
   },
 
+  updateThreadName: (threadId, name) => {
+    set((state) => {
+      const newThreadNames = new Map(state.threadNames);
+      newThreadNames.set(threadId, name);
+      return { threadNames: newThreadNames };
+    });
+  },
+
+  getThreadName: (threadId) => {
+    return get().threadNames.get(threadId);
+  },
+
+  updateHandlerInfo: (threadId, info) => {
+    set((state) => {
+      const newHandlerInfos = new Map(state.handlerInfos);
+      newHandlerInfos.set(threadId, info);
+      return { handlerInfos: newHandlerInfos };
+    });
+  },
+
+  getHandlerInfo: (threadId) => {
+    if (!threadId) return null;
+    return get().handlerInfos.get(threadId);
+  },
+
   clearSuggestionsAndVideos: (threadId) => {
     set((state) => {
       const newSuggestions = new Map(state.suggestions);
       newSuggestions.delete(threadId);
-
       const newVideos = new Map(state.videos);
       newVideos.delete(threadId);
-
-      return {
-        suggestions: newSuggestions,
-        videos: newVideos,
-      };
+      return { suggestions: newSuggestions, videos: newVideos };
     });
   },
 
@@ -238,6 +283,9 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
         const newMessages = new Map(state.messages);
         newMessages.delete(threadId);
 
+        const newThinkings = new Map(state.thinkings);
+        newThinkings.delete(threadId);
+
         const newStatuses = new Map(state.statuses);
         newStatuses.delete(threadId);
 
@@ -247,12 +295,21 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
         const newVideos = new Map(state.videos);
         newVideos.delete(threadId);
 
+        const newThreadNames = new Map(state.threadNames);
+        newThreadNames.delete(threadId);
+
+        const newHandlerInfos = new Map(state.handlerInfos);
+        newHandlerInfos.delete(threadId);
+
         return {
           handlers: newHandlers,
           messages: newMessages,
+          thinkings: newThinkings,
           statuses: newStatuses,
           suggestions: newSuggestions,
           videos: newVideos,
+          threadNames: newThreadNames,
+          handlerInfos: newHandlerInfos,
         };
       }
       return state;
@@ -260,10 +317,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
   },
 }));
 
-/**
- * A helper function to immutably update a specific message within the
- * deeply nested React Query cache structure for infinite queries.
- */
 const updateMessageInCache = (
   prevData: InfiniteData<Message[]> | undefined,
   messageId: string,

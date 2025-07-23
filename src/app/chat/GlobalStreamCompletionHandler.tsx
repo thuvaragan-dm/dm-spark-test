@@ -2,11 +2,11 @@ import { useEffect, useMemo } from "react";
 import { EMessage, messageKey } from "../../api/messages/config";
 import { useCreateMessage } from "../../api/messages/useCreateMessage";
 import queryClient from "../../api/queryClient";
-import { useStreamManager } from "../../store/streamStore";
-import { EThread, THREAD_LIMIT, threadKey } from "../../api/thread/config";
-import { useAgent } from "../../store/agentStore";
+import { THREAD_LIMIT } from "../../api/thread/config";
 import { ThreadParams } from "../../api/thread/types";
+import { useAgent } from "../../store/agentStore";
 import { useRerendererActions } from "../../store/rerendererStore";
+import { useStreamManager } from "../../store/streamStore";
 
 /**
  * A headless component that listens for concluded streams globally
@@ -65,12 +65,6 @@ export const GlobalStreamCompletionHandler = () => {
             queryClient.invalidateQueries({
               queryKey: [messageKey[EMessage.FETCH_ALL] + stream.threadId],
             });
-            queryClient.invalidateQueries({
-              queryKey: [threadKey[EThread.ALL], agentOptions],
-            });
-            setTimeout(() => {
-              setRerenderThreadList((prev) => prev + 1);
-            }, 500);
           },
           onError: (error) => {
             console.error(
@@ -87,9 +81,6 @@ export const GlobalStreamCompletionHandler = () => {
     // This is critical to prevent processing the same stream more than once.
     if (processedIds.length > 0) {
       processCompletedStreams(processedIds);
-      setTimeout(() => {
-        setRerenderThreadList((prev) => prev + 1);
-      }, 500);
     }
   }, [
     completedStreams,

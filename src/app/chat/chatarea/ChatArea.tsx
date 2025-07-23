@@ -39,6 +39,7 @@ import ChatInput, { ChatInputHandle } from "./ChatInput";
 import ChatResponse from "./ChatResponse";
 import ChatZeroState from "./ChatZeroState";
 import UserMessage from "./UserMessage";
+import { MemoizedMarkdown } from "../../../components/MemMDRenderer";
 
 const ChatArea = () => {
   const [searchParams] = useSearchParams();
@@ -330,6 +331,12 @@ const ChatArea = () => {
     }
   }, [searchParams]);
 
+  const thinking = useStreamManager((state) =>
+    state.thinkings.get(focusedThreadId || ""),
+  );
+
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+
   return (
     <section
       {...getRootProps()}
@@ -441,6 +448,114 @@ const ChatArea = () => {
                               />
                             ) : (
                               <div className="flex w-full flex-col">
+                                {idx === messages.pages.flat(1).length - 1 &&
+                                  thinking && (
+                                    <div className="mb-4 w-full overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg">
+                                      <button
+                                        onClick={() =>
+                                          setIsThinkingExpanded((prev) => !prev)
+                                        }
+                                        className="flex w-full items-center justify-between p-4 text-left text-gray-300 transition-colors duration-300 hover:bg-white/5 focus:outline-none"
+                                      >
+                                        <div className="flex items-center justify-start gap-3">
+                                          {status === "streaming" && (
+                                            <motion.div
+                                              initial={{ opacity: 0 }}
+                                              animate={{ opacity: 1 }}
+                                              exit={{ opacity: 0 }}
+                                              className="bg-primary relative w-min rounded-full p-0.5 text-white dark:bg-white/5 dark:text-white/50"
+                                            >
+                                              <div className="absolute -inset-1 animate-spin rounded-full bg-gradient-to-b from-[#EDEEF1] from-20% to-transparent dark:from-[#262626]"></div>
+                                              <svg
+                                                className="size-4"
+                                                fill="none"
+                                                viewBox="0 0 227 228"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                              >
+                                                <path
+                                                  d="M12 124.669c0 56.279 45.623 91.36 101.902 91.36 56.278 0 101.901-45.623 101.901-101.901S176.448 12.227 113.902 12.227c-43.572 0-88.001-5.742-88.001 40.532 0 46.275-4.275 75.51 54.268 24.122 63.249-55.518 109.631 37.247 73.79 73.088-35.841 35.841-78.007 0-78.007 0"
+                                                  stroke="currentColor"
+                                                  strokeWidth={22.033}
+                                                  strokeLinecap="round"
+                                                />
+                                              </svg>
+                                            </motion.div>
+                                          )}
+
+                                          <p className="text-sm font-medium text-gray-800 dark:text-white">
+                                            Show Thinking
+                                          </p>
+                                        </div>
+
+                                        {/* Animated Chevron Icon */}
+                                        <motion.div
+                                          animate={{
+                                            rotate: isThinkingExpanded
+                                              ? 180
+                                              : 0,
+                                          }}
+                                          transition={{
+                                            duration: 0.3,
+                                            ease: "easeInOut",
+                                          }}
+                                        >
+                                          <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="20"
+                                            height="20"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            className="text-gray-400"
+                                          >
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                          </svg>
+                                        </motion.div>
+                                      </button>
+
+                                      {/* --- Accordion Content --- */}
+                                      {/* AnimatePresence handles the enter/exit animations gracefully */}
+                                      <AnimatePresence initial={false}>
+                                        {isThinkingExpanded && (
+                                          <motion.section
+                                            key="content"
+                                            initial="collapsed"
+                                            animate="open"
+                                            exit="collapsed"
+                                            variants={{
+                                              open: {
+                                                opacity: 1,
+                                                height: "auto",
+                                              },
+                                              collapsed: {
+                                                opacity: 0,
+                                                height: 0,
+                                              },
+                                            }}
+                                            transition={{
+                                              duration: 0.4,
+                                              ease: "easeInOut",
+                                            }}
+                                            className="overflow-hidden"
+                                          >
+                                            {/* The actual markdown content */}
+                                            <div className="prose prose-invert max-w-none p-4 pt-0 text-gray-300">
+                                              <MemoizedMarkdown
+                                                id={
+                                                  message.thread_id + "thinking"
+                                                }
+                                                content={thinking}
+                                                showDot={false}
+                                              />
+                                            </div>
+                                          </motion.section>
+                                        )}
+                                      </AnimatePresence>
+                                    </div>
+                                  )}
                                 <ChatResponse
                                   message={message}
                                   isLast={

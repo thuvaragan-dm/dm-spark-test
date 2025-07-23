@@ -1,11 +1,20 @@
 import { Source, Suggestion, Video } from "../../../api/messages/types";
 
+export interface HandlerInfo {
+  type: string;
+  name: string;
+  confidence: number;
+}
+
 export interface StreamDataAccumulator {
   message: string;
   sources: Source[];
   suggestedQuestions: Suggestion[];
   suggestedVideos: Video[];
   files: File[];
+  handlerInfo: HandlerInfo | null;
+  threadName: string | null;
+  thinking: string;
 }
 
 export type StreamStatus = "idle" | "loading" | "streaming" | "done" | "error";
@@ -18,10 +27,12 @@ export type MessageHandlerEventMap = {
     error?: string,
   ) => void;
   messageChunk: (botMessageId: string, chunk: string) => void;
+  thinkingChunk: (botMessageId: string, chunk: string) => void;
   sources: (botMessageId: string, sources: Source[]) => void;
   suggestions: (botMessageId: string, suggestions: Suggestion[]) => void;
   suggestedVideos: (botMessageId: string, videos: Video[]) => void;
-  // New event to signal stream conclusion with all data
+  handlerSelected: (botMessageId: string, handlerInfo: HandlerInfo) => void;
+  threadName: (botMessageId: string, threadName: string) => void;
   streamConcluded: (
     botMessageId: string,
     finalData: Readonly<StreamDataAccumulator>,
@@ -44,22 +55,29 @@ export class MessageHandler {
     [K in keyof MessageHandlerEventMap]?: Array<(...args: unknown[]) => void>;
   } = {};
 
-  constructor(threadId: string, accessToken: string, apiUrl: string) {
-    // Added accessToken to constructor signature
-    this.threadId = threadId;
-    this.accessToken = accessToken; // Use passed accessToken
-    this.baseApiUrl = apiUrl; // Assuming apiUrl is globally available or correctly imported
+  // --- MODIFICATION: Buffering and batching logic ---
+  private thinkingBuffer: string[] = [];
+  private messageBuffer: string[] = [];
+  private flushHandle: number | null = null;
+  // --- End of modification ---
 
+  constructor(threadId: string, accessToken: string, apiUrl: string) {
+    this.threadId = threadId;
+    this.accessToken = accessToken;
+    this.baseApiUrl = apiUrl;
     this.currentStreamData = this.getInitialStreamData();
   }
 
   private getInitialStreamData(): StreamDataAccumulator {
     return {
       message: "",
+      thinking: "",
       sources: [],
       suggestedQuestions: [],
       suggestedVideos: [],
       files: [],
+      handlerInfo: null,
+      threadName: null,
     };
   }
 
@@ -79,9 +97,7 @@ export class MessageHandler {
     listener: MessageHandlerEventMap[K],
   ): void {
     const eventListeners = this.listeners[event];
-    if (!eventListeners) {
-      return;
-    }
+    if (!eventListeners) return;
     this.listeners[event] = eventListeners.filter(
       (l) => l !== (listener as (...args: unknown[]) => void),
     );
@@ -97,18 +113,58 @@ export class MessageHandler {
     const eventListeners = this.listeners[event];
     if (eventListeners) {
       eventListeners.forEach((listenerCallback) => {
-        const typedListener = listenerCallback as MessageHandlerEventMap[K];
-        // eslint-disable-next-line prefer-spread -- Needed because 'args' can be a union of tuples, which TS cannot spread directly (TS2556)
-        (typedListener as (this: null, ...params: unknown[]) => void).apply(
-          null,
-          args,
-        );
+        // MODIFICATION: Cast the listener to a function accepting a rest parameter
+        // to resolve the TypeScript error with the spread operator.
+        (listenerCallback as (...args: any[]) => void)(...args);
       });
     }
   }
 
+  // --- MODIFICATION: Batching logic implementation ---
+  private scheduleFlush(): void {
+    if (this.flushHandle) return; // A flush is already scheduled.
+    this.flushHandle = requestAnimationFrame(() => {
+      this.flushBuffers();
+      this.flushHandle = null;
+    });
+  }
+
+  private flushBuffers(): void {
+    // Cancel any scheduled flush since we are doing it now.
+    if (this.flushHandle) {
+      cancelAnimationFrame(this.flushHandle);
+      this.flushHandle = null;
+    }
+
+    if (this.thinkingBuffer.length > 0) {
+      const accumulatedChunk = this.thinkingBuffer.join("");
+      this.thinkingBuffer = []; // Clear buffer
+      this.currentStreamData.thinking += accumulatedChunk;
+      if (this.currentBotMessageIdForStream) {
+        this.emit(
+          "thinkingChunk",
+          this.currentBotMessageIdForStream,
+          accumulatedChunk,
+        );
+      }
+    }
+
+    if (this.messageBuffer.length > 0) {
+      const accumulatedChunk = this.messageBuffer.join("");
+      this.messageBuffer = []; // Clear buffer
+      this.currentStreamData.message += accumulatedChunk;
+      if (this.currentBotMessageIdForStream) {
+        this.emit(
+          "messageChunk",
+          this.currentBotMessageIdForStream,
+          accumulatedChunk,
+        );
+      }
+    }
+  }
+  // --- End of modification ---
+
   private setStreamStatus(status: StreamStatus, error?: string): void {
-    // Prevent re-triggering if already in a terminal state with the same status
     if (
       this.currentStreamStatus === status &&
       (status === "done" || status === "error")
@@ -125,33 +181,31 @@ export class MessageHandler {
       oldStatus !== "error"
     ) {
       this.cleanupEventSource();
-      this.handleStreamEnd(); // Call the new function here
+      this.handleStreamEnd();
     }
   }
 
   private cleanupEventSource(): void {
+    this.flushBuffers(); // Ensure any remaining data is flushed.
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
-      // console.log(`MessageHandler: EventSource closed for thread ${this.threadId}`);
     }
   }
 
   private handleStreamEnd(): void {
+    this.flushBuffers(); // Final flush for any buffered data.
     if (this.currentBotMessageIdForStream) {
       let endReason: StreamEndReason;
 
       if (this.currentStreamStatus === "error") {
         endReason = "error";
       } else if (this.currentStreamStatus === "done") {
-        if (this.streamInterruptionSource === "user") {
-          endReason = "interrupted_by_user";
-        } else {
-          endReason = "completed"; // Natural completion
-        }
+        endReason =
+          this.streamInterruptionSource === "user"
+            ? "interrupted_by_user"
+            : "completed";
       } else {
-        // This case should ideally not be reached if setStreamStatus logic is correct.
-        // Log a warning and default to 'error' to ensure streamConcluded is still emitted.
         console.warn(
           `MessageHandler: handleStreamEnd called with unexpected status: ${this.currentStreamStatus}. Defaulting endReason to 'error'.`,
         );
@@ -161,7 +215,7 @@ export class MessageHandler {
       this.emit(
         "streamConcluded",
         this.currentBotMessageIdForStream,
-        { ...this.currentStreamData }, // Send a snapshot
+        { ...this.currentStreamData },
         endReason,
       );
     }
@@ -191,9 +245,7 @@ export class MessageHandler {
     const threadId = this.threadId || "";
 
     if (!token) {
-      console.error(
-        "MessageHandler: Access token is missing. Cannot start stream.",
-      );
+      console.error("MessageHandler: Access token is missing.");
       this.setStreamStatus("error", "Access token missing.");
       this.currentBotMessageIdForStream = null;
       return;
@@ -203,35 +255,31 @@ export class MessageHandler {
     try {
       this.eventSource = new EventSource(streamUrl);
 
-      this.eventSource.onopen = () => {
-        this.setStreamStatus("streaming");
-      };
+      this.eventSource.onopen = () => this.setStreamStatus("streaming");
 
       this.eventSource.onerror = (event) => {
-        console.error(
-          `MessageHandler: EventSource error for ${this.currentBotMessageIdForStream}:`,
-          event,
-        );
-        const errorMessage =
-          this.eventSource?.readyState === EventSource.CLOSED &&
-          this.currentStreamStatus !== "done" &&
-          this.currentStreamStatus !== "error"
-            ? "Stream connection closed unexpectedly."
-            : "A network or other error occurred with the stream.";
-        this.setStreamStatus("error", errorMessage);
+        console.error("EventSource error:", event);
+        this.setStreamStatus("error", "A network error occurred.");
       };
 
-      this.eventSource.addEventListener("message", (event: MessageEvent) => {
-        if (
-          !this.currentBotMessageIdForStream ||
-          this.currentStreamStatus === "done" ||
-          this.currentStreamStatus === "error"
-        )
-          return;
-        const chunk = event.data as string;
-        this.currentStreamData.message += chunk;
-        this.emit("messageChunk", this.currentBotMessageIdForStream, chunk);
+      // --- MODIFICATION: Use buffering for high-frequency events ---
+      this.eventSource.addEventListener("thinking", (event: MessageEvent) => {
+        if (!this.currentBotMessageIdForStream) return;
+        this.thinkingBuffer.push(event.data);
+        this.scheduleFlush();
       });
+
+      this.eventSource.addEventListener("message", (event: MessageEvent) => {
+        if (!this.currentBotMessageIdForStream) return;
+        // KEY CHANGE: If we receive a message, immediately flush any pending
+        // 'thinking' chunks to prevent a visual delay.
+        if (this.thinkingBuffer.length > 0) {
+          this.flushBuffers();
+        }
+        this.messageBuffer.push(event.data);
+        this.scheduleFlush();
+      });
+      // --- End of modification ---
 
       const createSseDataHandler =
         <TData>(
@@ -245,17 +293,9 @@ export class MessageHandler {
           >,
         ) =>
         (event: MessageEvent) => {
-          if (
-            !this.currentBotMessageIdForStream ||
-            this.currentStreamStatus === "done" ||
-            this.currentStreamStatus === "error"
-          )
-            return;
+          if (!this.currentBotMessageIdForStream) return;
           try {
             const parsedData = JSON.parse(event.data) as TData[];
-            if (!Array.isArray(this.currentStreamData[dataField])) {
-              (this.currentStreamData[dataField] as TData[]) = [];
-            }
             (this.currentStreamData[dataField] as TData[]).push(...parsedData);
             this.emit(
               eventName as any,
@@ -264,7 +304,7 @@ export class MessageHandler {
             );
           } catch (e) {
             console.error(
-              `MessageHandler: Error parsing ${eventName} for ${this.currentBotMessageIdForStream}:`,
+              `Error parsing ${eventName}:`,
               e,
               "Data:",
               event.data,
@@ -285,21 +325,54 @@ export class MessageHandler {
         createSseDataHandler<Video>("suggestedVideos", "suggestedVideos"),
       );
 
+      this.eventSource.addEventListener(
+        "handler_selected",
+        (event: MessageEvent) => {
+          if (!this.currentBotMessageIdForStream) return;
+          try {
+            const handlerInfo = JSON.parse(event.data) as HandlerInfo;
+            this.currentStreamData.handlerInfo = handlerInfo;
+            this.emit(
+              "handlerSelected",
+              this.currentBotMessageIdForStream,
+              handlerInfo,
+            );
+          } catch (e) {
+            console.error(
+              "Error parsing handler_selected:",
+              e,
+              "Data:",
+              event.data,
+            );
+          }
+        },
+      );
+
+      this.eventSource.addEventListener(
+        "thread_name",
+        (event: MessageEvent) => {
+          if (!this.currentBotMessageIdForStream) return;
+          try {
+            const data = JSON.parse(event.data) as { thread_name: string };
+            this.currentStreamData.threadName = data.thread_name;
+            this.emit(
+              "threadName",
+              this.currentBotMessageIdForStream,
+              data.thread_name,
+            );
+          } catch (e) {
+            console.error("Error parsing thread_name:", e, "Data:", event.data);
+          }
+        },
+      );
+
       this.eventSource.addEventListener("status", (event: MessageEvent) => {
         if ((event.data as string).trim().toLowerCase() === "done") {
-          if (
-            this.currentStreamStatus !== "done" &&
-            this.currentStreamStatus !== "error"
-          ) {
-            this.setStreamStatus("done");
-          }
+          this.setStreamStatus("done");
         }
       });
     } catch (error) {
-      console.error(
-        `MessageHandler: Failed to initialize EventSource for ${this.currentBotMessageIdForStream}:`,
-        error,
-      );
+      console.error("Failed to initialize EventSource:", error);
       this.setStreamStatus("error", "Failed to start stream.");
       this.currentBotMessageIdForStream = null;
     }
@@ -326,34 +399,16 @@ export class MessageHandler {
     this.currentBotMessageIdForStream = null;
   }
 
-  /**
-   * Resets the MessageHandler to its initial state.
-   * Stops any active stream, clears current data, and resets status.
-   */
   public reset(): void {
-    // console.log(`MessageHandler: Resetting handler for thread ${this.threadId}`);
-
-    // Stop any ongoing stream. This will also handle cleanupEventSource
-    // and potentially call handleStreamEnd if a stream was active.
     this.stopStreaming();
-
-    // Reset internal state variables
     this.currentStreamData = this.getInitialStreamData();
     this.streamInterruptionSource = "none";
-
-    // Explicitly set bot message ID to null after stopping, as stopStreaming handles it.
-    // this.currentBotMessageIdForStream = null; // This is already done by stopStreaming
-
-    // Set status to idle and emit event.
-    // Check if already idle to avoid redundant status emission if stopStreaming didn't change it to done/error
     if (this.currentStreamStatus !== "idle") {
-      this.currentStreamStatus = "idle"; // Set directly before emit
-      this.emit("status", "idle", null); // Emit idle status with null botMessageId
+      this.currentStreamStatus = "idle";
+      this.emit("status", "idle", null);
     } else if (this.currentBotMessageIdForStream !== null) {
-      // If status was already idle but there was a lingering bot ID (shouldn't happen with proper stopStreaming)
       this.emit("status", "idle", null);
     }
-    // Ensure currentBotMessageIdForStream is null if it wasn't cleared by stopStreaming for some reason
     this.currentBotMessageIdForStream = null;
   }
 
