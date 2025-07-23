@@ -498,6 +498,11 @@ async function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
 
+  // TODO: [TEMP-DEBUG] This is a temporary addition for debugging this specific version.
+  // It opens the developer tools automatically on application start.
+  // REMOVE THIS LINE BEFORE THE NEXT RELEASE.
+  win.webContents.openDevTools();
+
   win.on("closed", () => {
     win = null;
   });
