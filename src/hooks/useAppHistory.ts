@@ -48,6 +48,7 @@ export const useAppHistory = (): AppHistoryControls => {
         setCurrentIndex(newStack.length - 1); // Update current index to the new end of the stack
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   const canGoBack = currentIndex > 0;

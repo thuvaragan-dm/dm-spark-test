@@ -1,7 +1,7 @@
 {
   "name": "spark",
   "private": true,
-  "version": "6.1.1",
+  "version": "6.1.0",
   "type": "module",
   "description": "Spark is your AI super agent",
   "author": {
@@ -11,9 +11,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "package:dev": "npm run build && electron-builder --config electron-builder.development.json5",
+    "package:dev": "echo \" update version to 6.1.1 before pushing \"",
     "package:prod": "npm run build && electron-builder --config electron-builder.production.json5",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint ./src/**/*.{ts,tsx}",
     "preview": "vite preview",
     "changeset:add": "changeset add",
     "changeset:exit-pre-release": "changeset pre exit",

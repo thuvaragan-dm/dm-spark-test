@@ -440,13 +440,15 @@ const ChatArea = () => {
                                 message={message.message}
                               />
                             ) : (
-                              <ChatResponse
-                                message={message}
-                                isLast={
-                                  messages.pages.flat(1).length - 1 === idx
-                                }
-                                isStreaming={status === "streaming"}
-                              />
+                              <div className="flex w-full flex-col">
+                                <ChatResponse
+                                  message={message}
+                                  isLast={
+                                    messages.pages.flat(1).length - 1 === idx
+                                  }
+                                  isStreaming={status === "streaming"}
+                                />
+                              </div>
                             )}
                           </div>
                         </li>

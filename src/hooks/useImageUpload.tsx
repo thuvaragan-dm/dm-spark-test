@@ -108,8 +108,7 @@ const useImageUpload = ({
           });
 
           await onDropHandle(convertedFile);
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_) {
+        } catch {
           // If upload fails, remove the file from the state
           setFiles((prev) => prev.filter((f) => f !== file));
         }
