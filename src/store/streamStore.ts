@@ -28,7 +28,8 @@ interface CompletedStream {
 interface StreamManagerState {
   handlers: Map<string, MessageHandler>;
   messages: Map<string, { botId: string; message: string }>;
-  thinkings: Map<string, string>;
+  // MODIFICATION: Changed to be message-specific, using the bot ID.
+  thinkings: Map<string, { botId: string; thinking: string }>;
   statuses: Map<string, StreamStatus>;
   suggestions: Map<string, Suggestion[]>;
   videos: Map<string, Video[]>;
@@ -42,9 +43,18 @@ interface StreamManagerState {
   getMessage: (
     threadId: string,
   ) => { botId: string; message: string } | undefined;
-  updateThinking: (threadId: string, chunk: string) => void;
-  getThinking: (threadId: string) => string | undefined;
-  updateStatus: (threadId: string, status: StreamStatus) => void;
+  // MODIFICATION: Updated signature to include botId.
+  updateThinking: (threadId: string, chunk: string, botId: string) => void;
+  // MODIFICATION: Updated return type.
+  getThinking: (
+    threadId: string,
+  ) => { botId: string; thinking: string } | undefined;
+  // MODIFICATION: Updated signature to include botId.
+  updateStatus: (
+    threadId: string,
+    status: StreamStatus,
+    botId: string | null,
+  ) => void;
   getStatus: (threadId: string) => StreamStatus | undefined;
   updateSuggestions: (threadId: string, suggestions: Suggestion[]) => void;
   getSuggestions: (threadId: string) => Suggestion[] | undefined;
@@ -63,6 +73,7 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
   // STATE
   handlers: new Map(),
   messages: new Map(),
+  // MODIFICATION: Initial state updated to match new structure.
   thinkings: new Map(),
   statuses: new Map(),
   suggestions: new Map(),
@@ -89,11 +100,9 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
 
       handler = new MessageHandler(threadId, accessToken, apiUrl);
 
-      // --- MODIFICATION: Removed all debouncing and buffering logic ---
-      // State updates will now happen immediately as events are received.
-
-      handler.on("thinkingChunk", (_id, chunk) => {
-        get().updateThinking(threadId, chunk);
+      // MODIFICATION: Pass botId to updateThinking action.
+      handler.on("thinkingChunk", (id, chunk) => {
+        get().updateThinking(threadId, chunk, id);
       });
 
       handler.on("messageChunk", (id, message) => {
@@ -106,7 +115,6 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
         // Update Zustand state
         get().updateMessage(threadId, message, id);
       });
-      // --- End of modification ---
 
       handler.on("suggestions", (_id, suggestions: Suggestion[]) => {
         get().updateSuggestions(threadId, suggestions);
@@ -116,8 +124,9 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
         get().updateVideos(threadId, videos);
       });
 
-      handler.on("status", (status) => {
-        get().updateStatus(threadId, status);
+      // MODIFICATION: Pass botMessageId to updateStatus action.
+      handler.on("status", (status, botMessageId) => {
+        get().updateStatus(threadId, status, botMessageId);
       });
 
       handler.on("threadName", (_id, name) => {
@@ -151,7 +160,9 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
         console.log(
           `Stream done for thread ${threadId}. Added to completion queue.`,
         );
-        get().updateStatus(threadId, "idle");
+        // MODIFICATION: Set status to idle without clearing state here.
+        // Clearing is now handled by the 'loading' status change.
+        get().updateStatus(threadId, "idle", null);
       });
 
       set((state) => {
@@ -179,24 +190,44 @@ export const useStreamManager = create<StreamManagerState>()((set, get) => ({
     return get().messages.get(threadId);
   },
 
-  updateThinking: (threadId, chunk) => {
+  // MODIFICATION: Reworked to handle message-specific thinking state.
+  updateThinking: (threadId, chunk, botId) => {
     set((state) => {
       const newThinkings = new Map(state.thinkings);
-      const current = newThinkings.get(threadId) || "";
-      newThinkings.set(threadId, current + chunk);
+      const current = newThinkings.get(threadId);
+      // If the botId differs, start a new thinking string; otherwise, append.
+      const newThinking =
+        current?.botId === botId ? current.thinking + chunk : chunk;
+      newThinkings.set(threadId, { botId: botId, thinking: newThinking });
       return { thinkings: newThinkings };
     });
   },
 
+  // MODIFICATION: Returns the new message-specific thinking state.
   getThinking: (threadId) => {
     return get().thinkings.get(threadId);
   },
 
-  updateStatus: (threadId, status) => {
+  // MODIFICATION: Reworked to clear transient state when a new stream starts.
+  updateStatus: (threadId, status, _botId) => {
     set((state) => {
       const newStatuses = new Map(state.statuses);
       newStatuses.set(threadId, status);
-      return { statuses: newStatuses };
+      let newState: Partial<StreamManagerState> = { statuses: newStatuses };
+
+      // When a new stream starts loading, clear the previous transient message and thinking states.
+      if (status === "loading") {
+        const newMessages = new Map(state.messages);
+        newMessages.delete(threadId);
+        const newThinkings = new Map(state.thinkings);
+        newThinkings.delete(threadId);
+        newState = {
+          ...newState,
+          messages: newMessages,
+          thinkings: newThinkings,
+        };
+      }
+      return newState;
     });
   },
 

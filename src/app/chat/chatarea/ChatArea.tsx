@@ -1,5 +1,5 @@
 import { InfiniteData } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useCallback,
   useEffect,
@@ -24,6 +24,7 @@ import { useGetInfiniteMessages } from "../../../api/messages/useGetInfiniteMess
 import queryClient from "../../../api/queryClient";
 import { EThread, threadKey } from "../../../api/thread/config";
 import { useCreateThread } from "../../../api/thread/useCreateThread";
+import { MemoizedMarkdown } from "../../../components/MemMDRenderer";
 import Spinner from "../../../components/Spinner";
 import useAppendToSearchQuery from "../../../hooks/useAppendToSearchQuery";
 import useFileUpload from "../../../hooks/useFileUpload";
@@ -39,7 +40,6 @@ import ChatInput, { ChatInputHandle } from "./ChatInput";
 import ChatResponse from "./ChatResponse";
 import ChatZeroState from "./ChatZeroState";
 import UserMessage from "./UserMessage";
-import { MemoizedMarkdown } from "../../../components/MemMDRenderer";
 
 const ChatArea = () => {
   const [searchParams] = useSearchParams();
@@ -131,7 +131,7 @@ const ChatArea = () => {
 
       if (fileData) {
         for (const document of fileData.values()) {
-          message += ` <span className="hidden">document id:${document.id} name:${document.name}</span>`;
+          message += ` <span class="hidden">document id:${document.id} name:${document.name}</span>`;
         }
       }
 
@@ -331,6 +331,7 @@ const ChatArea = () => {
     }
   }, [searchParams]);
 
+  // MODIFICATION: The 'thinking' state is now an object: { botId: string, thinking: string } | undefined
   const thinking = useStreamManager((state) =>
     state.thinkings.get(focusedThreadId || ""),
   );
@@ -380,7 +381,7 @@ const ChatArea = () => {
           exit={{ opacity: 0 }}
           className="relative z-30 flex w-full flex-1 flex-col overflow-hidden"
         >
-          <AnimatePresence initial={false} mode="popLayout">
+          <AnimatePresence initial={false}>
             {isMessagesLoading && (
               <div className="relative z-30 flex w-full flex-1 flex-col items-center justify-center">
                 <Spinner className="size-4 dark:text-white/60" />
@@ -395,7 +396,7 @@ const ChatArea = () => {
               className="scrollbar relative z-30 flex w-full flex-1 flex-col overflow-x-hidden overflow-y-auto"
             >
               <div ref={contentRef}>
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence>
                   {isFetchingNextPage && (
                     <motion.div
                       initial={{ filter: "blur(10px)", opacity: 0 }}
@@ -448,8 +449,10 @@ const ChatArea = () => {
                               />
                             ) : (
                               <div className="flex w-full flex-col">
+                                {/* MODIFICATION: Updated conditional to check for thinking content */}
                                 {idx === messages.pages.flat(1).length - 1 &&
-                                  thinking && (
+                                  thinking &&
+                                  thinking.thinking && (
                                     <div className="mb-4 w-full overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg">
                                       <button
                                         onClick={() =>
@@ -516,8 +519,6 @@ const ChatArea = () => {
                                         </motion.div>
                                       </button>
 
-                                      {/* --- Accordion Content --- */}
-                                      {/* AnimatePresence handles the enter/exit animations gracefully */}
                                       <AnimatePresence initial={false}>
                                         {isThinkingExpanded && (
                                           <motion.section
@@ -541,13 +542,13 @@ const ChatArea = () => {
                                             }}
                                             className="overflow-hidden"
                                           >
-                                            {/* The actual markdown content */}
                                             <div className="prose prose-invert max-w-none p-4 pt-0 text-gray-300">
+                                              {/* MODIFICATION: Use thinking.botId and thinking.thinking */}
                                               <MemoizedMarkdown
                                                 id={
-                                                  message.thread_id + "thinking"
+                                                  thinking.botId + "-thinking"
                                                 }
-                                                content={thinking}
+                                                content={thinking.thinking}
                                                 showDot={false}
                                               />
                                             </div>
@@ -569,7 +570,7 @@ const ChatArea = () => {
                         </li>
                       ))}
 
-                  <AnimatePresence mode="popLayout" initial={false}>
+                  <AnimatePresence>
                     {isSendMessageLoading && (
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -629,7 +630,7 @@ const ChatArea = () => {
                         handleChatSubmit(suggestion.question);
                       }}
                       key={idx}
-                      className="flex-shrink-0 rounded-xl border border-gray-300 bg-white p-3 ring-gray-300 hover:bg-gray-50 data-[presses]:bg-gray-100 md:p-3 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/20 dark:data-[presses]:bg-white/20"
+                      className="flex-shrink-0 rounded-xl border border-gray-300 bg-white p-3 ring-gray-300 hover:bg-gray-50 data-[pressed]:bg-gray-100 md:p-3 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/20 dark:data-[pressed]:bg-white/20"
                     >
                       <p className="text-skin-primary text-sm font-medium whitespace-nowrap">
                         {suggestion.question}

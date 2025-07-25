@@ -55,12 +55,6 @@ export class MessageHandler {
     [K in keyof MessageHandlerEventMap]?: Array<(...args: unknown[]) => void>;
   } = {};
 
-  // --- MODIFICATION: Buffering and batching logic ---
-  private thinkingBuffer: string[] = [];
-  private messageBuffer: string[] = [];
-  private flushHandle: number | null = null;
-  // --- End of modification ---
-
   constructor(threadId: string, accessToken: string, apiUrl: string) {
     this.threadId = threadId;
     this.accessToken = accessToken;
@@ -120,50 +114,6 @@ export class MessageHandler {
     }
   }
 
-  // --- MODIFICATION: Batching logic implementation ---
-  private scheduleFlush(): void {
-    if (this.flushHandle) return; // A flush is already scheduled.
-    this.flushHandle = requestAnimationFrame(() => {
-      this.flushBuffers();
-      this.flushHandle = null;
-    });
-  }
-
-  private flushBuffers(): void {
-    // Cancel any scheduled flush since we are doing it now.
-    if (this.flushHandle) {
-      cancelAnimationFrame(this.flushHandle);
-      this.flushHandle = null;
-    }
-
-    if (this.thinkingBuffer.length > 0) {
-      const accumulatedChunk = this.thinkingBuffer.join("");
-      this.thinkingBuffer = []; // Clear buffer
-      this.currentStreamData.thinking += accumulatedChunk;
-      if (this.currentBotMessageIdForStream) {
-        this.emit(
-          "thinkingChunk",
-          this.currentBotMessageIdForStream,
-          accumulatedChunk,
-        );
-      }
-    }
-
-    if (this.messageBuffer.length > 0) {
-      const accumulatedChunk = this.messageBuffer.join("");
-      this.messageBuffer = []; // Clear buffer
-      this.currentStreamData.message += accumulatedChunk;
-      if (this.currentBotMessageIdForStream) {
-        this.emit(
-          "messageChunk",
-          this.currentBotMessageIdForStream,
-          accumulatedChunk,
-        );
-      }
-    }
-  }
-  // --- End of modification ---
-
   private setStreamStatus(status: StreamStatus, error?: string): void {
     if (
       this.currentStreamStatus === status &&
@@ -186,7 +136,6 @@ export class MessageHandler {
   }
 
   private cleanupEventSource(): void {
-    this.flushBuffers(); // Ensure any remaining data is flushed.
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
@@ -194,7 +143,6 @@ export class MessageHandler {
   }
 
   private handleStreamEnd(): void {
-    this.flushBuffers(); // Final flush for any buffered data.
     if (this.currentBotMessageIdForStream) {
       let endReason: StreamEndReason;
 
@@ -262,24 +210,19 @@ export class MessageHandler {
         this.setStreamStatus("error", "A network error occurred.");
       };
 
-      // --- MODIFICATION: Use buffering for high-frequency events ---
       this.eventSource.addEventListener("thinking", (event: MessageEvent) => {
         if (!this.currentBotMessageIdForStream) return;
-        this.thinkingBuffer.push(event.data);
-        this.scheduleFlush();
+        const chunk = event.data as string;
+        this.currentStreamData.thinking += chunk;
+        this.emit("thinkingChunk", this.currentBotMessageIdForStream, chunk);
       });
 
       this.eventSource.addEventListener("message", (event: MessageEvent) => {
         if (!this.currentBotMessageIdForStream) return;
-        // KEY CHANGE: If we receive a message, immediately flush any pending
-        // 'thinking' chunks to prevent a visual delay.
-        if (this.thinkingBuffer.length > 0) {
-          this.flushBuffers();
-        }
-        this.messageBuffer.push(event.data);
-        this.scheduleFlush();
+        const chunk = event.data as string;
+        this.currentStreamData.message += chunk;
+        this.emit("messageChunk", this.currentBotMessageIdForStream, chunk);
       });
-      // --- End of modification ---
 
       const createSseDataHandler =
         <TData>(
