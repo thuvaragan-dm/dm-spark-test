@@ -48,10 +48,14 @@ jobs:
           fi
         env:
           # GITHUB_TOKEN used by electron-builder. Sourced from the selected GitHub Environment.
-          # Ensure 'PAT_FOR_PUBLISH' is the secret name in your GitHub Environments.
           GITHUB_TOKEN: ${{ secrets.PAT_FOR_PUBLISH }}
 
-          # Secrets for code signing and notarization can be included here as before.
+          # === ADDED THIS LINE ===
+          # Injects the PostHog API Key from the environment secret into the build process.
+          # Your build tool (e.g., Vite) will use this variable.
+          VITE_POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+
+          # Other secrets for code signing can be included here as before.
 
   # --- NEW JOB TO UPDATE THE CONFIGURATION REPOSITORY ---
   update_config_repo:
@@ -80,8 +84,6 @@ jobs:
         shell: bash
         run: |
           # 1. Determine the correct version name from the git tag.
-          # If the tag is "dev-v1.2.3", the version/branch will be "v1.2.3".
-          # If the tag is "v1.2.3", the version/branch will be "v1.2.3".
           TAG_NAME=${{ github.ref_name }}
           if [[ "$TAG_NAME" == dev-* ]]; then
             VERSION_NAME=${TAG_NAME#dev-}
@@ -98,8 +100,6 @@ jobs:
           git checkout -b "$VERSION_NAME"
 
           # 4. Update the 'version' field in config.json using jq.
-          # jq is pre-installed on GitHub-hosted runners.
-          # It reads config.json, sets the .version field, and writes to a temporary file before overwriting the original.
           jq --arg ver "$VERSION_NAME" '.version = $ver' config.json > config.json.tmp && mv config.json.tmp config.json
           echo "Updated config.json with version $VERSION_NAME:"
           cat config.json
