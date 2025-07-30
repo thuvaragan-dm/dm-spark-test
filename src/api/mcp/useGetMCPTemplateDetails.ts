@@ -11,5 +11,8 @@ export const useGetMCPTemplateDetails = (params?: MCPTemplateDetailParams) => {
     apiClient,
     url: "/mcp-templates/service-provider-details",
     queryParams: params,
+    queryOptions: {
+      enabled: !!params?.service_provider_name,
+    },
   });
 };

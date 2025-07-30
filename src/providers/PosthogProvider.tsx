@@ -1,9 +1,8 @@
 import { PostHogProvider as PH_P } from "posthog-js/react";
 import { ReactNode } from "react";
-import { useAppConfig } from "../store/configurationStore";
 
 const PosthogProvider = ({ children }: { children: ReactNode }) => {
-  const { posthogApiKey } = useAppConfig();
+  const posthogApiKey = import.meta.env.VITE_POSTHOG_API_KEY;
 
   if (posthogApiKey) {
     return (
