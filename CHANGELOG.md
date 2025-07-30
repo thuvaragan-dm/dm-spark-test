@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 6.4.0
+
+### Minor Changes
+
+- [`b7ad969`](https://github.com/thuvaragan-dm/dm-spark-test/commit/b7ad96941ffdf02c64b5757301607b0463f0e2ad) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - posthog api key now gets injected at build time
+
 ## 6.3.0
 
 ### Minor Changes
