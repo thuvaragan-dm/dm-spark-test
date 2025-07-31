@@ -53,16 +53,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # === MODIFIED STEP ===
+      # This step now uses the `package:prod` script for all builds as requested.
+      # The --publish flag tells electron-builder to create a release.
       - name: Build and Package Electron App
-        shell: bash
-        run: |
-          if [[ "${{ github.event.inputs.environment }}" == "development" ]]; then
-            echo "Running DEVELOPMENT package script..."
-            npm run package:dev -- --publish onTag
-          else
-            echo "Running PRODUCTION package script..."
-            npm run package:prod -- --publish onTag
-          fi
+        run: npm run package:prod -- --publish onTag
         env:
           # GITHUB_TOKEN used by electron-builder. Sourced from the selected GitHub Environment.
           GITHUB_TOKEN: ${{ secrets.PAT_FOR_PUBLISH }}
