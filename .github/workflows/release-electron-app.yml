@@ -7,18 +7,32 @@
 name: Build, Release, and Update Configs
 
 on:
-  push:
-    tags:
-      - "v*.*.*" # Production releases (e.g., v1.0.0)
-      - "dev-v*.*.*" # Development releases (e.g., dev-v0.1.0-alpha, dev-v1.0.0-dev.0)
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The git tag to build and release (e.g., v1.2.3 or dev-v0.1.0)."
+        required: true
+        type: string
+      environment:
+        description: "Select the build environment."
+        required: true
+        type: choice
+        options:
+          - development
+          - production
+        default: "development"
+      backend_url:
+        description: "Optional: Override backend URL. Leave blank for default."
+        required: false
+        type: string
 
 jobs:
   release:
     runs-on: ${{ matrix.os }}
 
-    # Conditionally select the GitHub Environment based on the tag prefix
+    # Conditionally select the GitHub Environment based on the manual input
     environment:
-      name: ${{ startsWith(github.ref_name, 'dev-') && 'development' || 'production' }}
+      name: ${{ github.event.inputs.environment }}
 
     strategy:
       matrix:
@@ -27,6 +41,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          # Use the tag from the manual input
+          ref: ${{ github.event.inputs.tag }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,7 +56,7 @@ jobs:
       - name: Build and Package Electron App
         shell: bash
         run: |
-          if [[ "${{ github.ref_name }}" == dev-* ]]; then
+          if [[ "${{ github.event.inputs.environment }}" == "development" ]]; then
             echo "Running DEVELOPMENT package script..."
             npm run package:dev -- --publish onTag
           else
@@ -50,14 +67,15 @@ jobs:
           # GITHUB_TOKEN used by electron-builder. Sourced from the selected GitHub Environment.
           GITHUB_TOKEN: ${{ secrets.PAT_FOR_PUBLISH }}
 
-          # === MODIFIED LINE ===
-          # Conditionally injects the PostHog API Key based on the tag prefix.
-          # Uses POSTHOG_DEV_API_KEY for 'dev-*' tags and POSTHOG_PRD_API_KEY for all others.
-          VITE_POSTHOG_API_KEY: ${{ startsWith(github.ref_name, 'dev-') && secrets.POSTHOG_DEV_API_KEY || secrets.POSTHOG_PRD_API_KEY }}
+          # Conditionally injects the PostHog API Key based on the environment input.
+          VITE_POSTHOG_API_KEY: ${{ github.event.inputs.environment == 'production' && secrets.POSTHOG_PRD_API_KEY || secrets.POSTHOG_DEV_API_KEY }}
+
+          # Injects the Backend URL. Uses the input if provided, otherwise defaults based on the environment.
+          API_URL: ${{ github.event.inputs.backend_url || (github.event.inputs.environment == 'production' && 'https://dm-api.deepmodel.ai' || 'https://dm-api-cloud-run-sandbox-238037281416.us-central1.run.app') }}
 
           # Other secrets for code signing can be included here as before.
 
-  # --- NEW JOB TO UPDATE THE CONFIGURATION REPOSITORY ---
+  # --- JOB TO UPDATE THE CONFIGURATION REPOSITORY ---
   update_config_repo:
     # This job runs only after the 'release' job has succeeded for all OSes.
     needs: release
@@ -65,7 +83,7 @@ jobs:
 
     # Use the same environment logic to access the PAT secret needed to push to the configs repo.
     environment:
-      name: ${{ startsWith(github.ref_name, 'dev-') && 'development' || 'production' }}
+      name: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout Configs Repository's Base Branch
@@ -83,8 +101,8 @@ jobs:
       - name: Create Version Branch and Update Files
         shell: bash
         run: |
-          # 1. Determine the correct version name from the git tag.
-          TAG_NAME=${{ github.ref_name }}
+          # 1. Determine the correct version name from the git tag input.
+          TAG_NAME=${{ github.event.inputs.tag }}
           if [[ "$TAG_NAME" == dev-* ]]; then
             VERSION_NAME=${TAG_NAME#dev-}
           else
