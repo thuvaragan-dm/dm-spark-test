@@ -46,6 +46,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.1",
     "electron-updater": "^6.1.8",
     "image-resize-compress": "^2.1.1",
     "js-cookie": "^3.0.5",

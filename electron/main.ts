@@ -13,8 +13,9 @@ import { autoUpdater, UpdateInfo } from "electron-updater";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, URL } from "node:url"; // Added URL for parsing
-import { apiUrl } from "../src/api/variables";
 import { AppConfiguration, GlobalAppConfig, VersionAppConfig } from "./types";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Determine the correct __dirname for ESM context.
 // This should point to the 'dist-electron' folder after build.
@@ -520,7 +521,7 @@ async function fetchAppConfiguration(): Promise<AppConfiguration | null> {
   console.log(`[Main] Fetching configuration for app version: ${version}`);
 
   try {
-    const url = `${apiUrl}/deepmodel-app-config`;
+    const url = `${process.env.API_URL}/deepmodel-app-config`;
     const globalConfigData = await fetch(`${url}/global`);
     const versionConfigData = await fetch(`${url}/v${version}`);
     const globalConfigResponse =
