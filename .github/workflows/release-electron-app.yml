@@ -50,10 +50,10 @@ jobs:
           # GITHUB_TOKEN used by electron-builder. Sourced from the selected GitHub Environment.
           GITHUB_TOKEN: ${{ secrets.PAT_FOR_PUBLISH }}
 
-          # === ADDED THIS LINE ===
-          # Injects the PostHog API Key from the environment secret into the build process.
-          # Your build tool (e.g., Vite) will use this variable.
-          VITE_POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          # === MODIFIED LINE ===
+          # Conditionally injects the PostHog API Key based on the tag prefix.
+          # Uses POSTHOG_DEV_API_KEY for 'dev-*' tags and POSTHOG_PRD_API_KEY for all others.
+          VITE_POSTHOG_API_KEY: ${{ startsWith(github.ref_name, 'dev-') && secrets.POSTHOG_DEV_API_KEY || secrets.POSTHOG_PRD_API_KEY }}
 
           # Other secrets for code signing can be included here as before.
 
