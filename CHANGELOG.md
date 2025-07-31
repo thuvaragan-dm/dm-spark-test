@@ -1,5 +1,11 @@
 # deepmodel-app
 
+## 6.5.0
+
+### Minor Changes
+
+- [`caab31d`](https://github.com/thuvaragan-dm/dm-spark-test/commit/caab31da71aba7a3ffbb8da1d1d40cba79c68e99) Thanks [@thuvaragan-dm](https://github.com/thuvaragan-dm)! - Variables are configured through env
+
 ## 6.4.0
 
 ### Minor Changes
